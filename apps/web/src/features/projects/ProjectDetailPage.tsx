@@ -1,23 +1,123 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Link, useNavigate, useParams } from 'react-router-dom';
 
 import {
   Badge,
+  type BadgeProps,
   Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  EmptyState,
   LoadingState,
   PageHeader,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { getProjectRequest } from './project-api';
 import { getProjectOptionLabel } from './project-options';
-import type { Project, ProjectAnswer } from './project-types';
+import type { Project, ProjectAnswer, ProjectDocument } from './project-types';
 
-const formatDate = (value: string) => new Date(value).toLocaleDateString();
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
+
+const formatStatus = (value: string) =>
+  value
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const getStatusVariant = (status: string): BadgeProps['variant'] => {
+  if (status === 'COMPLETED' || status === 'ACTIVE') {
+    return 'success';
+  }
+
+  if (status === 'FAILED') {
+    return 'danger';
+  }
+
+  if (status === 'PENDING' || status === 'PROCESSING' || status === 'DRAFT') {
+    return 'warning';
+  }
+
+  return 'neutral';
+};
+
+const documentTypeLabels: Record<string, string> = {
+  code_audit: 'Code Audit',
+  developer_jd: 'Developer JD',
+  rate_validator: 'Rate Validator',
+  roadmap: 'Roadmap',
+  stack_advisor: 'Stack Advisor',
+  technical_spec: 'Technical Spec',
+  vetting_scorecard: 'Vetting Scorecard',
+};
+
+const getDocumentTypeLabel = (type: string) => documentTypeLabels[type] ?? formatStatus(type);
+
+type WorkspaceModule = {
+  description: string;
+  documentTypes: string[];
+  title: string;
+  whenReady: string;
+};
+
+const workspaceModules: WorkspaceModule[] = [
+  {
+    description: 'Milestones, release order, and founder decisions needed before execution.',
+    documentTypes: ['roadmap'],
+    title: 'Roadmap',
+    whenReady: 'Prepare the first execution plan',
+  },
+  {
+    description: 'Recommended stack choices tied to budget, timeline, and product complexity.',
+    documentTypes: ['stack_advisor'],
+    title: 'Stack Advisor',
+    whenReady: 'Review stack options for the build',
+  },
+  {
+    description: 'Implementation-ready scope for vendors, contractors, and internal review.',
+    documentTypes: ['technical_spec'],
+    title: 'Technical Spec',
+    whenReady: 'Turn scope into implementation detail',
+  },
+  {
+    description: 'Role scope, required skills, interview focus, and delivery expectations.',
+    documentTypes: ['developer_jd'],
+    title: 'Developer JD',
+    whenReady: 'Define the first technical hire or contractor role',
+  },
+  {
+    description: 'Budget and quote review against expected delivery effort and complexity.',
+    documentTypes: ['rate_validator'],
+    title: 'Rate Validator',
+    whenReady: 'Validate the next vendor quote',
+  },
+  {
+    description: 'Repository, architecture, security, and maintainability review for shipped work.',
+    documentTypes: ['code_audit'],
+    title: 'Code Audit',
+    whenReady: 'Review a codebase when one is available',
+  },
+  {
+    description: 'Structured review criteria for evaluating technical candidates and vendors.',
+    documentTypes: ['vetting_scorecard'],
+    title: 'Vetting Scorecard',
+    whenReady: 'Prepare evaluation criteria',
+  },
+  {
+    description: 'Project-specific technical guidance using the saved workspace context.',
+    documentTypes: [],
+    title: 'CTO Chat',
+    whenReady: 'Ask project-specific follow-up questions',
+  },
+];
 
 const formatAnswer = (answer: ProjectAnswer) => {
   if (answer.key === 'existingAssets' && Array.isArray(answer.answer)) {
@@ -49,6 +149,48 @@ const DetailBlock = ({ label, value }: DetailBlockProps) => (
   </div>
 );
 
+type ModuleCardProps = {
+  contextReady: boolean;
+  document: ProjectDocument | null;
+  module: WorkspaceModule;
+};
+
+const ModuleCard = ({ contextReady, document, module }: ModuleCardProps) => {
+  const status = document
+    ? formatStatus(document.status)
+    : contextReady
+      ? 'Ready'
+      : 'Needs context';
+  const variant = document
+    ? getStatusVariant(document.status)
+    : contextReady
+      ? 'accent'
+      : 'warning';
+  const nextAction = !contextReady
+    ? 'Complete summary, customer, stage, and launch scope first'
+    : document
+      ? document.status === 'COMPLETED'
+        ? 'Review the saved document'
+        : 'Check the current document status'
+      : module.whenReady;
+
+  return (
+    <div className="rounded-lg border border-border bg-surface p-4">
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h3 className="text-sm font-semibold tracking-normal text-text">{module.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-muted">{module.description}</p>
+        </div>
+        <Badge variant={variant}>{status}</Badge>
+      </div>
+      <div className="mt-4 rounded-md border border-border bg-surface-raised p-3">
+        <p className="text-xs uppercase tracking-normal text-muted">Next action</p>
+        <p className="mt-1 text-sm font-medium leading-5 text-text">{nextAction}</p>
+      </div>
+    </div>
+  );
+};
+
 export const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
@@ -57,6 +199,24 @@ export const ProjectDetailPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<Project | null>(null);
 
+  const loadProject = useCallback(async () => {
+    if (!accessToken || !id) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await getProjectRequest(accessToken, id);
+      setProject(response.project);
+    } catch {
+      setError('Unable to load this project.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken, id]);
+
   useEffect(() => {
     if (!accessToken || !id) {
       return;
@@ -64,7 +224,10 @@ export const ProjectDetailPage = () => {
 
     let active = true;
 
-    const loadProject = async () => {
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
         const response = await getProjectRequest(accessToken, id);
 
@@ -87,15 +250,27 @@ export const ProjectDetailPage = () => {
       }
     };
 
-    void loadProject();
+    void load();
 
     return () => {
       active = false;
     };
   }, [accessToken, id]);
 
+  const moduleDocuments = useMemo(() => {
+    const documentsByType = new Map<string, ProjectDocument>();
+
+    project?.documents.forEach((document) => {
+      if (!documentsByType.has(document.type)) {
+        documentsByType.set(document.type, document);
+      }
+    });
+
+    return documentsByType;
+  }, [project]);
+
   if (isLoading) {
-    return <LoadingState label="Loading project" />;
+    return <LoadingState label="Loading project workspace" />;
   }
 
   if (error || !project) {
@@ -107,9 +282,26 @@ export const ProjectDetailPage = () => {
           eyebrow="Project context"
           title="Unable to load project"
         />
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              The project may not exist, or your account may not have access to it.
+            </p>
+            <Button onClick={loadProject} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
+
+  const contextReady = Boolean(
+    project.ideaSummary &&
+    project.targetCustomer &&
+    project.currentStage &&
+    project.mustHaveFeatures.length > 0,
+  );
 
   return (
     <div className="space-y-8">
@@ -120,26 +312,93 @@ export const ProjectDetailPage = () => {
           </Button>
         }
         description={`Created ${formatDate(project.createdAt)}. Last updated ${formatDate(project.updatedAt)}.`}
-        eyebrow="Project context"
+        eyebrow="Project workspace"
         title={project.name}
       />
 
       <div className="flex flex-wrap items-center gap-2">
-        <Badge variant="accent">{project.status}</Badge>
+        <Badge variant={getStatusVariant(project.status)}>{formatStatus(project.status)}</Badge>
         <Badge>{project.industry ?? 'Industry not set'}</Badge>
         <Badge>{getProjectOptionLabel.currentStage(project.currentStage)}</Badge>
+        <Badge>{contextReady ? 'Context ready' : 'Context needs review'}</Badge>
       </div>
 
-      <div className="grid gap-5 lg:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>Core context</CardTitle>
-            <CardDescription>The foundation used for planning and execution decisions.</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4">
+      <Card>
+        <CardHeader>
+          <CardTitle>Project summary</CardTitle>
+          <CardDescription>The saved context used across the workspace.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
+          <div className="space-y-4">
             <DetailBlock label="Idea summary" value={project.ideaSummary} />
             <DetailBlock label="Target customer" value={project.targetCustomer} />
             <DetailBlock label="Biggest concern" value={project.biggestConcern} />
+          </div>
+          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+            <DetailBlock
+              label="Stage"
+              value={getProjectOptionLabel.currentStage(project.currentStage)}
+            />
+            <DetailBlock
+              label="Budget"
+              value={getProjectOptionLabel.budgetRange(project.budgetRange)}
+            />
+            <DetailBlock
+              label="Timeline"
+              value={getProjectOptionLabel.launchTimeline(project.launchTimeline)}
+            />
+          </div>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Modules</CardTitle>
+          <CardDescription>Focused work areas connected to this project context.</CardDescription>
+        </CardHeader>
+        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
+          {workspaceModules.map((module) => {
+            const document =
+              module.documentTypes
+                .map((type) => moduleDocuments.get(type) ?? null)
+                .find((item): item is ProjectDocument => item !== null) ?? null;
+
+            return (
+              <ModuleCard
+                contextReady={contextReady}
+                document={document}
+                key={module.title}
+                module={module}
+              />
+            );
+          })}
+        </CardContent>
+      </Card>
+
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
+        <Card>
+          <CardHeader>
+            <CardTitle>Launch scope</CardTitle>
+            <CardDescription>The must-have feature set saved from onboarding.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {project.mustHaveFeatures.length > 0 ? (
+              <div className="grid gap-3">
+                {project.mustHaveFeatures.map((feature) => (
+                  <div
+                    className="rounded-md border border-border bg-surface-raised p-4 text-sm leading-6 text-text"
+                    key={feature}
+                  >
+                    {feature}
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <p className="text-sm leading-6 text-muted">
+                No launch features have been saved yet. Add the smallest feature set needed to
+                validate the product with real customers.
+              </p>
+            )}
           </CardContent>
         </Card>
 
@@ -183,31 +442,54 @@ export const ProjectDetailPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Launch scope</CardTitle>
-          <CardDescription>The must-have feature set saved from onboarding.</CardDescription>
+          <CardTitle>Recent documents</CardTitle>
+          <CardDescription>Latest completed and in-progress project documents.</CardDescription>
         </CardHeader>
         <CardContent>
-          <div className="grid gap-3">
-            {project.mustHaveFeatures.length > 0 ? (
-              project.mustHaveFeatures.map((feature) => (
+          {project.documents.length > 0 ? (
+            <div className="grid gap-3">
+              {project.documents.map((document) => (
                 <div
-                  className="rounded-md border border-border bg-surface-raised p-4 text-sm leading-6 text-text"
-                  key={feature}
+                  className="rounded-md border border-border bg-surface-raised p-4"
+                  key={document.id}
                 >
-                  {feature}
+                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                    <div>
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h3 className="text-sm font-semibold tracking-normal text-text">
+                          {document.title}
+                        </h3>
+                        <Badge>{getDocumentTypeLabel(document.type)}</Badge>
+                      </div>
+                      <p className="mt-2 text-sm leading-6 text-muted">
+                        {document.summary ?? 'No summary saved for this document.'}
+                      </p>
+                    </div>
+                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                      <Badge variant={getStatusVariant(document.status)}>
+                        {formatStatus(document.status)}
+                      </Badge>
+                      <Badge>{formatDate(document.completedAt ?? document.updatedAt)}</Badge>
+                    </div>
+                  </div>
                 </div>
-              ))
-            ) : (
-              <p className="text-sm text-muted">No must-have features saved.</p>
-            )}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <EmptyState
+              description="Complete the project context, then start with a roadmap or technical spec so future vendor and hiring decisions have a clear source of truth."
+              title="No documents yet"
+            />
+          )}
         </CardContent>
       </Card>
 
       <Card>
         <CardHeader>
           <CardTitle>Saved answers</CardTitle>
-          <CardDescription>Every onboarding answer is stored with the project record.</CardDescription>
+          <CardDescription>
+            Every onboarding answer is stored with the project record.
+          </CardDescription>
         </CardHeader>
         <CardContent className="grid gap-4 lg:grid-cols-2">
           {project.answers.map((answer) => (
