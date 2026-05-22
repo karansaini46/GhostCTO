@@ -1,5 +1,6 @@
 import cors from 'cors';
 import express from 'express';
+import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 
 import { config } from './config.js';
@@ -29,6 +30,7 @@ export const createApp = () => {
       },
     }),
   );
+  app.use(cookieParser());
   app.use(express.json({ limit: config.jsonLimit }));
   app.use(requestLogger);
   app.use(routes);
