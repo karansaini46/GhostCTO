@@ -153,9 +153,10 @@ type ModuleCardProps = {
   contextReady: boolean;
   document: ProjectDocument | null;
   module: WorkspaceModule;
+  projectId: string;
 };
 
-const ModuleCard = ({ contextReady, document, module }: ModuleCardProps) => {
+const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardProps) => {
   const status = document
     ? formatStatus(document.status)
     : contextReady
@@ -187,6 +188,16 @@ const ModuleCard = ({ contextReady, document, module }: ModuleCardProps) => {
         <p className="text-xs uppercase tracking-normal text-muted">Next action</p>
         <p className="mt-1 text-sm font-medium leading-5 text-text">{nextAction}</p>
       </div>
+      {module.documentTypes.includes('stack_advisor') ? (
+        <div className="mt-4">
+          <Link
+            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium tracking-normal text-text transition-colors hover:border-accent/35 hover:bg-surface-raised/80"
+            to={`/projects/${projectId}/stack-advice`}
+          >
+            Open advisor
+          </Link>
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -369,6 +380,7 @@ export const ProjectDetailPage = () => {
                 document={document}
                 key={module.title}
                 module={module}
+                projectId={project.id}
               />
             );
           })}

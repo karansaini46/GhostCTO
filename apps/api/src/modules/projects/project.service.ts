@@ -182,7 +182,9 @@ const toProjectResponse = (project: ProjectWithWorkspace) => ({
   documents: project.documents.map((document) => ({
     completedAt: document.completedAt?.toISOString() ?? null,
     createdAt: document.createdAt.toISOString(),
+    content: document.content,
     id: document.id,
+    metadata: document.metadata,
     status: document.status,
     summary: document.summary,
     title: document.title,

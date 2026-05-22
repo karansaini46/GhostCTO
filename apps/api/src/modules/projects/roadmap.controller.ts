@@ -27,8 +27,12 @@ export const generateRoadmap: RequestHandler = async (request, response, next) =
 export const listRoadmapDocuments: RequestHandler = async (request, response, next) => {
   try {
     const params = projectIdParamSchema.parse(request.params);
-    projectDocumentsQuerySchema.parse(request.query);
-    const documents = await listRoadmapDocumentsForUser(getUserId(request), params.id);
+    const query = projectDocumentsQuerySchema.parse(request.query);
+    const documents = await listRoadmapDocumentsForUser(
+      getUserId(request),
+      params.id,
+      query.type,
+    );
 
     sendJson(response, { documents });
   } catch (error) {

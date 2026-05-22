@@ -8,6 +8,7 @@ export type ProjectPromptContext = {
   answers?: ProjectPromptAnswer[];
   biggestConcern?: string | null;
   budgetRange?: string | null;
+  complianceSensitivity?: string | null;
   currentStage?: string | null;
   existingAssets?: string[] | null;
   founderTechnicalLevel?: string | null;
@@ -18,7 +19,9 @@ export type ProjectPromptContext = {
   mustHaveFeatures?: string[] | null;
   name: string;
   productType?: string | null;
+  speedPriority?: string | null;
   targetCustomer?: string | null;
+  targetScale?: string | null;
 };
 
 const formatUnknownValue = (value: unknown): string => {
@@ -59,6 +62,9 @@ export const buildProjectContextSection = (project: ProjectPromptContext) => {
   addLine(lines, 'Monetization', project.monetization);
   addLine(lines, 'Current stage', project.currentStage);
   addLine(lines, 'Budget range', project.budgetRange);
+  addLine(lines, 'Target scale', project.targetScale);
+  addLine(lines, 'Compliance sensitivity', project.complianceSensitivity);
+  addLine(lines, 'Speed priority', project.speedPriority);
   addLine(lines, 'Launch timeline', project.launchTimeline);
   addLine(lines, 'Founder technical level', project.founderTechnicalLevel);
   addLine(lines, 'Existing assets', project.existingAssets);

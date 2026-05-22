@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 
 import { ApiError } from '../../lib/api-error.js';
 import { sendJson } from '../../lib/responses.js';
-import { projectIdParamSchema } from './project.schemas.js';
+import { projectIdParamSchema, stackAdviceOverridesSchema } from './project.schemas.js';
 import { generateStackAdviceForUser } from './stack-advice.service.js';
 
 const getUserId = (request: Parameters<RequestHandler>[0]) => {
@@ -16,7 +16,8 @@ const getUserId = (request: Parameters<RequestHandler>[0]) => {
 export const generateStackAdvice: RequestHandler = async (request, response, next) => {
   try {
     const params = projectIdParamSchema.parse(request.params);
-    const result = await generateStackAdviceForUser(getUserId(request), params.id);
+    const overrides = stackAdviceOverridesSchema.parse(request.body ?? {});
+    const result = await generateStackAdviceForUser(getUserId(request), params.id, overrides);
 
     sendJson(response, result, 201);
   } catch (error) {

@@ -28,7 +28,9 @@ export type ProjectAnswer = {
 export type ProjectDocument = {
   completedAt: string | null;
   createdAt: string;
+  content: string | null;
   id: string;
+  metadata: unknown;
   status: string;
   summary: string | null;
   title: string;
@@ -57,4 +59,12 @@ export type Project = {
   status: string;
   targetCustomer: string | null;
   updatedAt: string;
+};
+
+export type StackAdviceGenerationOverrides = {
+  budgetRange?: string;
+  complianceSensitivity?: string;
+  founderTechnicalLevel?: string;
+  speedPriority?: string;
+  targetScale?: string;
 };
