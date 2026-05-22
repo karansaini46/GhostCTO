@@ -1,6 +1,6 @@
 import type { ErrorRequestHandler } from 'express';
 
-import { config } from '../config.js';
+import { config } from '../core/config.js';
 import { ApiError } from '../lib/api-error.js';
 import { sendError } from '../lib/responses.js';
 

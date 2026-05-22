@@ -72,5 +72,20 @@ Create local `.env` files from the committed examples before running the apps.
 ```text
 apps/
   api/
+    src/
+      core/
+      infrastructure/
+      modules/
+      middleware/
+      lib/
+      routes/
+    prisma/
   web/
+    src/
+      components/
+      features/
+      layouts/
+      lib/
+      styles.css
+docs/
 ```

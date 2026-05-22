@@ -17,7 +17,7 @@ import {
   Select,
   Tabs,
   Textarea,
-} from '../components/ui';
+} from '../../components/ui';
 
 export const DashboardPreview = () => {
   const [modalOpen, setModalOpen] = useState(false);
