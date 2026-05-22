@@ -54,11 +54,11 @@ export const config = {
   authCookieSameSite: parseSameSite(process.env.AUTH_COOKIE_SAMESITE),
   authCookieSecure: nodeEnv === 'production',
   authRateLimitMax: parsePositiveInteger(process.env.AUTH_RATE_LIMIT_MAX, 20),
-  authRateLimitWindowMs: parsePositiveInteger(process.env.AUTH_RATE_LIMIT_WINDOW_MS, 15 * 60 * 1000),
-  authSessionRateLimitMax: parsePositiveInteger(
-    process.env.AUTH_SESSION_RATE_LIMIT_MAX,
-    60,
+  authRateLimitWindowMs: parsePositiveInteger(
+    process.env.AUTH_RATE_LIMIT_WINDOW_MS,
+    15 * 60 * 1000,
   ),
+  authSessionRateLimitMax: parsePositiveInteger(process.env.AUTH_SESSION_RATE_LIMIT_MAX, 60),
   authSessionRateLimitWindowMs: parsePositiveInteger(
     process.env.AUTH_SESSION_RATE_LIMIT_WINDOW_MS,
     15 * 60 * 1000,
@@ -68,6 +68,10 @@ export const config = {
   refreshTokenTtlDays: parsePositiveInteger(process.env.REFRESH_TOKEN_TTL_DAYS, 30),
   isProduction: nodeEnv === 'production',
   jsonLimit: process.env.JSON_LIMIT ?? '1mb',
+  modelProviderApiKey: process.env.MODEL_PROVIDER_API_KEY?.trim(),
+  modelProviderBaseUrl:
+    process.env.MODEL_PROVIDER_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com',
+  modelProviderModel: process.env.MODEL_PROVIDER_MODEL?.trim(),
   nodeEnv,
   port: parsePort(process.env.PORT),
   serviceName: 'ghostcto-api',
