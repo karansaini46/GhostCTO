@@ -1,0 +1,29 @@
+{
+  "name": "ghostcto",
+  "version": "0.1.0",
+  "private": true,
+  "packageManager": "pnpm@10.0.0",
+  "type": "module",
+  "engines": {
+    "node": ">=22.0.0",
+    "pnpm": ">=10.0.0"
+  },
+  "scripts": {
+    "dev": "pnpm --parallel --filter @ghostcto/web --filter @ghostcto/api dev",
+    "dev:web": "pnpm --filter @ghostcto/web dev",
+    "dev:api": "pnpm --filter @ghostcto/api dev",
+    "build": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api build",
+    "lint": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api lint",
+    "format": "prettier --write ."
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.0.0",
+    "eslint": "^9.0.0",
+    "eslint-plugin-react-hooks": "^5.0.0",
+    "eslint-plugin-react-refresh": "^0.4.0",
+    "globals": "^16.0.0",
+    "prettier": "^3.0.0",
+    "typescript": "^5.0.0",
+    "typescript-eslint": "^8.0.0"
+  }
+}
