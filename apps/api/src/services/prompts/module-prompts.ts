@@ -6,6 +6,7 @@ import {
   ghostctoModuleTypes,
   quoteAnalysisSchema,
   roadmapOutputSchema,
+  stackAdviceOutputSchema,
   technicalSpecificationSchema,
   techStackRecommendationSchema,
   type GhostCTOModuleType,
@@ -25,6 +26,7 @@ type GhostCTOModulePromptMap = {
   developer_job_description: ModulePromptDefinition<typeof developerJobDescriptionSchema>;
   quote_analysis: ModulePromptDefinition<typeof quoteAnalysisSchema>;
   roadmap: ModulePromptDefinition<typeof roadmapOutputSchema>;
+  stack_advice: ModulePromptDefinition<typeof stackAdviceOutputSchema>;
   technical_specification: ModulePromptDefinition<typeof technicalSpecificationSchema>;
   tech_stack_recommendation: ModulePromptDefinition<typeof techStackRecommendationSchema>;
   vetting_scorecard: ModulePromptDefinition<typeof vettingScorecardSchema>;
@@ -79,6 +81,21 @@ const roadmapPrompt = (project: ProjectPromptContext) =>
       'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, phase1Mvp, phase2Growth, phase3Scale, featureTable, timelineEstimate, technicalDependencies, riskRegister, costControlAdvice, developerHandoffChecklist, decisionLog, milestones }. The phase objects must include title, boundary, goals, scope, deliverables, dependencies, exitCriteria, and durationWeeks.',
     schemaName: 'RoadmapOutput',
     task: 'Create a founder-ready technical roadmap for the project. Prioritize the smallest viable sequence of work, show exactly what belongs in the MVP, what belongs in later growth and scale phases, and what should not be built yet. Call out dependencies, timing assumptions, delivery risks, and cost-control advice in plain language. Avoid broad strategy language; the output should make it obvious what happens first, what comes next, and what can wait.',
+  });
+
+const stackAdvicePrompt = (project: ProjectPromptContext) =>
+  buildModulePrompt({
+    project,
+    requirements: joinRequirements(
+      'The markdown report must compare the recommended stack against practical alternatives and explain the tradeoffs in founder-friendly language.',
+      'Cover frontend, backend, database, auth, hosting, payments, analytics, email, file storage, monitoring, and AI tools only if they are genuinely useful.',
+      'Tune the recommendation to the project budget, expected team shape, launch timeline, and likely scale path.',
+      'Use the cards array for the primary recommendation, highest risk, and operational burden so the UI can scan the result quickly.',
+    ),
+    schemaDescription:
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, executiveSummary, recommendation, teamAssumption, scaleView, categories }. The categories array must include frontend, backend, database, auth, hosting, payments, analytics, email, file_storage, and monitoring, with ai_tools only if relevant. Each category item must include recommendation, whyItFits, whyNotCommonAlternative, costRiskLevel, costRisk, operationalComplexityLevel, operationalComplexity, founderExplanation, and commonAlternative.',
+    schemaName: 'StackAdviceOutput',
+    task: 'Recommend a specific technical stack for this project. Make the advice change based on the founder technical level, budget, stage, launch timeline, and expected team shape inferred from the project context. For each stack choice, give the recommended option, explain why it fits this project, explain why the common alternative is not the better fit here, and call out the cost and operational tradeoffs in plain language. Keep the output specific enough that a founder could hand it to a developer or vendor without needing extra translation.',
   });
 
 const techStackRecommendationPrompt = (project: ProjectPromptContext) =>
@@ -193,6 +210,13 @@ export const ghostctoModulePrompts = {
     schemaDescription:
       'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, phase1Mvp, phase2Growth, phase3Scale, featureTable, timelineEstimate, technicalDependencies, riskRegister, costControlAdvice, developerHandoffChecklist, decisionLog, milestones }.',
     schemaName: 'RoadmapOutput',
+  },
+  stack_advice: {
+    buildPrompt: stackAdvicePrompt,
+    schema: stackAdviceOutputSchema,
+    schemaDescription:
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, executiveSummary, recommendation, teamAssumption, scaleView, categories }.',
+    schemaName: 'StackAdviceOutput',
   },
   technical_specification: {
     buildPrompt: technicalSpecificationPrompt,

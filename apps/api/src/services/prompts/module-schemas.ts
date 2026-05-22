@@ -5,6 +5,7 @@ const nonEmptyText = (label: string, maxLength = 240) =>
 
 export const ghostctoModuleTypes = [
   'roadmap',
+  'stack_advice',
   'tech_stack_recommendation',
   'developer_job_description',
   'technical_specification',
@@ -151,6 +152,33 @@ const stackLayerSchema = z
   })
   .strict();
 
+const stackAdviceCategorySchema = z
+  .object({
+    category: z.enum([
+      'frontend',
+      'backend',
+      'database',
+      'auth',
+      'hosting',
+      'payments',
+      'analytics',
+      'email',
+      'file_storage',
+      'monitoring',
+      'ai_tools',
+    ]),
+    commonAlternative: nonEmptyText('Common alternative', 180),
+    costRisk: nonEmptyText('Cost risk', 260),
+    costRiskLevel: z.enum(['low', 'medium', 'high']),
+    founderExplanation: nonEmptyText('Founder explanation', 280),
+    operationalComplexity: nonEmptyText('Operational complexity', 260),
+    operationalComplexityLevel: z.enum(['low', 'medium', 'high']),
+    recommendation: nonEmptyText('Stack recommendation', 220),
+    whyItFits: nonEmptyText('Why it fits', 280),
+    whyNotCommonAlternative: nonEmptyText('Why not the common alternative', 280),
+  })
+  .strict();
+
 const jobResponsibilitySchema = z
   .object({
     priority: z.enum(['must', 'should', 'nice']),
@@ -269,6 +297,65 @@ export const roadmapOutputSchema = baseModuleOutputSchema.extend({
   timelineEstimate: roadmapTimelineEstimateSchema,
 });
 
+export const stackAdviceOutputSchema = baseModuleOutputSchema.extend({
+  categories: z
+    .array(stackAdviceCategorySchema)
+    .min(10)
+    .max(11)
+    .superRefine((items, ctx) => {
+      const requiredCategories = [
+        'frontend',
+        'backend',
+        'database',
+        'auth',
+        'hosting',
+        'payments',
+        'analytics',
+        'email',
+        'file_storage',
+        'monitoring',
+      ] as const;
+      const seen = new Set<string>();
+
+      for (const [index, item] of items.entries()) {
+        if (seen.has(item.category)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Duplicate category: ${item.category}.`,
+            path: [index, 'category'],
+          });
+        }
+
+        seen.add(item.category);
+      }
+
+      for (const category of requiredCategories) {
+        if (!seen.has(category)) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: `Missing required category: ${category}.`,
+            path: ['categories'],
+          });
+        }
+      }
+
+      const aiToolsCount = items.filter((item) => item.category === 'ai_tools').length;
+
+      if (aiToolsCount > 1) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Include at most one AI tools recommendation.',
+          path: ['categories'],
+        });
+      }
+    }),
+  executiveSummary: nonEmptyText('Executive summary', 1200),
+  moduleType: z.literal('STACK_ADVICE'),
+  recommendation: nonEmptyText('Overall recommendation', 320),
+  scaleView: nonEmptyText('Scale view', 720),
+  teamAssumption: nonEmptyText('Team assumption', 360),
+});
+
 export const techStackRecommendationSchema = baseModuleOutputSchema.extend({
   moduleType: z.literal('tech_stack_recommendation'),
   recommendation: nonEmptyText('Stack recommendation', 320),
@@ -342,6 +429,7 @@ export const vettingScorecardSchema = baseModuleOutputSchema.extend({
 });
 
 export type RoadmapOutput = z.infer<typeof roadmapOutputSchema>;
+export type StackAdviceOutput = z.infer<typeof stackAdviceOutputSchema>;
 export type TechStackRecommendationOutput = z.infer<typeof techStackRecommendationSchema>;
 export type DeveloperJobDescriptionOutput = z.infer<typeof developerJobDescriptionSchema>;
 export type TechnicalSpecificationOutput = z.infer<typeof technicalSpecificationSchema>;

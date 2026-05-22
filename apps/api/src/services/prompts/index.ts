@@ -17,6 +17,8 @@ export {
   type GhostCTOModuleType,
   quoteAnalysisSchema,
   roadmapOutputSchema,
+  stackAdviceOutputSchema,
+  type StackAdviceOutput,
   technicalSpecificationSchema,
   techStackRecommendationSchema,
   type QuoteAnalysisOutput,
