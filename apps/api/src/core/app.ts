@@ -3,11 +3,11 @@ import express from 'express';
 import helmet from 'helmet';
 
 import { config } from './config.js';
-import { ApiError } from './lib/api-error.js';
-import { errorHandler } from './middleware/error-handler.js';
-import { notFoundHandler } from './middleware/not-found.js';
-import { requestLogger } from './middleware/request-logger.js';
-import { routes } from './routes/index.js';
+import { ApiError } from '../lib/api-error.js';
+import { errorHandler } from '../middleware/error-handler.js';
+import { notFoundHandler } from '../middleware/not-found.js';
+import { requestLogger } from '../middleware/request-logger.js';
+import { routes } from '../routes/index.js';
 
 export const createApp = () => {
   const app = express();

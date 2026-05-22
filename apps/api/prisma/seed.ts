@@ -4,7 +4,7 @@ const seed = async () => {
     return;
   }
 
-  const { prisma } = await import('../src/lib/prisma.js');
+  const { prisma } = await import('../src/infrastructure/database/prisma.js');
 
   try {
     const user = await prisma.user.upsert({
