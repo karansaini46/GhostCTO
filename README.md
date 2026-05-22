@@ -57,9 +57,21 @@ Create local `.env` files from the committed examples before running the apps.
 - `CLIENT_ORIGIN`: Allowed browser origin for local CORS.
 - `DATABASE_URL`: PostgreSQL connection string.
 - `DIRECT_URL`: Direct PostgreSQL connection string for migrations.
+- `JWT_SECRET`: Secret used to sign access tokens.
+- `JWT_ISSUER`: Issuer claim for access tokens.
+- `JWT_AUDIENCE`: Audience claim for access tokens.
+- `JWT_EXPIRES_IN`: Access token lifetime, for example `15m`.
+- `AUTH_COOKIE_NAME`: Name of the refresh-token cookie.
+- `AUTH_COOKIE_SAMESITE`: Refresh cookie same-site policy.
+- `AUTH_RATE_LIMIT_WINDOW_MS`: Rate-limit window for login and register.
+- `AUTH_RATE_LIMIT_MAX`: Request limit for login and register.
+- `AUTH_SESSION_RATE_LIMIT_WINDOW_MS`: Rate-limit window for refresh, logout, and me.
+- `AUTH_SESSION_RATE_LIMIT_MAX`: Request limit for refresh, logout, and me.
+- `BCRYPT_ROUNDS`: Password hashing cost factor.
+- `REFRESH_TOKEN_BYTES`: Raw refresh-token entropy size.
+- `REFRESH_TOKEN_TTL_DAYS`: Refresh-token lifetime in days.
 - `SUPABASE_URL`: Supabase project URL.
 - `SUPABASE_SERVICE_ROLE_KEY`: Supabase service role key.
-- `JWT_SECRET`: Secret used for signed sessions.
 - `GOOGLE_CLIENT_ID`: Google OAuth client ID.
 - `GOOGLE_CLIENT_SECRET`: Google OAuth client secret.
 - `PUPPETEER_EXECUTABLE_PATH`: Optional browser executable path.
@@ -72,5 +84,20 @@ Create local `.env` files from the committed examples before running the apps.
 ```text
 apps/
   api/
+    src/
+      core/
+      infrastructure/
+      modules/
+      middleware/
+      lib/
+      routes/
+    prisma/
   web/
+    src/
+      components/
+      features/
+      layouts/
+      lib/
+      styles.css
+docs/
 ```

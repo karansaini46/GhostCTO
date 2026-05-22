@@ -1,6 +1,7 @@
 node_modules/
 dist/
 coverage/
+apps/api/src/generated/
 .DS_Store
 .env
 .env.*
