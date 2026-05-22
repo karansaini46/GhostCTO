@@ -79,6 +79,17 @@ model Project {
   industry       String?
   websiteUrl     String?
   summary        String?
+  ideaSummary    String?
+  targetCustomer String?
+  productType    String?
+  monetization   String?
+  currentStage   String?
+  budgetRange    String?
+  launchTimeline String?
+  founderTechnicalLevel String?
+  existingAssets Json                @default("[]")
+  mustHaveFeatures Json              @default("[]")
+  biggestConcern String?
   status         ProjectStatus       @default(DRAFT)
   context        Json                @default("{}")
   createdAt      DateTime            @default(now()) @db.Timestamptz(6)

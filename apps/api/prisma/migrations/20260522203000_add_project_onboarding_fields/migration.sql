@@ -1,0 +1,11 @@
+ALTER TABLE "Project" ADD COLUMN "ideaSummary" TEXT;
+ALTER TABLE "Project" ADD COLUMN "targetCustomer" TEXT;
+ALTER TABLE "Project" ADD COLUMN "productType" TEXT;
+ALTER TABLE "Project" ADD COLUMN "monetization" TEXT;
+ALTER TABLE "Project" ADD COLUMN "currentStage" TEXT;
+ALTER TABLE "Project" ADD COLUMN "budgetRange" TEXT;
+ALTER TABLE "Project" ADD COLUMN "launchTimeline" TEXT;
+ALTER TABLE "Project" ADD COLUMN "founderTechnicalLevel" TEXT;
+ALTER TABLE "Project" ADD COLUMN "existingAssets" JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE "Project" ADD COLUMN "mustHaveFeatures" JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE "Project" ADD COLUMN "biggestConcern" TEXT;
