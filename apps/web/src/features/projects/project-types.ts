@@ -25,12 +25,24 @@ export type ProjectAnswer = {
   updatedAt: string;
 };
 
+export type ProjectDocument = {
+  completedAt: string | null;
+  createdAt: string;
+  id: string;
+  status: string;
+  summary: string | null;
+  title: string;
+  type: string;
+  updatedAt: string;
+};
+
 export type Project = {
   answers: ProjectAnswer[];
   biggestConcern: string | null;
   budgetRange: string | null;
   createdAt: string;
   currentStage: string | null;
+  documents: ProjectDocument[];
   existingAssets: string[];
   founderTechnicalLevel: string | null;
   id: string;

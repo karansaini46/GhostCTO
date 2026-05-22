@@ -1,8 +1,9 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 
 import {
   Badge,
+  type BadgeProps,
   Button,
   Card,
   CardContent,
@@ -15,10 +16,57 @@ import {
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { listProjectsRequest } from '../projects/project-api';
-import {
-  getProjectOptionLabel,
-} from '../projects/project-options';
+import { getProjectOptionLabel } from '../projects/project-options';
 import type { Project } from '../projects/project-types';
+
+const formatDate = (value: string) =>
+  new Intl.DateTimeFormat(undefined, {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+  }).format(new Date(value));
+
+const formatStatus = (value: string) =>
+  value
+    .toLowerCase()
+    .split('_')
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(' ');
+
+const getProjectStatusVariant = (status: string): BadgeProps['variant'] => {
+  if (status === 'ACTIVE') {
+    return 'success';
+  }
+
+  if (status === 'DRAFT') {
+    return 'warning';
+  }
+
+  return 'neutral';
+};
+
+const hasDocumentType = (project: Project, type: string) =>
+  project.documents.some((document) => document.type === type && document.status === 'COMPLETED');
+
+const getNextAction = (project: Project) => {
+  if (!project.ideaSummary || !project.targetCustomer || !project.currentStage) {
+    return 'Complete the project context';
+  }
+
+  if (project.mustHaveFeatures.length === 0) {
+    return 'Define the first launch scope';
+  }
+
+  if (!hasDocumentType(project, 'roadmap')) {
+    return 'Prepare the execution roadmap';
+  }
+
+  if (!hasDocumentType(project, 'technical_spec')) {
+    return 'Turn scope into a technical spec';
+  }
+
+  return 'Review the latest project documents';
+};
 
 export const DashboardPage = () => {
   const navigate = useNavigate();
@@ -27,6 +75,24 @@ export const DashboardPage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [projects, setProjects] = useState<Project[]>([]);
 
+  const loadProjects = useCallback(async () => {
+    if (!accessToken) {
+      return;
+    }
+
+    setIsLoading(true);
+    setError(null);
+
+    try {
+      const response = await listProjectsRequest(accessToken);
+      setProjects(response.projects);
+    } catch {
+      setError('Unable to load projects right now.');
+    } finally {
+      setIsLoading(false);
+    }
+  }, [accessToken]);
+
   useEffect(() => {
     if (!accessToken) {
       return;
@@ -34,7 +100,10 @@ export const DashboardPage = () => {
 
     let active = true;
 
-    const loadProjects = async () => {
+    const load = async () => {
+      setIsLoading(true);
+      setError(null);
+
       try {
         const response = await listProjectsRequest(accessToken);
 
@@ -57,7 +126,7 @@ export const DashboardPage = () => {
       }
     };
 
-    void loadProjects();
+    void load();
 
     return () => {
       active = false;
@@ -68,65 +137,88 @@ export const DashboardPage = () => {
     <div className="space-y-8">
       <PageHeader
         actions={<Button onClick={() => navigate('/projects/new')}>New project</Button>}
-        description="Keep each venture's context specific enough for useful strategy, planning, and vendor review."
-        eyebrow="GhostCTO"
-        title="Project workspace"
+        description="Track each venture, keep its context current, and move the next planning decision forward."
+        eyebrow="Founder workspace"
+        title="Dashboard"
       />
 
       {isLoading ? <LoadingState label="Loading projects" /> : null}
-      {error ? <p className="text-sm leading-6 text-danger">{error}</p> : null}
+      {error ? (
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-danger">{error}</p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Refresh the workspace or try again after checking your connection.
+              </p>
+            </div>
+            <Button onClick={loadProjects} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {!isLoading && !error && projects.length === 0 ? (
         <EmptyState
           action={<Button onClick={() => navigate('/projects/new')}>Start onboarding</Button>}
-          description="Capture the customer, scope, budget, timeline, and founder constraints before planning the build."
-          title="Create your first project context"
+          description="Capture the customer, launch scope, budget, timeline, and founder constraints so the workspace can recommend the right next step."
+          title="Create your first project"
         />
       ) : null}
 
-      {!isLoading && projects.length > 0 ? (
-        <div className="grid gap-5 lg:grid-cols-2 xl:grid-cols-3">
-          {projects.map((project) => (
-            <Link
-              className="block rounded-lg focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45"
-              key={project.id}
-              to={`/projects/${project.id}`}
-            >
-              <Card className="h-full transition-colors hover:border-accent/40">
-                <CardHeader>
-                  <div className="flex items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>{project.name}</CardTitle>
-                      <CardDescription>
-                        {project.industry ?? 'Industry not set'}
-                      </CardDescription>
+      {!isLoading && !error && projects.length > 0 ? (
+        <Card>
+          <CardHeader>
+            <CardTitle>Projects</CardTitle>
+            <CardDescription>Status, created date, and recommended next action.</CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {projects.map((project) => (
+              <Link
+                className="block rounded-lg border border-border bg-surface-raised p-4 transition-colors hover:border-accent/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/45"
+                key={project.id}
+                to={`/projects/${project.id}`}
+              >
+                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                  <div className="min-w-0 space-y-2">
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h2 className="text-base font-semibold tracking-normal text-text">
+                        {project.name}
+                      </h2>
+                      <Badge variant={getProjectStatusVariant(project.status)}>
+                        {formatStatus(project.status)}
+                      </Badge>
                     </div>
-                    <Badge variant="accent">{project.status}</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <p className="line-clamp-4 text-sm leading-6 text-muted">
-                    {project.ideaSummary ?? 'Project context has not been completed.'}
-                  </p>
-                  <div className="grid gap-3 sm:grid-cols-2">
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Stage</p>
-                      <p className="mt-1 text-sm font-medium text-text">
-                        {getProjectOptionLabel.currentStage(project.currentStage)}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Timeline</p>
-                      <p className="mt-1 text-sm font-medium text-text">
-                        {getProjectOptionLabel.launchTimeline(project.launchTimeline)}
-                      </p>
+                    <p className="line-clamp-2 max-w-3xl text-sm leading-6 text-muted">
+                      {project.ideaSummary ??
+                        'Project context is ready to be completed before planning begins.'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      <Badge>{project.industry ?? 'Industry not set'}</Badge>
+                      <Badge>{getProjectOptionLabel.currentStage(project.currentStage)}</Badge>
+                      <Badge>{getProjectOptionLabel.launchTimeline(project.launchTimeline)}</Badge>
                     </div>
                   </div>
-                </CardContent>
-              </Card>
-            </Link>
-          ))}
-        </div>
+                  <div className="grid gap-3 sm:grid-cols-2 lg:w-[22rem]">
+                    <div className="rounded-md border border-border bg-surface p-3">
+                      <p className="text-xs uppercase tracking-normal text-muted">Created</p>
+                      <p className="mt-1 text-sm font-medium text-text">
+                        {formatDate(project.createdAt)}
+                      </p>
+                    </div>
+                    <div className="rounded-md border border-border bg-surface p-3">
+                      <p className="text-xs uppercase tracking-normal text-muted">Next action</p>
+                      <p className="mt-1 text-sm font-medium leading-5 text-text">
+                        {getNextAction(project)}
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </CardContent>
+        </Card>
       ) : null}
 
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
@@ -138,23 +230,23 @@ export const DashboardPage = () => {
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="rounded-lg border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Name</p>
+                <p className="text-xs uppercase tracking-normal text-muted">Name</p>
                 <p className="mt-2 text-sm font-medium text-text">{user?.name ?? 'Not set'}</p>
               </div>
               <div className="rounded-lg border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Email</p>
+                <p className="text-xs uppercase tracking-normal text-muted">Email</p>
                 <p className="mt-2 break-all text-sm font-medium text-text">{user?.email}</p>
               </div>
               <div className="rounded-lg border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Role</p>
+                <p className="text-xs uppercase tracking-normal text-muted">Role</p>
                 <div className="mt-2">
-                  <Badge variant="accent">{user?.role}</Badge>
+                  <Badge variant="accent">{user ? formatStatus(user.role) : 'Founder'}</Badge>
                 </div>
               </div>
               <div className="rounded-lg border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-[0.16em] text-muted">Created</p>
+                <p className="text-xs uppercase tracking-normal text-muted">Created</p>
                 <p className="mt-2 text-sm font-medium text-text">
-                  {user ? new Date(user.createdAt).toLocaleString() : 'Unknown'}
+                  {user ? formatDate(user.createdAt) : 'Unknown'}
                 </p>
               </div>
             </div>
@@ -163,18 +255,22 @@ export const DashboardPage = () => {
 
         <Card>
           <CardHeader>
-            <CardTitle>Context quality</CardTitle>
-            <CardDescription>Use complete project details before requesting guidance.</CardDescription>
+            <CardTitle>Workspace health</CardTitle>
+            <CardDescription>Summary of active project context across the account.</CardDescription>
           </CardHeader>
-          <CardContent className="space-y-4">
+          <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
             <div className="rounded-lg border border-border bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted">Projects</p>
-              <p className="mt-2 text-sm font-medium text-text">{projects.length}</p>
+              <p className="text-xs uppercase tracking-normal text-muted">Projects</p>
+              <p className="mt-2 text-2xl font-semibold tracking-normal text-text">
+                {projects.length}
+              </p>
             </div>
             <div className="rounded-lg border border-border bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-[0.16em] text-muted">Next step</p>
-              <p className="mt-2 text-sm font-medium text-text">
-                {projects.length > 0 ? 'Review project context' : 'Complete onboarding'}
+              <p className="text-xs uppercase tracking-normal text-muted">Next step</p>
+              <p className="mt-2 text-sm font-medium leading-6 text-text">
+                {projects.length > 0
+                  ? getNextAction(projects[0])
+                  : 'Complete onboarding for your first project'}
               </p>
             </div>
           </CardContent>

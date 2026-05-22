@@ -28,9 +28,15 @@ const projectInclude = {
       createdAt: 'asc',
     },
   },
+  documents: {
+    orderBy: {
+      createdAt: 'desc',
+    },
+    take: 6,
+  },
 } satisfies Prisma.ProjectInclude;
 
-type ProjectWithAnswers = Prisma.ProjectGetPayload<{ include: typeof projectInclude }>;
+type ProjectWithWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectInclude }>;
 
 const slugify = (value: string): string => {
   const slug = value
@@ -156,7 +162,7 @@ const buildProjectUpdateData = (input: UpdateProjectPayloadInput): Prisma.Projec
   return data;
 };
 
-const toProjectResponse = (project: ProjectWithAnswers) => ({
+const toProjectResponse = (project: ProjectWithWorkspace) => ({
   answers: project.answers.map((answer) => ({
     answer: answer.answer,
     createdAt: answer.createdAt.toISOString(),
@@ -171,6 +177,16 @@ const toProjectResponse = (project: ProjectWithAnswers) => ({
   budgetRange: project.budgetRange,
   createdAt: project.createdAt.toISOString(),
   currentStage: project.currentStage,
+  documents: project.documents.map((document) => ({
+    completedAt: document.completedAt?.toISOString() ?? null,
+    createdAt: document.createdAt.toISOString(),
+    id: document.id,
+    status: document.status,
+    summary: document.summary,
+    title: document.title,
+    type: document.type,
+    updatedAt: document.updatedAt.toISOString(),
+  })),
   existingAssets: toStringArray(project.existingAssets),
   founderTechnicalLevel: project.founderTechnicalLevel,
   id: project.id,
@@ -233,11 +249,13 @@ export const listProjectsForUser = async (userId: string) => {
 };
 
 export const getProjectForUser = async (userId: string, projectId: string) => {
-  const project = await prisma.project.findFirst({
+  const project = await prisma.project.findUnique({
     include: projectInclude,
     where: {
-      id: projectId,
-      userId,
+      id_userId: {
+        id: projectId,
+        userId,
+      },
     },
   });
 
@@ -254,11 +272,13 @@ export const updateProjectForUser = async (
   input: UpdateProjectPayloadInput,
 ) => {
   const project = await prisma.$transaction(async (transaction) => {
-    const existingProject = await transaction.project.findFirst({
+    const existingProject = await transaction.project.findUnique({
       select: { id: true },
       where: {
-        id: projectId,
-        userId,
+        id_userId: {
+          id: projectId,
+          userId,
+        },
       },
     });
 
@@ -268,7 +288,12 @@ export const updateProjectForUser = async (
 
     await transaction.project.update({
       data: buildProjectUpdateData(input),
-      where: { id: projectId },
+      where: {
+        id_userId: {
+          id: projectId,
+          userId,
+        },
+      },
     });
 
     const answers = buildAnswerRecords(userId, input);
@@ -296,7 +321,12 @@ export const updateProjectForUser = async (
 
     return transaction.project.findUniqueOrThrow({
       include: projectInclude,
-      where: { id: projectId },
+      where: {
+        id_userId: {
+          id: projectId,
+          userId,
+        },
+      },
     });
   });
 
