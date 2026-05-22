@@ -70,14 +70,15 @@ const roadmapPrompt = (project: ProjectPromptContext) =>
   buildModulePrompt({
     project,
     requirements: joinRequirements(
-      'The markdown report must include a short project context section, a recommendation section, a roadmap section, assumptions, risks, and next steps.',
-      'Make the roadmap practical for a founder who needs sequencing, milestones, and decision points more than theory.',
-      'Populate the cards array with milestone or decision summaries that can be shown in the UI at a glance.',
+      'The markdown report must include an executive summary, Phase 1 MVP, Phase 2 Growth, Phase 3 Scale, a feature table, a timeline estimate, technical dependencies, a risk register, cost-control advice, and a developer handoff checklist.',
+      'State the MVP boundaries clearly: what is in scope, what is deferred, and what is excluded for now.',
+      'Make the roadmap practical for a founder who needs sequencing, milestones, decision points, and budget discipline more than theory.',
+      'Populate the cards array with founder-facing summaries that can be shown in the UI at a glance.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, decisionLog, milestones }. Each milestone must include phase, objective, owner, targetWindow, deliverables, and dependencies.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, phase1Mvp, phase2Growth, phase3Scale, featureTable, timelineEstimate, technicalDependencies, riskRegister, costControlAdvice, developerHandoffChecklist, decisionLog, milestones }. The phase objects must include title, boundary, goals, scope, deliverables, dependencies, exitCriteria, and durationWeeks.',
     schemaName: 'RoadmapOutput',
-    task: 'Create a founder-ready execution roadmap for the project. Prioritize the smallest viable sequence of work, show where decisions must be made, and call out any dependency that can block delivery. Avoid broad strategy language; the output should make it obvious what happens first, what comes next, and what can wait.',
+    task: 'Create a founder-ready technical roadmap for the project. Prioritize the smallest viable sequence of work, show exactly what belongs in the MVP, what belongs in later growth and scale phases, and what should not be built yet. Call out dependencies, timing assumptions, delivery risks, and cost-control advice in plain language. Avoid broad strategy language; the output should make it obvious what happens first, what comes next, and what can wait.',
   });
 
 const techStackRecommendationPrompt = (project: ProjectPromptContext) =>
@@ -190,7 +191,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: roadmapPrompt,
     schema: roadmapOutputSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, decisionLog, milestones }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, phase1Mvp, phase2Growth, phase3Scale, featureTable, timelineEstimate, technicalDependencies, riskRegister, costControlAdvice, developerHandoffChecklist, decisionLog, milestones }.',
     schemaName: 'RoadmapOutput',
   },
   technical_specification: {

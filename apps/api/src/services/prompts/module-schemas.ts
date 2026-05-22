@@ -67,6 +67,69 @@ const roadmapMilestoneSchema = z
   })
   .strict();
 
+const roadmapPhaseSchema = z
+  .object({
+    boundary: nonEmptyText('Phase boundary', 260),
+    dependencies: z.array(nonEmptyText('Phase dependency', 180)).min(1).max(8),
+    deliverables: z.array(nonEmptyText('Phase deliverable', 180)).min(1).max(8),
+    durationWeeks: z.string().trim().min(1).max(80),
+    exitCriteria: z.array(nonEmptyText('Phase exit criteria', 180)).min(1).max(8),
+    goals: z.array(nonEmptyText('Phase goal', 180)).min(1).max(8),
+    scope: z.array(nonEmptyText('Phase scope item', 180)).min(1).max(12),
+    title: nonEmptyText('Phase title', 80),
+  })
+  .strict();
+
+const roadmapFeatureRowSchema = z
+  .object({
+    decision: z.enum(['in_scope', 'defer', 'exclude']),
+    feature: nonEmptyText('Feature name', 180),
+    note: nonEmptyText('Feature note', 280),
+    phase: z.enum(['phase_1_mvp', 'phase_2_growth', 'phase_3_scale']),
+  })
+  .strict();
+
+const roadmapTimelineEstimateSchema = z
+  .object({
+    assumptions: z.array(nonEmptyText('Timeline assumption', 200)).min(1).max(8),
+    totalWeeks: nonEmptyText('Total timeline estimate', 120),
+    phase1Weeks: nonEmptyText('Phase 1 timeline estimate', 120),
+    phase2Weeks: nonEmptyText('Phase 2 timeline estimate', 120),
+    phase3Weeks: nonEmptyText('Phase 3 timeline estimate', 120),
+  })
+  .strict();
+
+const roadmapDependencySchema = z
+  .object({
+    dependency: nonEmptyText('Technical dependency', 180),
+    impact: nonEmptyText('Dependency impact', 240),
+    riskIfMissing: nonEmptyText('Dependency risk', 240),
+  })
+  .strict();
+
+const roadmapRiskSchema = z
+  .object({
+    impact: nonEmptyText('Roadmap risk impact', 240),
+    likelihood: z.enum(['low', 'medium', 'high']),
+    mitigation: nonEmptyText('Roadmap risk mitigation', 280),
+    risk: nonEmptyText('Roadmap risk', 240),
+  })
+  .strict();
+
+const roadmapCostControlSchema = z
+  .object({
+    advice: nonEmptyText('Cost-control advice', 260),
+    reason: nonEmptyText('Cost-control reason', 260),
+  })
+  .strict();
+
+const roadmapHandoffChecklistItemSchema = z
+  .object({
+    item: nonEmptyText('Handoff checklist item', 220),
+    reason: nonEmptyText('Handoff checklist reason', 260),
+  })
+  .strict();
+
 const stackLayerSchema = z
   .object({
     decision: nonEmptyText('Stack decision', 160),
@@ -184,10 +247,26 @@ const scorecardCriterionSchema = z
   .strict();
 
 export const roadmapOutputSchema = baseModuleOutputSchema.extend({
+  costControlAdvice: z.array(roadmapCostControlSchema).min(3).max(8),
+  developerHandoffChecklist: z.array(roadmapHandoffChecklistItemSchema).min(5).max(12),
+  executiveSummary: nonEmptyText('Executive summary', 1200),
   decisionLog: z.array(nonEmptyText('Roadmap decision log entry', 240)).min(2).max(8),
+  featureTable: z.array(roadmapFeatureRowSchema).min(6).max(20),
   milestones: z.array(roadmapMilestoneSchema).min(3).max(8),
+  phase1Mvp: roadmapPhaseSchema.extend({
+    title: z.literal('Phase 1 MVP'),
+  }),
+  phase2Growth: roadmapPhaseSchema.extend({
+    title: z.literal('Phase 2 Growth'),
+  }),
+  phase3Scale: roadmapPhaseSchema.extend({
+    title: z.literal('Phase 3 Scale'),
+  }),
   moduleType: z.literal('roadmap'),
   recommendation: nonEmptyText('Roadmap recommendation', 320),
+  riskRegister: z.array(roadmapRiskSchema).min(3).max(10),
+  technicalDependencies: z.array(roadmapDependencySchema).min(3).max(10),
+  timelineEstimate: roadmapTimelineEstimateSchema,
 });
 
 export const techStackRecommendationSchema = baseModuleOutputSchema.extend({
