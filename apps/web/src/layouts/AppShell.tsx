@@ -10,7 +10,10 @@ type AppShellProps = {
   children: ReactNode;
 };
 
-const navigationItems = [{ label: 'Workspace', to: '/' }];
+const navigationItems = [
+  { label: 'Workspace', to: '/' },
+  { label: 'New project', to: '/projects/new' },
+];
 
 const Brand = () => (
   <div className="flex items-center gap-3">
