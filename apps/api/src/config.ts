@@ -25,6 +25,7 @@ const nodeEnv = process.env.NODE_ENV ?? 'development';
 
 export const config = {
   clientOrigins: parseOrigins(process.env.CLIENT_ORIGIN),
+  databaseUrl: process.env.DATABASE_URL?.trim(),
   isProduction: nodeEnv === 'production',
   jsonLimit: process.env.JSON_LIMIT ?? '1mb',
   nodeEnv,
