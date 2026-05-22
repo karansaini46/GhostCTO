@@ -1,5 +1,7 @@
 import type { ErrorRequestHandler } from 'express';
 
+import { ZodError } from 'zod';
+
 import { config } from '../core/config.js';
 import { ApiError } from '../lib/api-error.js';
 import { sendError } from '../lib/responses.js';
@@ -63,7 +65,13 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, next
 
   const httpStatusCode = getHttpStatusCode(error as HttpErrorLike);
   const normalized =
-    error instanceof ApiError
+    error instanceof ZodError
+      ? {
+          code: 'VALIDATION_ERROR',
+          message: error.issues[0]?.message ?? 'Invalid request body.',
+          statusCode: 400,
+        }
+      : error instanceof ApiError
       ? {
           code: error.code,
           message: error.expose ? error.message : fallbackError.message,

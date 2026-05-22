@@ -1,13 +1,16 @@
 import { useState } from 'react';
 import type { ReactNode } from 'react';
+import { NavLink, useNavigate } from 'react-router-dom';
 
+import { Button } from '../components/ui';
+import { useAuth } from '../features/auth/auth-context';
 import { cn } from '../lib/cn';
 
 type AppShellProps = {
   children: ReactNode;
 };
 
-const navigationItems = [{ label: 'Dashboard preview', active: true }];
+const navigationItems = [{ label: 'Workspace', to: '/' }];
 
 const Brand = () => (
   <div className="flex items-center gap-3">
@@ -36,24 +39,28 @@ const SidebarContent = () => (
     </div>
     <nav className="flex-1 space-y-1 px-3 py-5">
       {navigationItems.map((item) => (
-        <button
-          className={cn(
-            'flex w-full items-center rounded-md px-3 py-2.5 text-left text-sm font-medium tracking-normal transition-colors',
-            item.active
-              ? 'bg-surface-raised text-text'
-              : 'text-muted hover:bg-surface-raised hover:text-text',
-          )}
+        <NavLink
+          className={({ isActive }) =>
+            cn(
+              'flex w-full items-center rounded-md px-3 py-2.5 text-left text-sm font-medium tracking-normal transition-colors',
+              isActive
+                ? 'bg-surface-raised text-text'
+                : 'text-muted hover:bg-surface-raised hover:text-text',
+            )
+          }
           key={item.label}
-          type="button"
+          to={item.to}
         >
           {item.label}
-        </button>
+        </NavLink>
       ))}
     </nav>
     <div className="border-t border-border p-4">
       <div className="rounded-lg border border-border bg-surface-raised p-4">
         <p className="text-sm font-medium tracking-normal text-text">Private workspace</p>
-        <p className="mt-1 text-sm leading-6 text-muted">Structured for focused founder review.</p>
+        <p className="mt-1 text-sm leading-6 text-muted">
+          Structured for account review and project execution.
+        </p>
       </div>
     </div>
   </div>
@@ -61,6 +68,8 @@ const SidebarContent = () => (
 
 export const AppShell = ({ children }: AppShellProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const navigate = useNavigate();
+  const { user } = useAuth();
 
   return (
     <div className="min-h-screen bg-background text-text">
@@ -94,14 +103,18 @@ export const AppShell = ({ children }: AppShellProps) => {
               <MenuMark />
             </button>
             <div className="hidden lg:block">
-              <p className="text-sm font-medium tracking-normal text-muted">Workspace preview</p>
+              <p className="text-sm font-medium tracking-normal text-muted">Founder workspace</p>
             </div>
             <div className="flex items-center gap-3">
               <div className="hidden text-right sm:block">
-                <p className="text-sm font-medium tracking-normal text-text">Founder view</p>
-                <p className="text-xs text-muted">Foundation</p>
+                <p className="text-sm font-medium tracking-normal text-text">
+                  {user?.name ?? user?.email ?? 'Founder view'}
+                </p>
+                <p className="text-xs text-muted">Signed in</p>
               </div>
-              <div className="h-9 w-9 rounded-full border border-border bg-surface-raised" />
+              <Button onClick={() => navigate('/logout')} variant="secondary">
+                Sign out
+              </Button>
             </div>
           </div>
         </header>

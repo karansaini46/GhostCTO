@@ -1,3 +1,5 @@
+import bcrypt from 'bcryptjs';
+
 const seed = async () => {
   if (process.env.NODE_ENV !== 'development') {
     console.info('Seed skipped outside development.');
@@ -7,15 +9,19 @@ const seed = async () => {
   const { prisma } = await import('../src/infrastructure/database/prisma.js');
 
   try {
+    const passwordHash = await bcrypt.hash('Password123!', 12);
+
     const user = await prisma.user.upsert({
       where: { email: 'founder@example.com' },
       update: {
         name: 'Test Founder',
         role: 'FOUNDER',
+        passwordHash,
       },
       create: {
         email: 'founder@example.com',
         name: 'Test Founder',
+        passwordHash,
         role: 'FOUNDER',
       },
     });
