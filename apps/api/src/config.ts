@@ -12,8 +12,22 @@ const parsePort = (value: string | undefined): number => {
   return port;
 };
 
+const parseOrigins = (value: string | undefined): string[] => {
+  const origins = value ?? 'http://localhost:5173';
+
+  return origins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean);
+};
+
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+
 export const config = {
-  clientOrigin: process.env.CLIENT_ORIGIN ?? 'http://localhost:5173',
-  nodeEnv: process.env.NODE_ENV ?? 'development',
+  clientOrigins: parseOrigins(process.env.CLIENT_ORIGIN),
+  isProduction: nodeEnv === 'production',
+  jsonLimit: process.env.JSON_LIMIT ?? '1mb',
+  nodeEnv,
   port: parsePort(process.env.PORT),
+  serviceName: 'ghostcto-api',
 };
