@@ -8,6 +8,7 @@ import {
   type ProjectPromptAnswer,
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
+import type { StackAdviceOverridesInput } from './project.schemas.js';
 
 const stackAdviceDocumentType = 'STACK_ADVICE';
 const stackAdviceDocumentTitle = 'Tech Stack Advisor';
@@ -57,6 +58,7 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   answers: toProjectPromptAnswers(project),
   biggestConcern: project.biggestConcern,
   budgetRange: project.budgetRange,
+  complianceSensitivity: null,
   currentStage: project.currentStage,
   existingAssets: toStringArray(project.existingAssets),
   founderTechnicalLevel: project.founderTechnicalLevel,
@@ -67,7 +69,21 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   mustHaveFeatures: toStringArray(project.mustHaveFeatures),
   name: project.name,
   productType: project.productType,
+  speedPriority: null,
   targetCustomer: project.targetCustomer,
+  targetScale: null,
+});
+
+const applyStackAdviceOverrides = (
+  context: ProjectPromptContext,
+  overrides: StackAdviceOverridesInput,
+): ProjectPromptContext => ({
+  ...context,
+  budgetRange: overrides.budgetRange ?? context.budgetRange,
+  complianceSensitivity: overrides.complianceSensitivity ?? context.complianceSensitivity,
+  founderTechnicalLevel: overrides.founderTechnicalLevel ?? context.founderTechnicalLevel,
+  speedPriority: overrides.speedPriority ?? context.speedPriority,
+  targetScale: overrides.targetScale ?? context.targetScale,
 });
 
 const normalizeDocumentType = (type: string) =>
@@ -105,9 +121,13 @@ const getProjectForUser = async (userId: string, projectId: string) => {
   return project;
 };
 
-export const generateStackAdviceForUser = async (userId: string, projectId: string) => {
+export const generateStackAdviceForUser = async (
+  userId: string,
+  projectId: string,
+  overrides: StackAdviceOverridesInput = {},
+) => {
   const project = await getProjectForUser(userId, projectId);
-  const promptContext = toProjectPromptContext(project);
+  const promptContext = applyStackAdviceOverrides(toProjectPromptContext(project), overrides);
   const provider = getModelProvider();
   const schema = getGhostctoModuleSchema('stack_advice');
   const prompt = buildGhostctoModulePrompt('stack_advice', promptContext);
@@ -126,6 +146,7 @@ export const generateStackAdviceForUser = async (userId: string, projectId: stri
       metadata: {
         generatedAt: generatedAt.toISOString(),
         moduleType: generation.data.moduleType,
+        requestOverrides: overrides,
         stackAdvice: generation.data,
         usage: generation.usage
           ? {

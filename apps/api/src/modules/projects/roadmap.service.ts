@@ -10,6 +10,7 @@ import {
 } from '../../services/prompts/index.js';
 
 const roadmapDocumentType = 'roadmap';
+const stackAdviceDocumentType = 'STACK_ADVICE';
 const roadmapDocumentTitle = 'Technical Roadmap';
 
 const projectWorkspaceInclude = {
@@ -147,8 +148,14 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
   };
 };
 
-export const listRoadmapDocumentsForUser = async (userId: string, projectId: string) => {
+export const listRoadmapDocumentsForUser = async (
+  userId: string,
+  projectId: string,
+  documentType: 'roadmap' | 'stack_advisor' = 'roadmap',
+) => {
   await getProjectForUser(userId, projectId);
+  const normalizedDocumentType =
+    documentType === 'stack_advisor' ? stackAdviceDocumentType : roadmapDocumentType;
 
   const documents = await prisma.generatedDocument.findMany({
     orderBy: {
@@ -169,7 +176,7 @@ export const listRoadmapDocumentsForUser = async (userId: string, projectId: str
     },
     where: {
       projectId,
-      type: roadmapDocumentType,
+      type: normalizedDocumentType,
       userId,
     },
   });

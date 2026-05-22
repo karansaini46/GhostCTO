@@ -115,9 +115,28 @@ export const projectDocumentsQuerySchema = z.object({
     }
 
     return 'roadmap';
-  }, z.literal('roadmap')),
+  }, z.enum(['roadmap', 'stack_advisor'])),
 });
+
+export const stackAdviceOverridesSchema = z
+  .object({
+    budgetRange: z.enum([
+      'under_5000',
+      '5000_15000',
+      '15000_50000',
+      '50000_100000',
+      'over_100000',
+      'not_set',
+    ]),
+    complianceSensitivity: z.enum(['low', 'medium', 'high']),
+    speedPriority: z.enum(['low', 'medium', 'high']),
+    founderTechnicalLevel: z.enum(['non_technical', 'beginner', 'intermediate', 'technical']),
+    targetScale: z.enum(['pre_launch', 'early_mvp', 'growth_ready', 'multi_team']),
+  })
+  .partial()
+  .strict();
 
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
+export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;

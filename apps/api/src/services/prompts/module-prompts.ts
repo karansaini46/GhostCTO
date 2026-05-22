@@ -89,7 +89,7 @@ const stackAdvicePrompt = (project: ProjectPromptContext) =>
     requirements: joinRequirements(
       'The markdown report must compare the recommended stack against practical alternatives and explain the tradeoffs in founder-friendly language.',
       'Cover frontend, backend, database, auth, hosting, payments, analytics, email, file storage, monitoring, and AI tools only if they are genuinely useful.',
-      'Tune the recommendation to the project budget, expected team shape, launch timeline, and likely scale path.',
+      'Tune the recommendation to the project budget, expected team shape, target scale, compliance sensitivity, launch timeline, and speed priority.',
       'Use the cards array for the primary recommendation, highest risk, and operational burden so the UI can scan the result quickly.',
     ),
     schemaDescription:
