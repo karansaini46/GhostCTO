@@ -288,23 +288,108 @@ const acceptanceCriterionSchema = z
   })
   .strict();
 
-const quoteLineItemSchema = z
+const confidenceLevelSchema = z.enum(['low', 'medium', 'high']);
+
+const quoteVerdictSchema = z.enum([
+  'fair',
+  'risky',
+  'overpriced',
+  'under_scoped',
+  'unrealistic',
+]);
+
+const parsedScopeItemSchema = z
   .object({
-    amount: nonEmptyText('Quote amount', 80),
-    comment: nonEmptyText('Quote comment', 240),
-    concernLevel: z.enum(['low', 'medium', 'high']),
-    item: nonEmptyText('Quote line item', 220),
-    judgment: z.enum(['accept', 'clarify', 'push_back']),
+    complexity: z.enum(['low', 'medium', 'high']),
+    confidenceLevel: confidenceLevelSchema,
+    description: nonEmptyText('Scope item description', 280),
+    pricingConcern: nonEmptyText('Scope item pricing concern', 260),
+    scopeItem: nonEmptyText('Scope item', 180),
+    specificity: z.enum(['specific', 'partial', 'vague']),
   })
   .strict();
 
-const auditFindingSchema = z
+const quotedPriceSchema = z
   .object({
-    evidence: nonEmptyText('Finding evidence', 280),
-    fix: nonEmptyText('Finding fix', 260),
-    impact: nonEmptyText('Finding impact', 240),
+    amount: z.number().positive().nullable(),
+    basis: z.enum(['fixed_bid', 'hourly', 'monthly', 'milestone', 'unclear']),
+    currency: z.string().trim().min(3).max(3).nullable(),
+    notes: nonEmptyText('Quoted price notes', 240),
+  })
+  .strict();
+
+const complexityEstimateSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    drivers: z.array(nonEmptyText('Complexity driver', 220)).min(2).max(8),
+    level: z.enum(['low', 'medium', 'high', 'very_high']),
+    rationale: nonEmptyText('Complexity rationale', 320),
+  })
+  .strict();
+
+const timelineRealismSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    concerns: z.array(nonEmptyText('Timeline concern', 220)).min(1).max(8),
+    rationale: nonEmptyText('Timeline rationale', 320),
+    verdict: z.enum(['realistic', 'aggressive', 'unrealistic', 'unclear']),
+  })
+  .strict();
+
+const priceFairnessSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    rationale: nonEmptyText('Price fairness rationale', 360),
+    verdict: quoteVerdictSchema,
+  })
+  .strict();
+
+const pricingRiskSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    rationale: nonEmptyText('Pricing risk rationale', 300),
+    riskLevel: z.enum(['low', 'medium', 'high']),
+  })
+  .strict();
+
+const missingDeliverableSchema = z
+  .object({
+    deliverable: nonEmptyText('Missing deliverable', 180),
+    whyItMatters: nonEmptyText('Missing deliverable rationale', 260),
+  })
+  .strict();
+
+const contractGapSchema = z
+  .object({
+    gap: nonEmptyText('Contract gap', 200),
+    risk: nonEmptyText('Contract gap risk', 280),
+  })
+  .strict();
+
+const developerQuestionSchema = z
+  .object({
+    question: nonEmptyText('Question', 240),
+    reason: nonEmptyText('Question reason', 240),
+  })
+  .strict();
+
+const codeAuditFindingSchema = z
+  .object({
+    category: z.enum([
+      'critical_risk',
+      'security',
+      'scalability',
+      'maintainability',
+      'delivery_risk',
+    ]),
+    confidenceLevel: z.enum(['low', 'medium', 'high']),
+    evidence: nonEmptyText('Audit finding evidence', 360),
+    explanation: nonEmptyText('Audit finding explanation', 320),
+    impact: nonEmptyText('Audit finding impact', 280),
+    priority: z.enum(['p0', 'p1', 'p2', 'p3']),
     severity: z.enum(['low', 'medium', 'high', 'critical']),
-    title: nonEmptyText('Finding title', 180),
+    suggestedFix: nonEmptyText('Audit finding suggested fix', 320),
+    title: nonEmptyText('Audit finding title', 180),
   })
   .strict();
 
@@ -415,6 +500,30 @@ export const techStackRecommendationSchema = baseModuleOutputSchema.extend({
   stack: z.array(stackLayerSchema).min(5).max(10),
 });
 
+const auditActionSchema = z
+  .object({
+    action: nonEmptyText('Audit action', 240),
+    priority: z.enum(['low', 'medium', 'high']),
+    reason: nonEmptyText('Audit action reason', 280),
+  })
+  .strict();
+
+const auditAcceptableSchema = z
+  .object({
+    area: nonEmptyText('Acceptable area', 220),
+    evidence: nonEmptyText('Acceptable evidence', 300),
+    explanation: nonEmptyText('Acceptable explanation', 280),
+  })
+  .strict();
+
+const auditQuestionSchema = z
+  .object({
+    priority: z.enum(['low', 'medium', 'high']),
+    question: nonEmptyText('Audit question', 240),
+    reason: nonEmptyText('Audit question reason', 280),
+  })
+  .strict();
+
 export const developerJobDescriptionSchema = baseModuleOutputSchema.extend({
   employmentType: z.enum(['contractor', 'fractional', 'full_time', 'agency', 'mixed']),
   evaluationRubric: z.array(evaluationRubricItemSchema).min(4).max(8),
@@ -445,26 +554,75 @@ export const technicalSpecificationSchema = baseModuleOutputSchema.extend({
 });
 
 export const quoteAnalysisSchema = baseModuleOutputSchema.extend({
-  clarifyingQuestions: z.array(nonEmptyText('Clarifying question', 220)).min(2).max(8),
-  lineItems: z.array(quoteLineItemSchema).min(1).max(12),
+  dangerousContractGaps: z.array(contractGapSchema).min(2).max(10),
+  estimatedComplexity: complexityEstimateSchema,
+  missingDeliverables: z.array(missingDeliverableSchema).min(2).max(10),
   moduleType: z.literal('quote_analysis'),
+  negotiationScript: z.string().trim().min(120).max(4000),
+  overchargeRisk: pricingRiskSchema,
+  parsedScopeItems: z.array(parsedScopeItemSchema).min(1).max(16),
+  priceFairnessVerdict: priceFairnessSchema,
+  questionsToAskDeveloper: z.array(developerQuestionSchema).min(3).max(12),
+  quotedPrice: quotedPriceSchema,
   recommendation: nonEmptyText('Quote analysis recommendation', 320),
-  scopeGaps: z.array(nonEmptyText('Scope gap', 220)).min(1).max(10),
+  riskScore: z.number().int().min(0).max(100),
+  timelineRealism: timelineRealismSchema,
+  underchargeRisk: pricingRiskSchema,
   totalRiskLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  vagueScopeFlags: z.array(nonEmptyText('Vague scope flag', 240)).min(1).max(10),
   vendorSummary: nonEmptyText('Vendor summary', 280),
   valueJudgment: nonEmptyText('Value judgment', 320),
 });
 
 export const codeAuditSchema = baseModuleOutputSchema.extend({
-  findings: z.array(auditFindingSchema).min(1).max(12),
+  acceptableAreas: z.array(auditAcceptableSchema).min(2).max(10),
+  criticalRisks: z.array(codeAuditFindingSchema).min(1).max(8),
+  disclaimer: nonEmptyText('Code audit disclaimer', 240),
+  executiveSummary: nonEmptyText('Executive summary', 1600),
+  findings: z
+    .array(codeAuditFindingSchema)
+    .min(4)
+    .max(16)
+    .superRefine((items, ctx) => {
+      const priorityOrder = ['p0', 'p1', 'p2', 'p3'] as const;
+
+      for (const [index, item] of items.entries()) {
+        const nextItem = items[index + 1];
+
+        if (!nextItem) {
+          continue;
+        }
+
+        const currentIndex = priorityOrder.indexOf(item.priority as (typeof priorityOrder)[number]);
+        const nextIndex = priorityOrder.indexOf(nextItem.priority as (typeof priorityOrder)[number]);
+
+        if (currentIndex > nextIndex) {
+          ctx.addIssue({
+            code: z.ZodIssueCode.custom,
+            message: 'Findings must be sorted by priority from highest to lowest.',
+            path: [index, 'priority'],
+          });
+          break;
+        }
+      }
+
+      if (!items.some((item) => item.priority === 'p0')) {
+        ctx.addIssue({
+          code: z.ZodIssueCode.custom,
+          message: 'Include at least one highest-priority finding.',
+          path: ['findings'],
+        });
+      }
+    }),
   moduleType: z.literal('code_audit'),
-  maintainabilityNotes: z.array(nonEmptyText('Maintainability note', 220)).min(2).max(8),
-  overallAssessment: nonEmptyText('Overall assessment', 320),
+  overviewRiskLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  recommendedNextActions: z.array(auditActionSchema).min(3).max(10),
+  questionsForDeveloper: z.array(auditQuestionSchema).min(3).max(12),
   recommendation: nonEmptyText('Code audit recommendation', 320),
-  remediationPlan: z.array(nonEmptyText('Remediation plan item', 240)).min(3).max(10),
-  securityNotes: z.array(nonEmptyText('Security note', 220)).min(1).max(8),
-  severitySummary: z.enum(['low', 'medium', 'high', 'critical']),
-  quickWins: z.array(nonEmptyText('Quick win', 200)).min(2).max(8),
+  rushedWorkSignals: z.array(codeAuditFindingSchema).min(1).max(8),
+  scalabilityIssues: z.array(codeAuditFindingSchema).min(1).max(8),
+  securityIssues: z.array(codeAuditFindingSchema).min(1).max(8),
+  maintainabilityIssues: z.array(codeAuditFindingSchema).min(1).max(8),
 });
 
 export const vettingScorecardSchema = baseModuleOutputSchema.extend({

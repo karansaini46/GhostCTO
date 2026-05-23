@@ -150,28 +150,31 @@ const quoteAnalysisPrompt = (project: ProjectPromptContext) =>
   buildModulePrompt({
     project,
     requirements: joinRequirements(
-      'The markdown report must evaluate the quote as a founder would: price, scope, risks, and what needs clarification before signing.',
-      'Call out line items or scope gaps that are likely to create overruns or disputes.',
-      'Use the cards array for the headline quote judgment and major negotiation points.',
+      'The markdown report must evaluate the quote as a founder would: price, scope, timeline, delivery risk, and what needs clarification before signing.',
+      'Do not pretend exact pricing certainty. Give confidence levels, state assumptions, and explain what information is missing.',
+      'Flag vague scope, unrealistic timelines, missing deliverables, dangerous contract gaps, and places where the price may be inflated or suspiciously low.',
+      'The price fairness verdict must be one of: fair, risky, overpriced, under_scoped, or unrealistic.',
+      'Use the cards array for the headline verdict, confidence, risk score, and top negotiation point.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, vendorSummary, valueJudgment, totalRiskLevel, lineItems, scopeGaps, clarifyingQuestions }. Each line item must include item, amount, judgment, concern level, and comment.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, vendorSummary, valueJudgment, totalRiskLevel, riskScore, quotedPrice, parsedScopeItems, estimatedComplexity, timelineRealism, priceFairnessVerdict, overchargeRisk, underchargeRisk, missingDeliverables, dangerousContractGaps, vagueScopeFlags, questionsToAskDeveloper, negotiationScript }. Every verdict or risk judgment must include a confidence level or stated assumption.',
     schemaName: 'QuoteAnalysisOutput',
-    task: 'Analyze a vendor or contractor quote. Compare the quote against likely delivery effort and scope risk, identify where the quote is fair or inflated, and point out missing scope, ambiguous wording, or hidden follow-on cost. Give a clear recommendation the founder can act on immediately.',
+    task: 'Analyze a vendor or contractor quote. Compare the quote against likely delivery effort, scope clarity, timeline realism, and contract risk. Identify parsed scope items, estimated complexity, price fairness verdict, overcharge and undercharge risks, missing deliverables, dangerous contract gaps, exact questions the founder should ask, and a direct but professional negotiation script. Give a clear recommendation the founder can act on immediately.',
   });
 
 const codeAuditPrompt = (project: ProjectPromptContext) =>
   buildModulePrompt({
     project,
     requirements: joinRequirements(
-      'The markdown report must read like an audit a founder can use to decide whether the codebase is safe to continue investing in.',
-      'Prioritize security, reliability, maintainability, and delivery risk over cosmetic observations.',
+      'The markdown report must read like an advisory audit a founder can use to decide whether the codebase is safe to continue investing in.',
+      'Prioritize security, reliability, maintainability, delivery risk, and signs of rushed work over cosmetic observations.',
+      'Include a clear disclaimer that this is not a complete penetration test or certification.',
       'Use the cards array for the highest-risk issues and the fastest fixes.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallAssessment, severitySummary, findings, securityNotes, maintainabilityNotes, remediationPlan, quickWins }. Each finding must include severity, title, evidence, impact, and fix.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, disclaimer, overviewRiskLevel, findings, criticalRisks, securityIssues, scalabilityIssues, maintainabilityIssues, rushedWorkSignals, acceptableAreas, questionsForDeveloper, recommendedNextActions }. Each finding must include category, severity, priority, title, explanation, evidence, impact, confidenceLevel, and suggestedFix.',
     schemaName: 'CodeAuditOutput',
-    task: 'Audit the codebase or implementation for delivery risk, maintainability problems, security issues, and major gaps that could slow the team down. Focus on findings that matter to a founder making investment or hiring decisions. Be specific about evidence, impact, and remediation.',
+    task: 'Audit the codebase or implementation for delivery risk, maintainability problems, security issues, scalability concerns, and signs of rushed or poor work. Focus on findings that matter to a founder making investment or hiring decisions. Be specific about evidence, impact, and remediation. Keep the findings prioritized and the summary direct enough that a founder can act on it immediately.',
   });
 
 const vettingScorecardPrompt = (project: ProjectPromptContext) =>
@@ -193,7 +196,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: codeAuditPrompt,
     schema: codeAuditSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallAssessment, severitySummary, findings, securityNotes, maintainabilityNotes, remediationPlan, quickWins }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, disclaimer, overviewRiskLevel, findings, criticalRisks, securityIssues, scalabilityIssues, maintainabilityIssues, rushedWorkSignals, acceptableAreas, questionsForDeveloper, recommendedNextActions }. Each finding must include category, severity, priority, title, explanation, evidence, impact, confidenceLevel, and suggestedFix.',
     schemaName: 'CodeAuditOutput',
   },
   developer_job_description: {
@@ -207,7 +210,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: quoteAnalysisPrompt,
     schema: quoteAnalysisSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, vendorSummary, valueJudgment, totalRiskLevel, lineItems, scopeGaps, clarifyingQuestions }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, vendorSummary, valueJudgment, totalRiskLevel, riskScore, quotedPrice, parsedScopeItems, estimatedComplexity, timelineRealism, priceFairnessVerdict, overchargeRisk, underchargeRisk, missingDeliverables, dangerousContractGaps, vagueScopeFlags, questionsToAskDeveloper, negotiationScript }.',
     schemaName: 'QuoteAnalysisOutput',
   },
   roadmap: {

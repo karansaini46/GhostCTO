@@ -167,7 +167,17 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
           label: 'Open writer',
           path: `/projects/${projectId}/specs`,
         }
-      : null;
+      : module.documentTypes.includes('rate_validator')
+      ? {
+          label: 'Open validator',
+          path: `/projects/${projectId}/rate-validator`,
+        }
+      : module.documentTypes.includes('code_audit')
+        ? {
+            label: 'Open auditor',
+            path: `/projects/${projectId}/code-audit`,
+          }
+        : null;
   const status = document
     ? formatStatus(document.status)
     : contextReady

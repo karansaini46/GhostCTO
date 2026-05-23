@@ -65,6 +65,14 @@ const normalizeDocumentType = (type: string) => {
     return 'technical_spec';
   }
 
+  if (type === 'QUOTE_ANALYSIS') {
+    return 'rate_validator';
+  }
+
+  if (type === 'CODE_AUDIT') {
+    return 'code_audit';
+  }
+
   if (type === 'DEVELOPER_JD') {
     return 'developer_jd';
   }

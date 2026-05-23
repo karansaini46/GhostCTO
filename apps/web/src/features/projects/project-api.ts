@@ -1,4 +1,9 @@
 import { apiRequest } from '../../lib/api';
+import type { CodeAuditGenerationInput, CodeAuditOutput } from './code-audit-types';
+import type {
+  RateValidatorGenerationInput,
+  RateValidatorOutput,
+} from './rate-validator-types';
 import type { TechnicalSpecGenerationInput, TechnicalSpecOutput } from './technical-spec-types';
 import type {
   Project,
@@ -66,6 +71,36 @@ export const generateTechnicalSpecRequest = (
       method: 'POST',
     },
   );
+
+export const generateRateValidationRequest = (
+  accessToken: string,
+  projectId: string,
+  payload: RateValidatorGenerationInput,
+) =>
+  apiRequest<{
+    document: Project['documents'][number];
+    quoteAnalysis: unknown;
+    rateValidation: RateValidatorOutput;
+  }>(`/projects/${projectId}/quote-analysis`, {
+    body: JSON.stringify(payload),
+    headers: authHeaders(accessToken),
+    method: 'POST',
+  });
+
+export const generateCodeAuditRequest = (
+  accessToken: string,
+  projectId: string,
+  payload: CodeAuditGenerationInput,
+) =>
+  apiRequest<{
+    auditReport: unknown;
+    codeAudit: CodeAuditOutput;
+    document: Project['documents'][number];
+  }>(`/projects/${projectId}/code-audit`, {
+    body: JSON.stringify(payload),
+    headers: authHeaders(accessToken),
+    method: 'POST',
+  });
 
 export const listProjectDocumentsRequest = (
   accessToken: string,

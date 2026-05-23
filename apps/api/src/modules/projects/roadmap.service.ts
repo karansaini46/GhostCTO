@@ -12,6 +12,8 @@ import {
 const roadmapDocumentType = 'roadmap';
 const stackAdviceDocumentType = 'STACK_ADVICE';
 const technicalSpecDocumentType = 'TECH_SPEC';
+const quoteAnalysisDocumentType = 'QUOTE_ANALYSIS';
+const codeAuditDocumentType = 'CODE_AUDIT';
 const developerJdDocumentType = 'DEVELOPER_JD';
 const roadmapDocumentTitle = 'Technical Roadmap';
 
@@ -80,6 +82,14 @@ const normalizeDocumentType = (type: string) => {
 
   if (type === technicalSpecDocumentType) {
     return 'technical_spec';
+  }
+
+  if (type === quoteAnalysisDocumentType) {
+    return 'rate_validator';
+  }
+
+  if (type === codeAuditDocumentType) {
+    return 'code_audit';
   }
 
   if (type === developerJdDocumentType) {
@@ -169,17 +179,28 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
 export const listRoadmapDocumentsForUser = async (
   userId: string,
   projectId: string,
-  documentType: 'roadmap' | 'stack_advisor' | 'technical_spec' | 'developer_jd' = 'roadmap',
+  documentType:
+    | 'code_audit'
+    | 'developer_jd'
+    | 'rate_validator'
+    | 'roadmap'
+    | 'stack_advisor'
+    | 'technical_spec' = 'roadmap',
 ) => {
   await getProjectForUser(userId, projectId);
-  const normalizedDocumentType =
-    documentType === 'stack_advisor'
-      ? stackAdviceDocumentType
-      : documentType === 'technical_spec'
-        ? technicalSpecDocumentType
-        : documentType === 'developer_jd'
-          ? developerJdDocumentType
-          : roadmapDocumentType;
+  let normalizedDocumentType = roadmapDocumentType;
+
+  if (documentType === 'stack_advisor') {
+    normalizedDocumentType = stackAdviceDocumentType;
+  } else if (documentType === 'technical_spec') {
+    normalizedDocumentType = technicalSpecDocumentType;
+  } else if (documentType === 'rate_validator') {
+    normalizedDocumentType = quoteAnalysisDocumentType;
+  } else if (documentType === 'code_audit') {
+    normalizedDocumentType = codeAuditDocumentType;
+  } else if (documentType === 'developer_jd') {
+    normalizedDocumentType = developerJdDocumentType;
+  }
 
   const documents = await prisma.generatedDocument.findMany({
     orderBy: {
