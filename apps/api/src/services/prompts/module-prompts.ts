@@ -177,10 +177,11 @@ const vettingScorecardPrompt = (project: ProjectPromptContext) =>
     requirements: joinRequirements(
       'The markdown report must support an interview or vendor evaluation decision, not just summarize impressions.',
       'Explain the scoring criteria in practical terms and make the final recommendation explicit.',
-      'Use the cards array for overall score, verdict, and the most important strengths or concerns.',
+      'Use the cards array for overall score, recommendation, and the most important strengths or concerns.',
+      'Make the difference between hire, interview with caution, avoid, and need more info obvious.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallScore, verdict, concernSummary, strengths, criteria, followUpQuestions }. Each criterion must include a 1-5 score and notes.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallScore, overallScoreReasoning, finalRecommendation, concernSummary, strengths, criteria, technicalDepthScore, portfolioProofScore, communicationClarityScore, pricingRiskScore, redFlags, greenFlags, missingProof, interviewQuestions }. Each criterion must include a 1-10 score and notes. The finalRecommendation must be one of hire, interview_with_caution, avoid, or need_more_info.',
     schemaName: 'VettingScorecardOutput',
     task: 'Build a practical vetting scorecard for evaluating a developer, vendor, or technical partner. Keep the criteria grounded in delivery, communication, judgment, and fit for the project stage. Make the final recommendation unambiguous and explain what would change it.',
   });
@@ -239,7 +240,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: vettingScorecardPrompt,
     schema: vettingScorecardSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallScore, verdict, concernSummary, strengths, criteria, followUpQuestions }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallScore, overallScoreReasoning, finalRecommendation, concernSummary, strengths, criteria, technicalDepthScore, portfolioProofScore, communicationClarityScore, pricingRiskScore, redFlags, greenFlags, missingProof, interviewQuestions }. Each criterion must include a 1-10 score and notes.',
     schemaName: 'VettingScorecardOutput',
   },
 } satisfies GhostCTOModulePromptMap;
