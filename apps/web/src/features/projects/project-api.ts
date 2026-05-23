@@ -120,11 +120,26 @@ export const generateVettingScorecardRequest = (
 export const listProjectDocumentsRequest = (
   accessToken: string,
   projectId: string,
-  type: ProjectDocumentType,
-) =>
-  apiRequest<{ documents: Project['documents'] }>(`/projects/${projectId}/documents?type=${type}`, {
+  type?: ProjectDocumentType,
+) => {
+  const query = type ? `?type=${type}` : '';
+
+  return apiRequest<{ documents: Project['documents'] }>(`/projects/${projectId}/documents${query}`, {
     headers: authHeaders(accessToken),
   });
+};
+
+export const getProjectDocumentRequest = (
+  accessToken: string,
+  projectId: string,
+  documentId: string,
+) =>
+  apiRequest<{ document: Project['documents'][number] }>(
+    `/projects/${projectId}/documents/${documentId}`,
+    {
+      headers: authHeaders(accessToken),
+    },
+  );
 
 export const listProjectChatMessagesRequest = (accessToken: string, projectId: string, page = 1) =>
   apiRequest<{ messages: ProjectChatMessage[]; pagination: ProjectChatPagination }>(

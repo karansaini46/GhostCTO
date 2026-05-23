@@ -2,6 +2,7 @@ import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
 import { AppShell } from './layouts/AppShell';
 import { AuthProvider } from './features/auth/auth-store';
+import { BillingPage } from './features/billing/BillingPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { LogoutPage } from './features/auth/LogoutPage';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
@@ -9,6 +10,8 @@ import { PublicRoute } from './features/auth/PublicRoute';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
+import { DocumentDetailPage } from './features/projects/DocumentDetailPage';
+import { DocumentsPage } from './features/projects/DocumentsPage';
 import { ProjectChatPage } from './features/projects/ProjectChatPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
@@ -48,6 +51,14 @@ export const App = () => (
           <Route
             element={
               <AppShell>
+                <BillingPage />
+              </AppShell>
+            }
+            path="/billing"
+          />
+          <Route
+            element={
+              <AppShell>
                 <ProjectDetailPage />
               </AppShell>
             }
@@ -60,6 +71,22 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id/chat"
+          />
+          <Route
+            element={
+              <AppShell>
+                <DocumentsPage />
+              </AppShell>
+            }
+            path="/projects/:id/documents"
+          />
+          <Route
+            element={
+              <AppShell>
+                <DocumentDetailPage />
+              </AppShell>
+            }
+            path="/projects/:id/documents/:documentId"
           />
           <Route
             element={

@@ -15,6 +15,7 @@ import {
   PageHeader,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { freePlanLimits, getPlanLabel } from '../billing/billing-plan';
 import { listProjectsRequest } from '../projects/project-api';
 import { getProjectOptionLabel } from '../projects/project-options';
 import type { Project } from '../projects/project-types';
@@ -133,14 +134,37 @@ export const DashboardPage = () => {
     };
   }, [accessToken]);
 
+  const isLifetimePlan = user?.plan === 'LIFETIME';
+  const projectLimitReached = !isLifetimePlan && projects.length >= freePlanLimits.projects;
+
   return (
     <div className="space-y-8">
       <PageHeader
-        actions={<Button onClick={() => navigate('/projects/new')}>New project</Button>}
+        actions={
+          <Button onClick={() => navigate(projectLimitReached ? '/billing' : '/projects/new')}>
+            {projectLimitReached ? 'Unlock more projects' : 'New project'}
+          </Button>
+        }
         description="Track each venture, keep its context current, and move the next planning decision forward."
         eyebrow="Founder workspace"
         title="Dashboard"
       />
+
+      {projectLimitReached ? (
+        <Card className="border-warning/35 bg-warning/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-warning">Free project limit reached</p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Activate lifetime access to create additional projects.
+              </p>
+            </div>
+            <Button onClick={() => navigate('/billing')} variant="secondary">
+              Open billing
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       {isLoading ? <LoadingState label="Loading projects" /> : null}
       {error ? (
@@ -241,6 +265,14 @@ export const DashboardPage = () => {
                 <p className="text-xs uppercase tracking-normal text-muted">Role</p>
                 <div className="mt-2">
                   <Badge variant="accent">{user ? formatStatus(user.role) : 'Founder'}</Badge>
+                </div>
+              </div>
+              <div className="rounded-lg border border-border bg-surface-raised p-4">
+                <p className="text-xs uppercase tracking-normal text-muted">Plan</p>
+                <div className="mt-2">
+                  <Badge variant={user?.plan === 'LIFETIME' ? 'success' : 'warning'}>
+                    {getPlanLabel(user?.plan)}
+                  </Badge>
                 </div>
               </div>
               <div className="rounded-lg border border-border bg-surface-raised p-4">

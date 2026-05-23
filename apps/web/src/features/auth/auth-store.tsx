@@ -74,6 +74,10 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setState(applySession(session));
   }, []);
 
+  const updateUser = useCallback((user: AuthSession['user']) => {
+    setState((current) => ({ ...current, user }));
+  }, []);
+
   const login = useCallback(async (payload: { email: string; password: string }) => {
     try {
       updateSession(await loginRequest(payload));
@@ -128,8 +132,9 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
       logout,
       refreshSession,
       register,
+      updateUser,
     }),
-    [login, logout, refreshSession, register, state],
+    [login, logout, refreshSession, register, state, updateUser],
   );
 
   return (

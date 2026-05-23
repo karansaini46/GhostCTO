@@ -8,6 +8,11 @@ import {
   type ProjectPromptAnswer,
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
+import {
+  createVersionedGeneratedDocument,
+  serializeGeneratedDocument,
+} from './document-history.service.js';
+import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { StackAdviceOverridesInput } from './project.schemas.js';
 
 const stackAdviceDocumentType = 'STACK_ADVICE';
@@ -22,22 +27,6 @@ const projectWorkspaceInclude = {
 } satisfies Prisma.ProjectInclude;
 
 type ProjectWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectWorkspaceInclude }>;
-
-type GeneratedStackAdviceDocument = Prisma.GeneratedDocumentGetPayload<{
-  select: {
-    completedAt: true;
-    content: true;
-    createdAt: true;
-    id: true;
-    metadata: true;
-    projectId: true;
-    status: true;
-    summary: true;
-    title: true;
-    type: true;
-    updatedAt: true;
-  };
-}>;
 
 const toStringArray = (value: Prisma.JsonValue): string[] => {
   if (!Array.isArray(value)) {
@@ -86,23 +75,6 @@ const applyStackAdviceOverrides = (
   targetScale: overrides.targetScale ?? context.targetScale,
 });
 
-const normalizeDocumentType = (type: string) =>
-  type === stackAdviceDocumentType ? 'stack_advisor' : type;
-
-const serializeGeneratedDocument = (document: GeneratedStackAdviceDocument) => ({
-  completedAt: document.completedAt?.toISOString() ?? null,
-  content: document.content,
-  createdAt: document.createdAt.toISOString(),
-  id: document.id,
-  metadata: document.metadata,
-  projectId: document.projectId,
-  status: document.status,
-  summary: document.summary,
-  title: document.title,
-  type: normalizeDocumentType(document.type),
-  updatedAt: document.updatedAt.toISOString(),
-});
-
 const getProjectForUser = async (userId: string, projectId: string) => {
   const project = await prisma.project.findUnique({
     include: projectWorkspaceInclude,
@@ -127,6 +99,7 @@ export const generateStackAdviceForUser = async (
   overrides: StackAdviceOverridesInput = {},
 ) => {
   const project = await getProjectForUser(userId, projectId);
+  await enforceDailyGenerationLimitForUser(userId);
   const promptContext = applyStackAdviceOverrides(toProjectPromptContext(project), overrides);
   const provider = getModelProvider();
   const schema = getGhostctoModuleSchema('stack_advice');
@@ -139,30 +112,28 @@ export const generateStackAdviceForUser = async (
     schema,
   });
 
-  const document = await prisma.generatedDocument.create({
-    data: {
-      completedAt: generatedAt,
-      content: generation.data.reportMarkdown,
-      metadata: {
-        generatedAt: generatedAt.toISOString(),
-        moduleType: generation.data.moduleType,
-        requestOverrides: overrides,
-        stackAdvice: generation.data,
-        usage: generation.usage
-          ? {
-              inputTokens: generation.usage.inputTokens ?? null,
-              outputTokens: generation.usage.outputTokens ?? null,
-              totalTokens: generation.usage.totalTokens ?? null,
-            }
-          : null,
-      },
-      projectId: project.id,
-      status: 'COMPLETED',
-      summary: generation.data.executiveSummary,
-      title: stackAdviceDocumentTitle,
-      type: stackAdviceDocumentType,
-      userId,
+  const document = await createVersionedGeneratedDocument(prisma, {
+    completedAt: generatedAt,
+    content: generation.data.reportMarkdown,
+    metadata: {
+      generatedAt: generatedAt.toISOString(),
+      moduleType: generation.data.moduleType,
+      requestOverrides: overrides,
+      stackAdvice: generation.data,
+      usage: generation.usage
+        ? {
+            inputTokens: generation.usage.inputTokens ?? null,
+            outputTokens: generation.usage.outputTokens ?? null,
+            totalTokens: generation.usage.totalTokens ?? null,
+          }
+        : null,
     },
+    projectId: project.id,
+    status: 'COMPLETED',
+    summary: generation.data.executiveSummary,
+    title: stackAdviceDocumentTitle,
+    type: stackAdviceDocumentType,
+    userId,
   });
 
   return {

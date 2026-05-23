@@ -1,6 +1,7 @@
 import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../infrastructure/database/prisma.js';
 import { ApiError } from '../../lib/api-error.js';
+import { normalizeGeneratedDocumentType } from './document-history.service.js';
 import type { ProjectPayloadInput, UpdateProjectPayloadInput } from './project.schemas.js';
 
 const answerDefinitions = [
@@ -54,38 +55,6 @@ const toStringArray = (value: Prisma.JsonValue): string[] => {
   }
 
   return value.filter((item): item is string => typeof item === 'string');
-};
-
-const normalizeDocumentType = (type: string) => {
-  if (type === 'ROADMAP') {
-    return 'roadmap';
-  }
-
-  if (type === 'STACK_ADVICE') {
-    return 'stack_advisor';
-  }
-
-  if (type === 'TECH_SPEC') {
-    return 'technical_spec';
-  }
-
-  if (type === 'QUOTE_ANALYSIS') {
-    return 'rate_validator';
-  }
-
-  if (type === 'CODE_AUDIT') {
-    return 'code_audit';
-  }
-
-  if (type === 'VETTING_SCORECARD') {
-    return 'vetting_scorecard';
-  }
-
-  if (type === 'DEVELOPER_JD') {
-    return 'developer_jd';
-  }
-
-  return type;
 };
 
 const buildAnswerRecords = (userId: string, input: ProjectAnswerInput) =>
@@ -215,11 +184,13 @@ const toProjectResponse = (project: ProjectWithWorkspace) => ({
     content: document.content,
     id: document.id,
     metadata: document.metadata,
+    projectId: document.projectId,
     status: document.status,
     summary: document.summary,
     title: document.title,
-    type: normalizeDocumentType(document.type),
+    type: normalizeGeneratedDocumentType(document.type),
     updatedAt: document.updatedAt.toISOString(),
+    version: document.version,
   })),
   existingAssets: toStringArray(project.existingAssets),
   founderTechnicalLevel: project.founderTechnicalLevel,
