@@ -10,6 +10,7 @@ import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
+import { RateValidatorPage } from './features/projects/RateValidatorPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
 import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
@@ -64,6 +65,14 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id/specs"
+          />
+          <Route
+            element={
+              <AppShell>
+                <RateValidatorPage />
+              </AppShell>
+            }
+            path="/projects/:id/rate-validator"
           />
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />
