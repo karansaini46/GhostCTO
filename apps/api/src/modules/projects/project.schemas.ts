@@ -31,7 +31,7 @@ const existingAssetSchema = z.enum([
   'no_assets',
 ]);
 
-const mustHaveFeatureSchema = z.string().trim().min(12).max(140);
+const mustHaveFeatureSchema = z.string().trim().min(12).max(240);
 
 export const projectPayloadSchema = z
   .object({
