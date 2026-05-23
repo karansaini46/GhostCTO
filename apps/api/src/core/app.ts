@@ -20,6 +20,7 @@ export const createApp = () => {
   app.use(
     cors({
       credentials: true,
+      exposedHeaders: ['Content-Disposition'],
       origin(origin, callback) {
         if (!origin || config.clientOrigins.includes(origin)) {
           callback(null, true);
