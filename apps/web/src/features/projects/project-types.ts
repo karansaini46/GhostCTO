@@ -68,3 +68,5 @@ export type StackAdviceGenerationOverrides = {
   speedPriority?: string;
   targetScale?: string;
 };
+
+export type ProjectDocumentType = 'roadmap' | 'stack_advisor' | 'technical_spec';
