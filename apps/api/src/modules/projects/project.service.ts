@@ -56,7 +56,17 @@ const toStringArray = (value: Prisma.JsonValue): string[] => {
   return value.filter((item): item is string => typeof item === 'string');
 };
 
-const normalizeDocumentType = (type: string) => (type === 'STACK_ADVICE' ? 'stack_advisor' : type);
+const normalizeDocumentType = (type: string) => {
+  if (type === 'STACK_ADVICE') {
+    return 'stack_advisor';
+  }
+
+  if (type === 'TECH_SPEC') {
+    return 'technical_spec';
+  }
+
+  return type;
+};
 
 const buildAnswerRecords = (userId: string, input: ProjectAnswerInput) =>
   answerDefinitions.flatMap((definition) => {
