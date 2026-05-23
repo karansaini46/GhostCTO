@@ -10,11 +10,13 @@ import {
 } from '../../services/prompts/index.js';
 
 const roadmapDocumentType = 'roadmap';
+const roadmapDocumentTypes = ['roadmap', 'ROADMAP'];
 const stackAdviceDocumentType = 'STACK_ADVICE';
 const technicalSpecDocumentType = 'TECH_SPEC';
 const quoteAnalysisDocumentType = 'QUOTE_ANALYSIS';
 const codeAuditDocumentType = 'CODE_AUDIT';
 const vettingScorecardDocumentType = 'VETTING_SCORECARD';
+const developerJdDocumentTypes = ['DEVELOPER_JD', 'developer_jd', 'developer_job_description'];
 const roadmapDocumentTitle = 'Technical Roadmap';
 
 const projectWorkspaceInclude = {
@@ -76,6 +78,10 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
 });
 
 const normalizeDocumentType = (type: string) => {
+  if (type === 'ROADMAP') {
+    return 'roadmap';
+  }
+
   if (type === stackAdviceDocumentType) {
     return 'stack_advisor';
   }
@@ -94,6 +100,10 @@ const normalizeDocumentType = (type: string) => {
 
   if (type === vettingScorecardDocumentType) {
     return 'vetting_scorecard';
+  }
+
+  if (developerJdDocumentTypes.includes(type)) {
+    return 'developer_jd';
   }
 
   return type;
@@ -185,10 +195,11 @@ export const listRoadmapDocumentsForUser = async (
     | 'technical_spec'
     | 'rate_validator'
     | 'code_audit'
+    | 'developer_jd'
     | 'vetting_scorecard' = 'roadmap',
 ) => {
   await getProjectForUser(userId, projectId);
-  let normalizedDocumentType = roadmapDocumentType;
+  let normalizedDocumentType: string | string[] = roadmapDocumentTypes;
 
   if (documentType === 'stack_advisor') {
     normalizedDocumentType = stackAdviceDocumentType;
@@ -200,6 +211,8 @@ export const listRoadmapDocumentsForUser = async (
     normalizedDocumentType = codeAuditDocumentType;
   } else if (documentType === 'vetting_scorecard') {
     normalizedDocumentType = vettingScorecardDocumentType;
+  } else if (documentType === 'developer_jd') {
+    normalizedDocumentType = developerJdDocumentTypes;
   }
 
   const documents = await prisma.generatedDocument.findMany({
@@ -221,7 +234,11 @@ export const listRoadmapDocumentsForUser = async (
     },
     where: {
       projectId,
-      type: normalizedDocumentType,
+      type: Array.isArray(normalizedDocumentType)
+        ? {
+            in: normalizedDocumentType,
+          }
+        : normalizedDocumentType,
       userId,
     },
   });

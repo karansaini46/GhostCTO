@@ -4,6 +4,7 @@ import { asyncHandler } from '../../middleware/async-handler.js';
 import { authenticateRequest, requireAuth } from '../../middleware/auth.js';
 import { createProjectChatMessage, listProjectChatMessages } from './chat.controller.js';
 import { generateCodeAudit } from './code-audit.controller.js';
+import { exportProjectDocumentPdf } from './document-export.controller.js';
 import { createProject, getProject, listProjects, updateProject } from './project.controller.js';
 import { analyzeQuote } from './quote-analysis.controller.js';
 import { generateRoadmap, listRoadmapDocuments } from './roadmap.controller.js';
@@ -24,6 +25,10 @@ projectRouter.post('/:id/specs', asyncHandler(generateTechnicalSpec));
 projectRouter.post('/:id/quote-analysis', asyncHandler(analyzeQuote));
 projectRouter.post('/:id/vetting', asyncHandler(generateVettingScorecard));
 projectRouter.get('/:id/chat', asyncHandler(listProjectChatMessages));
+projectRouter.get(
+  '/:projectId/documents/:documentId/export.pdf',
+  asyncHandler(exportProjectDocumentPdf),
+);
 projectRouter.get('/:id/documents', asyncHandler(listRoadmapDocuments));
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));

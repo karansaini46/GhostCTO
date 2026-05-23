@@ -119,6 +119,11 @@ export const projectIdParamSchema = z.object({
   id: z.string().uuid(),
 });
 
+export const documentExportParamsSchema = z.object({
+  documentId: z.string().uuid(),
+  projectId: z.string().uuid(),
+});
+
 export const projectDocumentsQuerySchema = z.object({
   type: z.preprocess(
     (value) => {
@@ -130,6 +135,7 @@ export const projectDocumentsQuerySchema = z.object({
     },
     z.enum([
       'code_audit',
+      'developer_jd',
       'roadmap',
       'stack_advisor',
       'technical_spec',
@@ -246,6 +252,7 @@ export const chatMessagesQuerySchema = z
 
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
+export type DocumentExportParamsInput = z.infer<typeof documentExportParamsSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;
 export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchema>;

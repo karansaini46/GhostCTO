@@ -57,6 +57,10 @@ const toStringArray = (value: Prisma.JsonValue): string[] => {
 };
 
 const normalizeDocumentType = (type: string) => {
+  if (type === 'ROADMAP') {
+    return 'roadmap';
+  }
+
   if (type === 'STACK_ADVICE') {
     return 'stack_advisor';
   }
@@ -75,6 +79,10 @@ const normalizeDocumentType = (type: string) => {
 
   if (type === 'VETTING_SCORECARD') {
     return 'vetting_scorecard';
+  }
+
+  if (type === 'DEVELOPER_JD' || type === 'developer_jd' || type === 'developer_job_description') {
+    return 'developer_jd';
   }
 
   return type;

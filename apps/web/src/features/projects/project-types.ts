@@ -38,6 +38,27 @@ export type ProjectDocument = {
   updatedAt: string;
 };
 
+export type ProjectChatMessageRole = 'founder' | 'advisor' | 'system';
+
+export type ProjectChatMessage = {
+  content: string;
+  createdAt: string;
+  id: string;
+  metadata: unknown;
+  projectId: string | null;
+  role: ProjectChatMessageRole;
+  updatedAt: string;
+};
+
+export type ProjectChatPagination = {
+  hasNextPage: boolean;
+  hasPreviousPage: boolean;
+  limit: number;
+  page: number;
+  total: number;
+  totalPages: number;
+};
+
 export type Project = {
   answers: ProjectAnswer[];
   biggestConcern: string | null;
@@ -71,6 +92,7 @@ export type StackAdviceGenerationOverrides = {
 
 export type ProjectDocumentType =
   | 'code_audit'
+  | 'developer_jd'
   | 'roadmap'
   | 'stack_advisor'
   | 'technical_spec'

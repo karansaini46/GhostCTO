@@ -1,10 +1,12 @@
-import { apiRequest } from '../../lib/api';
+import { apiFileRequest, apiRequest } from '../../lib/api';
 import type { CodeAuditGenerationInput, CodeAuditOutput } from './code-audit-types';
 import type { RateValidatorGenerationInput, RateValidatorOutput } from './rate-validator-types';
 import type { TechnicalSpecGenerationInput, TechnicalSpecOutput } from './technical-spec-types';
 import type { VettingGenerationInput, VettingOutput } from './vetting-types';
 import type {
   Project,
+  ProjectChatMessage,
+  ProjectChatPagination,
   ProjectDocumentType,
   ProjectPayload,
   StackAdviceGenerationOverrides,
@@ -121,5 +123,36 @@ export const listProjectDocumentsRequest = (
   type: ProjectDocumentType,
 ) =>
   apiRequest<{ documents: Project['documents'] }>(`/projects/${projectId}/documents?type=${type}`, {
+    headers: authHeaders(accessToken),
+  });
+
+export const listProjectChatMessagesRequest = (accessToken: string, projectId: string, page = 1) =>
+  apiRequest<{ messages: ProjectChatMessage[]; pagination: ProjectChatPagination }>(
+    `/projects/${projectId}/chat?page=${page}&limit=30`,
+    {
+      headers: authHeaders(accessToken),
+    },
+  );
+
+export const createProjectChatMessageRequest = (
+  accessToken: string,
+  projectId: string,
+  message: string,
+) =>
+  apiRequest<{ assistantMessage: ProjectChatMessage; messages: ProjectChatMessage[] }>(
+    `/projects/${projectId}/chat`,
+    {
+      body: JSON.stringify({ message }),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
+export const exportProjectDocumentPdfRequest = (
+  accessToken: string,
+  projectId: string,
+  documentId: string,
+) =>
+  apiFileRequest(`/projects/${projectId}/documents/${documentId}/export.pdf`, {
     headers: authHeaders(accessToken),
   });

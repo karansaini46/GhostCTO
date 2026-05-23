@@ -15,7 +15,7 @@ import {
   PageHeader,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
-import { getProjectRequest } from './project-api';
+import { exportProjectDocumentPdfRequest, getProjectRequest } from './project-api';
 import { getProjectOptionLabel } from './project-options';
 import type { Project, ProjectAnswer, ProjectDocument } from './project-types';
 
@@ -60,6 +60,32 @@ const documentTypeLabels: Record<string, string> = {
 };
 
 const getDocumentTypeLabel = (type: string) => documentTypeLabels[type] ?? formatStatus(type);
+
+const exportableDocumentTypes = new Set([
+  'developer_jd',
+  'roadmap',
+  'stack_advisor',
+  'technical_spec',
+]);
+
+const sanitizeFilename = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 80) || 'document';
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
 
 type WorkspaceModule = {
   description: string;
@@ -157,32 +183,38 @@ type ModuleCardProps = {
 };
 
 const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardProps) => {
-  const moduleLink = module.documentTypes.includes('stack_advisor')
-    ? {
-        label: 'Open advisor',
-        path: `/projects/${projectId}/stack-advice`,
-      }
-    : module.documentTypes.includes('technical_spec')
+  const moduleLink =
+    module.title === 'CTO Chat'
       ? {
-          label: 'Open writer',
-          path: `/projects/${projectId}/specs`,
+          label: 'Open chat',
+          path: `/projects/${projectId}/chat`,
         }
-      : module.documentTypes.includes('rate_validator')
+      : module.documentTypes.includes('stack_advisor')
         ? {
-            label: 'Open validator',
-            path: `/projects/${projectId}/rate-validator`,
+            label: 'Open advisor',
+            path: `/projects/${projectId}/stack-advice`,
           }
-        : module.documentTypes.includes('code_audit')
+        : module.documentTypes.includes('technical_spec')
           ? {
-              label: 'Open auditor',
-              path: `/projects/${projectId}/code-audit`,
+              label: 'Open writer',
+              path: `/projects/${projectId}/specs`,
             }
-          : module.documentTypes.includes('vetting_scorecard')
+          : module.documentTypes.includes('rate_validator')
             ? {
-                label: 'Open vetting',
-                path: `/projects/${projectId}/vetting`,
+                label: 'Open validator',
+                path: `/projects/${projectId}/rate-validator`,
               }
-            : null;
+            : module.documentTypes.includes('code_audit')
+              ? {
+                  label: 'Open auditor',
+                  path: `/projects/${projectId}/code-audit`,
+                }
+              : module.documentTypes.includes('vetting_scorecard')
+                ? {
+                    label: 'Open vetting',
+                    path: `/projects/${projectId}/vetting`,
+                  }
+                : null;
   const status = document
     ? formatStatus(document.status)
     : contextReady
@@ -233,6 +265,8 @@ export const ProjectDetailPage = () => {
   const { id } = useParams();
   const { accessToken } = useAuth();
   const [error, setError] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [exportingDocumentId, setExportingDocumentId] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<Project | null>(null);
 
@@ -305,6 +339,26 @@ export const ProjectDetailPage = () => {
 
     return documentsByType;
   }, [project]);
+
+  const handleExportPdf = async (document: ProjectDocument) => {
+    if (!accessToken || !project) {
+      return;
+    }
+
+    setExportError(null);
+    setExportingDocumentId(document.id);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(accessToken, project.id, document.id);
+      const fallbackFilename = `${sanitizeFilename(project.name)}-${sanitizeFilename(document.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch {
+      setExportError('Unable to export this document as a PDF.');
+    } finally {
+      setExportingDocumentId(null);
+    }
+  };
 
   if (isLoading) {
     return <LoadingState label="Loading project workspace" />;
@@ -484,6 +538,11 @@ export const ProjectDetailPage = () => {
           <CardDescription>Latest completed and in-progress project documents.</CardDescription>
         </CardHeader>
         <CardContent>
+          {exportError ? (
+            <div className="mb-4 rounded-md border border-danger/35 bg-danger/5 p-4 text-sm leading-6 text-danger">
+              {exportError}
+            </div>
+          ) : null}
           {project.documents.length > 0 ? (
             <div className="grid gap-3">
               {project.documents.map((document) => (
@@ -508,6 +567,16 @@ export const ProjectDetailPage = () => {
                         {formatStatus(document.status)}
                       </Badge>
                       <Badge>{formatDate(document.completedAt ?? document.updatedAt)}</Badge>
+                      {exportableDocumentTypes.has(document.type) ? (
+                        <Button
+                          isLoading={exportingDocumentId === document.id}
+                          onClick={() => handleExportPdf(document)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Export PDF
+                        </Button>
+                      ) : null}
                     </div>
                   </div>
                 </div>

@@ -7,6 +7,11 @@ export type ApiErrorResponse = {
   };
 };
 
+export type ApiFileResponse = {
+  blob: Blob;
+  filename: string | null;
+};
+
 export class ApiError extends Error {
   readonly code: string;
   readonly status: number;
@@ -26,10 +31,7 @@ const readResponse = async <Body>(response: Response): Promise<Body> => {
   return text ? (JSON.parse(text) as Body) : (undefined as Body);
 };
 
-export const apiRequest = async <Body>(
-  path: string,
-  options: RequestInit = {},
-): Promise<Body> => {
+export const apiRequest = async <Body>(path: string, options: RequestInit = {}): Promise<Body> => {
   const response = await fetch(toApiUrl(path), {
     ...options,
     credentials: 'include',
@@ -53,4 +55,47 @@ export const apiRequest = async <Body>(
   }
 
   return readResponse<Body>(response);
+};
+
+const readFilename = (contentDisposition: string | null) => {
+  if (!contentDisposition) {
+    return null;
+  }
+
+  const utf8Match = /filename\*=UTF-8''([^;]+)/i.exec(contentDisposition);
+
+  if (utf8Match?.[1]) {
+    return decodeURIComponent(utf8Match[1]);
+  }
+
+  const match = /filename="([^"]+)"/i.exec(contentDisposition);
+
+  return match?.[1] ?? null;
+};
+
+export const apiFileRequest = async (
+  path: string,
+  options: RequestInit = {},
+): Promise<ApiFileResponse> => {
+  const response = await fetch(toApiUrl(path), {
+    ...options,
+    credentials: 'include',
+    headers: {
+      ...(options.headers ?? {}),
+    },
+  });
+
+  if (!response.ok) {
+    const errorBody = await readResponse<ApiErrorResponse>(response);
+    throw new ApiError(
+      response.status,
+      errorBody.error?.code ?? 'REQUEST_ERROR',
+      errorBody.error?.message ?? 'The request could not be completed.',
+    );
+  }
+
+  return {
+    blob: await response.blob(),
+    filename: readFilename(response.headers.get('Content-Disposition')),
+  };
 };

@@ -9,6 +9,7 @@ import { PublicRoute } from './features/auth/PublicRoute';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
+import { ProjectChatPage } from './features/projects/ProjectChatPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { RateValidatorPage } from './features/projects/RateValidatorPage';
@@ -51,6 +52,14 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id"
+          />
+          <Route
+            element={
+              <AppShell>
+                <ProjectChatPage />
+              </AppShell>
+            }
+            path="/projects/:id/chat"
           />
           <Route
             element={
