@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { asyncHandler } from '../../middleware/async-handler.js';
 import { authenticateRequest, requireAuth } from '../../middleware/auth.js';
+import { createProjectChatMessage, listProjectChatMessages } from './chat.controller.js';
 import { generateCodeAudit } from './code-audit.controller.js';
 import { createProject, getProject, listProjects, updateProject } from './project.controller.js';
 import { analyzeQuote } from './quote-analysis.controller.js';
@@ -16,11 +17,13 @@ projectRouter.use(authenticateRequest, requireAuth);
 
 projectRouter.post('/', asyncHandler(createProject));
 projectRouter.post('/:id/code-audit', asyncHandler(generateCodeAudit));
+projectRouter.post('/:id/chat', asyncHandler(createProjectChatMessage));
 projectRouter.post('/:id/roadmap', asyncHandler(generateRoadmap));
 projectRouter.post('/:id/stack-advice', asyncHandler(generateStackAdvice));
 projectRouter.post('/:id/specs', asyncHandler(generateTechnicalSpec));
 projectRouter.post('/:id/quote-analysis', asyncHandler(analyzeQuote));
 projectRouter.post('/:id/vetting', asyncHandler(generateVettingScorecard));
+projectRouter.get('/:id/chat', asyncHandler(listProjectChatMessages));
 projectRouter.get('/:id/documents', asyncHandler(listRoadmapDocuments));
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));

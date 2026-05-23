@@ -83,14 +83,19 @@ const toVettingPromptAnswers = (input: VettingRequestInput): ProjectPromptAnswer
     label: 'Website URL',
   },
   {
-    answer: input.quote ?? 'Not provided',
-    key: 'quote',
-    label: 'Quote',
+    answer: input.proposalText,
+    key: 'proposalText',
+    label: 'Pasted proposal',
   },
   {
     answer: input.portfolioText,
     key: 'portfolioText',
     label: 'Portfolio or profile text',
+  },
+  {
+    answer: input.founderConcern,
+    key: 'founderConcern',
+    label: 'Founder concern',
   },
 ];
 
@@ -99,7 +104,7 @@ const toProjectPromptContext = (
   input: VettingRequestInput,
 ): ProjectPromptContext => ({
   answers: [...toProjectPromptAnswers(project), ...toVettingPromptAnswers(input)],
-  biggestConcern: project.biggestConcern,
+  biggestConcern: input.founderConcern || project.biggestConcern,
   budgetRange: project.budgetRange,
   currentStage: project.currentStage,
   existingAssets: toStringArray(project.existingAssets),

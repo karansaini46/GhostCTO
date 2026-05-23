@@ -120,13 +120,23 @@ export const projectIdParamSchema = z.object({
 });
 
 export const projectDocumentsQuerySchema = z.object({
-  type: z.preprocess((value) => {
-    if (typeof value === 'string') {
-      return value.trim().toLowerCase();
-    }
+  type: z.preprocess(
+    (value) => {
+      if (typeof value === 'string') {
+        return value.trim().toLowerCase();
+      }
 
-    return 'roadmap';
-  }, z.enum(['code_audit', 'roadmap', 'stack_advisor', 'technical_spec', 'rate_validator', 'vetting_scorecard'])),
+      return 'roadmap';
+    },
+    z.enum([
+      'code_audit',
+      'roadmap',
+      'stack_advisor',
+      'technical_spec',
+      'rate_validator',
+      'vetting_scorecard',
+    ]),
+  ),
 });
 
 export const stackAdviceOverridesSchema = z
@@ -195,8 +205,9 @@ export const quoteAnalysisRequestSchema = z
 
 export const vettingRequestSchema = z
   .object({
+    founderConcern: detailedText('Founder concern', 30, 5, 2000),
     portfolioText: detailedText('Portfolio or profile text', 120, 18, 20000),
-    quote: optionalTrimmedText(5000),
+    proposalText: detailedText('Proposal text', 120, 18, 20000),
     subjectName: z.string().trim().min(2, 'Name is required.').max(120, 'Name is too long.'),
     websiteUrl: z
       .string()
@@ -209,6 +220,30 @@ export const vettingRequestSchema = z
   })
   .strict();
 
+const queryInteger = (defaultValue: number, maxValue: number) =>
+  z.preprocess((value) => {
+    const rawValue = Array.isArray(value) ? value[0] : value;
+
+    if (rawValue === undefined || rawValue === null || rawValue === '') {
+      return defaultValue;
+    }
+
+    return Number(rawValue);
+  }, z.number().int().min(1).max(maxValue));
+
+export const chatMessageRequestSchema = z
+  .object({
+    message: detailedText('Message', 2, 1, 4000),
+  })
+  .strict();
+
+export const chatMessagesQuerySchema = z
+  .object({
+    limit: queryInteger(30, 50),
+    page: queryInteger(1, 1000),
+  })
+  .strict();
+
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
@@ -217,3 +252,5 @@ export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchem
 export type CodeAuditRequestInput = z.infer<typeof codeAuditRequestSchema>;
 export type QuoteAnalysisRequestInput = z.infer<typeof quoteAnalysisRequestSchema>;
 export type VettingRequestInput = z.infer<typeof vettingRequestSchema>;
+export type ChatMessageRequestInput = z.infer<typeof chatMessageRequestSchema>;
+export type ChatMessagesQueryInput = z.infer<typeof chatMessagesQuerySchema>;

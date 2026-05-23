@@ -1,10 +1,8 @@
 import { apiRequest } from '../../lib/api';
 import type { CodeAuditGenerationInput, CodeAuditOutput } from './code-audit-types';
-import type {
-  RateValidatorGenerationInput,
-  RateValidatorOutput,
-} from './rate-validator-types';
+import type { RateValidatorGenerationInput, RateValidatorOutput } from './rate-validator-types';
 import type { TechnicalSpecGenerationInput, TechnicalSpecOutput } from './technical-spec-types';
+import type { VettingGenerationInput, VettingOutput } from './vetting-types';
 import type {
   Project,
   ProjectDocumentType,
@@ -97,6 +95,21 @@ export const generateCodeAuditRequest = (
     codeAudit: CodeAuditOutput;
     document: Project['documents'][number];
   }>(`/projects/${projectId}/code-audit`, {
+    body: JSON.stringify(payload),
+    headers: authHeaders(accessToken),
+    method: 'POST',
+  });
+
+export const generateVettingScorecardRequest = (
+  accessToken: string,
+  projectId: string,
+  payload: VettingGenerationInput,
+) =>
+  apiRequest<{
+    document: Project['documents'][number];
+    vettingReport: unknown;
+    vettingScorecard: VettingOutput;
+  }>(`/projects/${projectId}/vetting`, {
     body: JSON.stringify(payload),
     headers: authHeaders(accessToken),
     method: 'POST',
