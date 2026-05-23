@@ -157,6 +157,17 @@ type ModuleCardProps = {
 };
 
 const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardProps) => {
+  const moduleLink = module.documentTypes.includes('stack_advisor')
+    ? {
+        label: 'Open advisor',
+        path: `/projects/${projectId}/stack-advice`,
+      }
+    : module.documentTypes.includes('technical_spec')
+      ? {
+          label: 'Open writer',
+          path: `/projects/${projectId}/specs`,
+        }
+      : null;
   const status = document
     ? formatStatus(document.status)
     : contextReady
@@ -188,13 +199,13 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
         <p className="text-xs uppercase tracking-normal text-muted">Next action</p>
         <p className="mt-1 text-sm font-medium leading-5 text-text">{nextAction}</p>
       </div>
-      {module.documentTypes.includes('stack_advisor') ? (
+      {moduleLink ? (
         <div className="mt-4">
           <Link
             className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium tracking-normal text-text transition-colors hover:border-accent/35 hover:bg-surface-raised/80"
-            to={`/projects/${projectId}/stack-advice`}
+            to={moduleLink.path}
           >
-            Open advisor
+            {moduleLink.label}
           </Link>
         </div>
       ) : null}

@@ -1,5 +1,11 @@
 import { apiRequest } from '../../lib/api';
-import type { Project, ProjectPayload, StackAdviceGenerationOverrides } from './project-types';
+import type { TechnicalSpecGenerationInput, TechnicalSpecOutput } from './technical-spec-types';
+import type {
+  Project,
+  ProjectDocumentType,
+  ProjectPayload,
+  StackAdviceGenerationOverrides,
+} from './project-types';
 
 const authHeaders = (accessToken: string) => ({
   Authorization: `Bearer ${accessToken}`,
@@ -47,10 +53,24 @@ export const generateStackAdviceRequest = (
     },
   );
 
+export const generateTechnicalSpecRequest = (
+  accessToken: string,
+  projectId: string,
+  payload: TechnicalSpecGenerationInput,
+) =>
+  apiRequest<{ document: Project['documents'][number]; technicalSpec: TechnicalSpecOutput }>(
+    `/projects/${projectId}/specs`,
+    {
+      body: JSON.stringify(payload),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
 export const listProjectDocumentsRequest = (
   accessToken: string,
   projectId: string,
-  type: 'roadmap' | 'stack_advisor',
+  type: ProjectDocumentType,
 ) =>
   apiRequest<{ documents: Project['documents'] }>(`/projects/${projectId}/documents?type=${type}`, {
     headers: authHeaders(accessToken),

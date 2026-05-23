@@ -12,6 +12,7 @@ import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
 import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
+import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
 
 export const App = () => (
   <AuthProvider>
@@ -22,10 +23,7 @@ export const App = () => (
           <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/logout" element={<LogoutPage />} />
-        <Route
-          element={<ShareDocumentPage />}
-          path="/share/:documentId"
-        />
+        <Route element={<ShareDocumentPage />} path="/share/:documentId" />
         <Route element={<ProtectedRoute />}>
           <Route
             element={
@@ -58,6 +56,14 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id/stack-advice"
+          />
+          <Route
+            element={
+              <AppShell>
+                <TechnicalSpecPage />
+              </AppShell>
+            }
+            path="/projects/:id/specs"
           />
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />
