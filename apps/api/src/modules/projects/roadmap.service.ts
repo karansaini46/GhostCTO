@@ -11,6 +11,7 @@ import {
 
 const roadmapDocumentType = 'roadmap';
 const stackAdviceDocumentType = 'STACK_ADVICE';
+const technicalSpecDocumentType = 'TECH_SPEC';
 const roadmapDocumentTitle = 'Technical Roadmap';
 
 const projectWorkspaceInclude = {
@@ -71,6 +72,18 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   targetCustomer: project.targetCustomer,
 });
 
+const normalizeDocumentType = (type: string) => {
+  if (type === stackAdviceDocumentType) {
+    return 'stack_advisor';
+  }
+
+  if (type === technicalSpecDocumentType) {
+    return 'technical_spec';
+  }
+
+  return type;
+};
+
 const serializeGeneratedDocument = (document: GeneratedRoadmapDocument) => ({
   completedAt: document.completedAt?.toISOString() ?? null,
   content: document.content,
@@ -81,7 +94,7 @@ const serializeGeneratedDocument = (document: GeneratedRoadmapDocument) => ({
   status: document.status,
   summary: document.summary,
   title: document.title,
-  type: document.type,
+  type: normalizeDocumentType(document.type),
   updatedAt: document.updatedAt.toISOString(),
 });
 
@@ -151,11 +164,15 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
 export const listRoadmapDocumentsForUser = async (
   userId: string,
   projectId: string,
-  documentType: 'roadmap' | 'stack_advisor' = 'roadmap',
+  documentType: 'roadmap' | 'stack_advisor' | 'technical_spec' = 'roadmap',
 ) => {
   await getProjectForUser(userId, projectId);
   const normalizedDocumentType =
-    documentType === 'stack_advisor' ? stackAdviceDocumentType : roadmapDocumentType;
+    documentType === 'stack_advisor'
+      ? stackAdviceDocumentType
+      : documentType === 'technical_spec'
+        ? technicalSpecDocumentType
+        : roadmapDocumentType;
 
   const documents = await prisma.generatedDocument.findMany({
     orderBy: {

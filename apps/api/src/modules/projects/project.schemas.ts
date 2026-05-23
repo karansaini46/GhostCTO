@@ -31,7 +31,9 @@ const existingAssetSchema = z.enum([
   'no_assets',
 ]);
 
-const mustHaveFeatureSchema = z.string().trim().min(12).max(140);
+const mustHaveFeatureSchema = z.string().trim().min(12).max(1000);
+
+const specContextItemSchema = z.string().trim().min(2).max(280);
 
 export const projectPayloadSchema = z
   .object({
@@ -115,7 +117,7 @@ export const projectDocumentsQuerySchema = z.object({
     }
 
     return 'roadmap';
-  }, z.enum(['roadmap', 'stack_advisor'])),
+  }, z.enum(['roadmap', 'stack_advisor', 'technical_spec'])),
 });
 
 export const stackAdviceOverridesSchema = z
@@ -136,7 +138,18 @@ export const stackAdviceOverridesSchema = z
   .partial()
   .strict();
 
+export const technicalSpecRequestSchema = z
+  .object({
+    constraints: z.array(specContextItemSchema).max(12),
+    existingSystemNotes: z.array(specContextItemSchema).max(12),
+    featureDescription: detailedText('Feature description', 50, 8, 3000),
+    featureName: z.string().trim().min(3).max(120),
+    priority: z.enum(['low', 'medium', 'high', 'critical']),
+  })
+  .strict();
+
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;
+export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchema>;
