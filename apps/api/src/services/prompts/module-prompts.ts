@@ -160,14 +160,15 @@ const codeAuditPrompt = (project: ProjectPromptContext) =>
   buildModulePrompt({
     project,
     requirements: joinRequirements(
-      'The markdown report must read like an audit a founder can use to decide whether the codebase is safe to continue investing in.',
-      'Prioritize security, reliability, maintainability, and delivery risk over cosmetic observations.',
+      'The markdown report must read like an advisory audit a founder can use to decide whether the codebase is safe to continue investing in.',
+      'Prioritize security, reliability, maintainability, delivery risk, and signs of rushed work over cosmetic observations.',
+      'Include a clear disclaimer that this is not a complete penetration test or certification.',
       'Use the cards array for the highest-risk issues and the fastest fixes.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallAssessment, severitySummary, findings, securityNotes, maintainabilityNotes, remediationPlan, quickWins }. Each finding must include severity, title, evidence, impact, and fix.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, disclaimer, overviewRiskLevel, findings, criticalRisks, securityIssues, scalabilityIssues, maintainabilityIssues, rushedWorkSignals, acceptableAreas, questionsForDeveloper, recommendedNextActions }. Each finding must include category, severity, priority, title, explanation, evidence, impact, confidenceLevel, and suggestedFix.',
     schemaName: 'CodeAuditOutput',
-    task: 'Audit the codebase or implementation for delivery risk, maintainability problems, security issues, and major gaps that could slow the team down. Focus on findings that matter to a founder making investment or hiring decisions. Be specific about evidence, impact, and remediation.',
+    task: 'Audit the codebase or implementation for delivery risk, maintainability problems, security issues, scalability concerns, and signs of rushed or poor work. Focus on findings that matter to a founder making investment or hiring decisions. Be specific about evidence, impact, and remediation. Keep the findings prioritized and the summary direct enough that a founder can act on it immediately.',
   });
 
 const vettingScorecardPrompt = (project: ProjectPromptContext) =>
@@ -189,7 +190,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: codeAuditPrompt,
     schema: codeAuditSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, overallAssessment, severitySummary, findings, securityNotes, maintainabilityNotes, remediationPlan, quickWins }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, executiveSummary, disclaimer, overviewRiskLevel, findings, criticalRisks, securityIssues, scalabilityIssues, maintainabilityIssues, rushedWorkSignals, acceptableAreas, questionsForDeveloper, recommendedNextActions }. Each finding must include category, severity, priority, title, explanation, evidence, impact, confidenceLevel, and suggestedFix.',
     schemaName: 'CodeAuditOutput',
   },
   developer_job_description: {

@@ -69,6 +69,10 @@ const normalizeDocumentType = (type: string) => {
     return 'rate_validator';
   }
 
+  if (type === 'CODE_AUDIT') {
+    return 'code_audit';
+  }
+
   return type;
 };
 

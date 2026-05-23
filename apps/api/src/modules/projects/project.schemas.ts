@@ -126,7 +126,7 @@ export const projectDocumentsQuerySchema = z.object({
     }
 
     return 'roadmap';
-  }, z.enum(['roadmap', 'stack_advisor', 'technical_spec', 'rate_validator'])),
+  }, z.enum(['code_audit', 'roadmap', 'stack_advisor', 'technical_spec', 'rate_validator'])),
 });
 
 export const stackAdviceOverridesSchema = z
@@ -157,6 +157,24 @@ export const technicalSpecRequestSchema = z
   })
   .strict();
 
+export const codeAuditRequestSchema = z
+  .object({
+    codeSnippet: z
+      .string()
+      .trim()
+      .min(120, 'Paste enough code for a meaningful audit.')
+      .max(50000, 'Code snippet is too long.')
+      .optional()
+      .nullable()
+      .transform((value) => (value?.length ? value : null)),
+    repoUrl: optionalTrimmedText(2048),
+  })
+  .strict()
+  .refine((value) => Boolean(value.repoUrl) !== Boolean(value.codeSnippet), {
+    message: 'Provide either a GitHub repository URL or a code snippet.',
+    path: ['repoUrl'],
+  });
+
 export const quoteAnalysisRequestSchema = z
   .object({
     countryMarket: optionalTrimmedText(120),
@@ -180,4 +198,5 @@ export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchem
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;
 export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchema>;
+export type CodeAuditRequestInput = z.infer<typeof codeAuditRequestSchema>;
 export type QuoteAnalysisRequestInput = z.infer<typeof quoteAnalysisRequestSchema>;

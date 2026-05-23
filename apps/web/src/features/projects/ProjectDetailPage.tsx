@@ -168,9 +168,14 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
           path: `/projects/${projectId}/specs`,
         }
       : module.documentTypes.includes('rate_validator')
+      ? {
+          label: 'Open validator',
+          path: `/projects/${projectId}/rate-validator`,
+        }
+      : module.documentTypes.includes('code_audit')
         ? {
-            label: 'Open validator',
-            path: `/projects/${projectId}/rate-validator`,
+            label: 'Open auditor',
+            path: `/projects/${projectId}/code-audit`,
           }
         : null;
   const status = document

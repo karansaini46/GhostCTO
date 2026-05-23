@@ -13,6 +13,7 @@ const roadmapDocumentType = 'roadmap';
 const stackAdviceDocumentType = 'STACK_ADVICE';
 const technicalSpecDocumentType = 'TECH_SPEC';
 const quoteAnalysisDocumentType = 'QUOTE_ANALYSIS';
+const codeAuditDocumentType = 'CODE_AUDIT';
 const roadmapDocumentTitle = 'Technical Roadmap';
 
 const projectWorkspaceInclude = {
@@ -84,6 +85,10 @@ const normalizeDocumentType = (type: string) => {
 
   if (type === quoteAnalysisDocumentType) {
     return 'rate_validator';
+  }
+
+  if (type === codeAuditDocumentType) {
+    return 'code_audit';
   }
 
   return type;
@@ -169,17 +174,20 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
 export const listRoadmapDocumentsForUser = async (
   userId: string,
   projectId: string,
-  documentType: 'roadmap' | 'stack_advisor' | 'technical_spec' | 'rate_validator' = 'roadmap',
+  documentType: 'roadmap' | 'stack_advisor' | 'technical_spec' | 'rate_validator' | 'code_audit' = 'roadmap',
 ) => {
   await getProjectForUser(userId, projectId);
-  const normalizedDocumentType =
-    documentType === 'stack_advisor'
-      ? stackAdviceDocumentType
-      : documentType === 'technical_spec'
-        ? technicalSpecDocumentType
-        : documentType === 'rate_validator'
-          ? quoteAnalysisDocumentType
-          : roadmapDocumentType;
+  let normalizedDocumentType = roadmapDocumentType;
+
+  if (documentType === 'stack_advisor') {
+    normalizedDocumentType = stackAdviceDocumentType;
+  } else if (documentType === 'technical_spec') {
+    normalizedDocumentType = technicalSpecDocumentType;
+  } else if (documentType === 'rate_validator') {
+    normalizedDocumentType = quoteAnalysisDocumentType;
+  } else if (documentType === 'code_audit') {
+    normalizedDocumentType = codeAuditDocumentType;
+  }
 
   const documents = await prisma.generatedDocument.findMany({
     orderBy: {

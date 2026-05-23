@@ -69,4 +69,9 @@ export type StackAdviceGenerationOverrides = {
   targetScale?: string;
 };
 
-export type ProjectDocumentType = 'roadmap' | 'stack_advisor' | 'technical_spec' | 'rate_validator';
+export type ProjectDocumentType =
+  | 'code_audit'
+  | 'roadmap'
+  | 'stack_advisor'
+  | 'technical_spec'
+  | 'rate_validator';
