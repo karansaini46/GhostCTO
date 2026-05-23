@@ -17,6 +17,7 @@ import {
   Textarea,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import { generateCodeAuditRequest, getProjectRequest, listProjectDocumentsRequest } from './project-api';
 import type { Project, ProjectDocument } from './project-types';
 import type {
@@ -332,6 +333,7 @@ const CodeAuditPage = () => {
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
   const [generatedDocument, setGeneratedDocument] = useState<ProjectDocument | null>(null);
   const [generatedAudit, setGeneratedAudit] = useState<CodeAuditOutput | null>(null);
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [copyLabel, setCopyLabel] = useState<string | null>(null);
   const [formState, setFormState] = useState<FormState>(initialFormState);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
@@ -343,6 +345,7 @@ const CodeAuditPage = () => {
 
     setIsLoading(true);
     setError(null);
+    setLimitMessage(null);
 
     try {
       const [projectResponse, documentsResponse] = await Promise.all([
@@ -412,14 +415,21 @@ const CodeAuditPage = () => {
 
     setIsGenerating(true);
     setError(null);
+    setLimitMessage(null);
 
     try {
       const response = await generateCodeAuditRequest(accessToken, id, toPayload(formState));
       setGeneratedDocument(response.document);
       setGeneratedAudit(response.codeAudit);
       setDocuments((current) => [response.document, ...current.filter((item) => item.id !== response.document.id)]);
-    } catch {
-      setError('Unable to generate the code audit right now.');
+    } catch (requestError) {
+      const message = getGenerationErrorMessage(
+        requestError,
+        'Unable to generate the code audit right now.',
+      );
+
+      setError(message);
+      setLimitMessage(isGenerationLimitError(requestError) ? message : null);
     } finally {
       setIsGenerating(false);
     }
@@ -461,12 +471,12 @@ const CodeAuditPage = () => {
     return (
       <EmptyState
         action={
-          <Button onClick={() => navigate('/')} variant="secondary">
-            Back to projects
+          <Button onClick={() => navigate(limitMessage ? '/billing' : '/')} variant="secondary">
+            {limitMessage ? 'Review access' : 'Back to projects'}
           </Button>
         }
         description={error ?? 'This workspace is unavailable.'}
-        title="Code audit unavailable"
+        title={limitMessage ? 'Generation limit reached' : 'Code audit unavailable'}
       />
     );
   }

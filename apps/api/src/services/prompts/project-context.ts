@@ -24,13 +24,34 @@ export type ProjectPromptContext = {
   targetScale?: string | null;
 };
 
+const maxValueLength = 1200;
+const maxArrayItemLength = 300;
+const maxArrayItems = 12;
+const maxAnswers = 30;
+
+const compactText = (value: string) => value.replace(/\s+/g, ' ').trim();
+
+const truncateText = (value: string, maxLength: number) => {
+  const compacted = compactText(value);
+
+  if (compacted.length <= maxLength) {
+    return compacted;
+  }
+
+  return `${compacted.slice(0, maxLength - 1).trim()}...`;
+};
+
 const formatUnknownValue = (value: unknown): string => {
   if (Array.isArray(value)) {
-    return value.map(formatUnknownValue).filter(Boolean).join(', ');
+    return value
+      .slice(0, maxArrayItems)
+      .map((item) => truncateText(formatUnknownValue(item), maxArrayItemLength))
+      .filter(Boolean)
+      .join(', ');
   }
 
   if (typeof value === 'string') {
-    return value.trim();
+    return truncateText(value, maxValueLength);
   }
 
   if (typeof value === 'number' || typeof value === 'boolean') {
@@ -38,7 +59,7 @@ const formatUnknownValue = (value: unknown): string => {
   }
 
   if (value && typeof value === 'object') {
-    return JSON.stringify(value);
+    return truncateText(JSON.stringify(value), maxValueLength);
   }
 
   return '';
@@ -74,7 +95,7 @@ export const buildProjectContextSection = (project: ProjectPromptContext) => {
   if (project.answers?.length) {
     lines.push('Saved founder answers:');
 
-    project.answers.forEach((answer) => {
+    project.answers.slice(0, maxAnswers).forEach((answer) => {
       addLine(lines, answer.label ?? answer.key, answer.answer);
     });
   }

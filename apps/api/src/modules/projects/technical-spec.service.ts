@@ -9,6 +9,11 @@ import {
   type ProjectPromptAnswer,
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
+import {
+  createVersionedGeneratedDocument,
+  serializeGeneratedDocument,
+} from './document-history.service.js';
+import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { TechnicalSpecRequestInput } from './project.schemas.js';
 
 const technicalSpecDocumentType = 'TECH_SPEC';
@@ -22,22 +27,6 @@ const projectWorkspaceInclude = {
 } satisfies Prisma.ProjectInclude;
 
 type ProjectWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectWorkspaceInclude }>;
-
-type GeneratedTechnicalSpecDocument = Prisma.GeneratedDocumentGetPayload<{
-  select: {
-    completedAt: true;
-    content: true;
-    createdAt: true;
-    id: true;
-    metadata: true;
-    projectId: true;
-    status: true;
-    summary: true;
-    title: true;
-    type: true;
-    updatedAt: true;
-  };
-}>;
 
 const nonEmptyText = (label: string, maxLength = 320) =>
   z.string().trim().min(1, `${label} is required.`).max(maxLength, `${label} is too long.`);
@@ -215,23 +204,6 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   targetCustomer: project.targetCustomer,
 });
 
-const normalizeDocumentType = (type: string) =>
-  type === technicalSpecDocumentType ? 'technical_spec' : type;
-
-const serializeGeneratedDocument = (document: GeneratedTechnicalSpecDocument) => ({
-  completedAt: document.completedAt?.toISOString() ?? null,
-  content: document.content,
-  createdAt: document.createdAt.toISOString(),
-  id: document.id,
-  metadata: document.metadata,
-  projectId: document.projectId,
-  status: document.status,
-  summary: document.summary,
-  title: document.title,
-  type: normalizeDocumentType(document.type),
-  updatedAt: document.updatedAt.toISOString(),
-});
-
 const getProjectForUser = async (userId: string, projectId: string) => {
   const project = await prisma.project.findUnique({
     include: projectWorkspaceInclude,
@@ -294,6 +266,7 @@ export const generateTechnicalSpecForUser = async (
   input: TechnicalSpecRequestInput,
 ) => {
   const project = await getProjectForUser(userId, projectId);
+  await enforceDailyGenerationLimitForUser(userId);
   const promptContext = toProjectPromptContext(project);
   const provider = getModelProvider();
   const prompt = buildTechnicalSpecPrompt(promptContext, input);
@@ -305,29 +278,27 @@ export const generateTechnicalSpecForUser = async (
     schema: technicalSpecOutputSchema,
   });
 
-  const document = await prisma.generatedDocument.create({
-    data: {
-      completedAt: generatedAt,
-      content: generation.data.reportMarkdown,
-      metadata: {
-        generatedAt: generatedAt.toISOString(),
-        request: input,
-        technicalSpec: generation.data,
-        usage: generation.usage
-          ? {
-              inputTokens: generation.usage.inputTokens ?? null,
-              outputTokens: generation.usage.outputTokens ?? null,
-              totalTokens: generation.usage.totalTokens ?? null,
-            }
-          : null,
-      },
-      projectId: project.id,
-      status: 'COMPLETED',
-      summary: generation.data.featureOverview.summary,
-      title: `Technical Spec: ${input.featureName}`,
-      type: technicalSpecDocumentType,
-      userId,
+  const document = await createVersionedGeneratedDocument(prisma, {
+    completedAt: generatedAt,
+    content: generation.data.reportMarkdown,
+    metadata: {
+      generatedAt: generatedAt.toISOString(),
+      request: input,
+      technicalSpec: generation.data,
+      usage: generation.usage
+        ? {
+            inputTokens: generation.usage.inputTokens ?? null,
+            outputTokens: generation.usage.outputTokens ?? null,
+            totalTokens: generation.usage.totalTokens ?? null,
+          }
+        : null,
     },
+    projectId: project.id,
+    status: 'COMPLETED',
+    summary: generation.data.featureOverview.summary,
+    title: `Technical Spec: ${input.featureName}`,
+    type: technicalSpecDocumentType,
+    userId,
   });
 
   return {

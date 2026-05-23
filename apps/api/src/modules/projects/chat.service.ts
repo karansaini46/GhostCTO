@@ -2,6 +2,7 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../infrastructure/database/prisma.js';
 import { ApiError } from '../../lib/api-error.js';
 import { getModelProvider } from '../../services/model-provider/index.js';
+import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { ChatMessageRequestInput, ChatMessagesQueryInput } from './project.schemas.js';
 
 const recentDocumentLimit = 6;
@@ -305,6 +306,7 @@ export const createProjectChatMessageForUser = async (
   input: ChatMessageRequestInput,
 ) => {
   const project = await getProjectForUser(userId, projectId);
+  await enforceDailyGenerationLimitForUser(userId);
   const recentMessages = (
     await prisma.chatMessage.findMany({
       orderBy: {

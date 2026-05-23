@@ -8,6 +8,11 @@ import {
   type ProjectPromptAnswer,
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
+import {
+  createVersionedGeneratedDocument,
+  serializeGeneratedDocument,
+} from './document-history.service.js';
+import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 
 const developerJdDocumentType = 'DEVELOPER_JD';
 
@@ -20,22 +25,6 @@ const projectWorkspaceInclude = {
 } satisfies Prisma.ProjectInclude;
 
 type ProjectWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectWorkspaceInclude }>;
-
-type DeveloperJdDocument = Prisma.GeneratedDocumentGetPayload<{
-  select: {
-    completedAt: true;
-    content: true;
-    createdAt: true;
-    id: true;
-    metadata: true;
-    projectId: true;
-    status: true;
-    summary: true;
-    title: true;
-    type: true;
-    updatedAt: true;
-  };
-}>;
 
 const toStringArray = (value: Prisma.JsonValue): string[] => {
   if (!Array.isArray(value)) {
@@ -69,23 +58,6 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   targetCustomer: project.targetCustomer,
 });
 
-const normalizeDocumentType = (type: string) =>
-  type === developerJdDocumentType ? 'developer_jd' : type;
-
-const serializeGeneratedDocument = (document: DeveloperJdDocument) => ({
-  completedAt: document.completedAt?.toISOString() ?? null,
-  content: document.content,
-  createdAt: document.createdAt.toISOString(),
-  id: document.id,
-  metadata: document.metadata,
-  projectId: document.projectId,
-  status: document.status,
-  summary: document.summary,
-  title: document.title,
-  type: normalizeDocumentType(document.type),
-  updatedAt: document.updatedAt.toISOString(),
-});
-
 const getProjectForUser = async (userId: string, projectId: string) => {
   const project = await prisma.project.findUnique({
     include: projectWorkspaceInclude,
@@ -108,6 +80,7 @@ const toDocumentTitle = (roleTitle: string) => `Developer Job Description: ${rol
 
 export const createDeveloperJdForUser = async (userId: string, projectId: string) => {
   const project = await getProjectForUser(userId, projectId);
+  await enforceDailyGenerationLimitForUser(userId);
   const promptContext = toProjectPromptContext(project);
   const provider = getModelProvider();
   const schema = getGhostctoModuleSchema('developer_job_description');
@@ -120,29 +93,27 @@ export const createDeveloperJdForUser = async (userId: string, projectId: string
     schema,
   });
 
-  const document = await prisma.generatedDocument.create({
-    data: {
-      completedAt: generatedAt,
-      content: generation.data.reportMarkdown,
-      metadata: {
-        developerJobDescription: generation.data,
-        generatedAt: generatedAt.toISOString(),
-        moduleType: generation.data.moduleType,
-        usage: generation.usage
-          ? {
-              inputTokens: generation.usage.inputTokens ?? null,
-              outputTokens: generation.usage.outputTokens ?? null,
-              totalTokens: generation.usage.totalTokens ?? null,
-            }
-          : null,
-      },
-      projectId: project.id,
-      status: 'COMPLETED',
-      summary: generation.data.roleSummary,
-      title: toDocumentTitle(generation.data.roleTitle),
-      type: developerJdDocumentType,
-      userId,
+  const document = await createVersionedGeneratedDocument(prisma, {
+    completedAt: generatedAt,
+    content: generation.data.reportMarkdown,
+    metadata: {
+      developerJobDescription: generation.data,
+      generatedAt: generatedAt.toISOString(),
+      moduleType: generation.data.moduleType,
+      usage: generation.usage
+        ? {
+            inputTokens: generation.usage.inputTokens ?? null,
+            outputTokens: generation.usage.outputTokens ?? null,
+            totalTokens: generation.usage.totalTokens ?? null,
+          }
+        : null,
     },
+    projectId: project.id,
+    status: 'COMPLETED',
+    summary: generation.data.roleSummary,
+    title: toDocumentTitle(generation.data.roleTitle),
+    type: developerJdDocumentType,
+    userId,
   });
 
   return {

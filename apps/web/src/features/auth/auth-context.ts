@@ -17,6 +17,7 @@ export type AuthContextValue = AuthState & {
   logout: () => Promise<void>;
   refreshSession: () => Promise<void>;
   register: (payload: { email: string; name?: string; password: string }) => Promise<void>;
+  updateUser: (user: SafeUser) => void;
 };
 
 export const AuthContext = createContext<AuthContextValue | null>(null);

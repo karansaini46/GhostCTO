@@ -4,6 +4,7 @@ export type SafeUser = {
   email: string;
   id: string;
   name: string | null;
+  plan: 'FREE' | 'LIFETIME';
   role: 'FOUNDER' | 'ADMIN';
   updatedAt: string;
 };
@@ -13,4 +14,3 @@ export type AuthSession = {
   accessTokenExpiresAt: string;
   user: SafeUser;
 };
-

@@ -13,6 +13,11 @@ import {
   fetchPublicGithubRepository,
   type GithubRepositorySnapshot,
 } from '../../services/github/github.service.js';
+import {
+  createVersionedGeneratedDocument,
+  serializeGeneratedDocument,
+} from './document-history.service.js';
+import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { CodeAuditRequestInput } from './project.schemas.js';
 
 const codeAuditDocumentType = 'CODE_AUDIT';
@@ -28,22 +33,6 @@ const projectWorkspaceInclude = {
 } satisfies Prisma.ProjectInclude;
 
 type ProjectWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectWorkspaceInclude }>;
-
-type GeneratedCodeAuditDocument = Prisma.GeneratedDocumentGetPayload<{
-  select: {
-    completedAt: true;
-    content: true;
-    createdAt: true;
-    id: true;
-    metadata: true;
-    projectId: true;
-    status: true;
-    summary: true;
-    title: true;
-    type: true;
-    updatedAt: true;
-  };
-}>;
 
 type AuditReportRecord = Prisma.AuditReportGetPayload<{
   select: {
@@ -91,22 +80,6 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   name: project.name,
   productType: project.productType,
   targetCustomer: project.targetCustomer,
-});
-
-const normalizeDocumentType = (type: string) => (type === codeAuditDocumentType ? 'code_audit' : type);
-
-const serializeGeneratedDocument = (document: GeneratedCodeAuditDocument) => ({
-  completedAt: document.completedAt?.toISOString() ?? null,
-  content: document.content,
-  createdAt: document.createdAt.toISOString(),
-  id: document.id,
-  metadata: document.metadata,
-  projectId: document.projectId,
-  status: document.status,
-  summary: document.summary,
-  title: document.title,
-  type: normalizeDocumentType(document.type),
-  updatedAt: document.updatedAt.toISOString(),
 });
 
 const serializeAuditReport = (report: AuditReportRecord) => ({
@@ -253,6 +226,7 @@ export const generateCodeAuditForUser = async (
   input: CodeAuditRequestInput,
 ) => {
   const project = await getProjectForUser(userId, projectId);
+  await enforceDailyGenerationLimitForUser(userId);
   const repositorySnapshot = input.repoUrl ? await fetchPublicGithubRepository(input.repoUrl) : null;
   const promptContext = toProjectPromptContext(project);
   const prompt = buildCodeAuditPrompt(promptContext, input, repositorySnapshot);
@@ -315,38 +289,23 @@ export const generateCodeAuditForUser = async (
       },
     });
 
-    const generatedDocument = await transaction.generatedDocument.create({
-      data: {
-        completedAt: generatedAt,
-        content: generation.data.reportMarkdown,
-        metadata: {
-          ...buildRequestMetadata(input, repositorySnapshot),
-          auditReportId: auditReportRecord.id,
-          codeAudit: generation.data,
-          generatedAt: generatedAt.toISOString(),
-          moduleType: generation.data.moduleType,
-          usage,
-        },
-        projectId: project.id,
-        status: 'COMPLETED',
-        summary,
-        title: codeAuditDocumentTitle,
-        type: codeAuditDocumentType,
-        userId,
+    const generatedDocument = await createVersionedGeneratedDocument(transaction, {
+      completedAt: generatedAt,
+      content: generation.data.reportMarkdown,
+      metadata: {
+        ...buildRequestMetadata(input, repositorySnapshot),
+        auditReportId: auditReportRecord.id,
+        codeAudit: generation.data,
+        generatedAt: generatedAt.toISOString(),
+        moduleType: generation.data.moduleType,
+        usage,
       },
-      select: {
-        completedAt: true,
-        content: true,
-        createdAt: true,
-        id: true,
-        metadata: true,
-        projectId: true,
-        status: true,
-        summary: true,
-        title: true,
-        type: true,
-        updatedAt: true,
-      },
+      projectId: project.id,
+      status: 'COMPLETED',
+      summary,
+      title: codeAuditDocumentTitle,
+      type: codeAuditDocumentType,
+      userId,
     });
 
     return {

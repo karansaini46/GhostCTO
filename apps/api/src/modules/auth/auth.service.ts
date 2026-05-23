@@ -20,6 +20,7 @@ const safeUserSelect = {
   email: true,
   id: true,
   name: true,
+  plan: true,
   role: true,
   updatedAt: true,
 } satisfies Prisma.UserSelect;
@@ -37,6 +38,7 @@ const toSafeUser = (
   email: user.email,
   id: user.id,
   name: user.name,
+  plan: user.plan,
   role: user.role,
   updatedAt: user.updatedAt.toISOString(),
 });
