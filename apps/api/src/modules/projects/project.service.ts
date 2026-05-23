@@ -77,6 +77,10 @@ const normalizeDocumentType = (type: string) => {
     return 'vetting_scorecard';
   }
 
+  if (type === 'DEVELOPER_JD') {
+    return 'developer_jd';
+  }
+
   return type;
 };
 

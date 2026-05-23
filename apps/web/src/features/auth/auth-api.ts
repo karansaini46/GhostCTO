@@ -1,4 +1,4 @@
-import { apiRequest } from '../../lib/api';
+import { apiRequest, toApiUrl } from '../../lib/api';
 import type { AuthSession } from './auth-types';
 
 type LoginPayload = {
@@ -28,3 +28,4 @@ export const logoutRequest = () => apiRequest<void>('/auth/logout', { method: 'P
 
 export const meRequest = () => apiRequest<{ user: AuthSession['user'] }>('/auth/me');
 
+export const getGoogleAuthUrl = () => toApiUrl('/auth/google');

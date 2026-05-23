@@ -11,7 +11,7 @@ import {
   hashToken,
   verifyAccessToken,
 } from './auth.tokens.js';
-import type { AuthSession, SafeUser } from './auth.types.js';
+import type { AuthSession, GoogleOAuthProfile, SafeUser } from './auth.types.js';
 import type { LoginInput, RegisterInput } from './auth.schemas.js';
 
 const safeUserSelect = {
@@ -75,6 +75,15 @@ const buildSession = async (userId: string): Promise<{ refreshToken: string; ses
   };
 };
 
+const getGoogleProfileUpdates = (
+  user: { avatarUrl: string | null; name: string | null },
+  profile: GoogleOAuthProfile,
+) => ({
+  avatarUrl: user.avatarUrl ?? profile.avatarUrl,
+  googleAccountId: profile.id,
+  name: user.name ?? profile.name,
+});
+
 const getUserByEmailWithPassword = async (email: string) =>
   prisma.user.findUnique({
     select: userWithPasswordSelect,
@@ -127,6 +136,89 @@ export const loginUser = async (input: LoginInput): Promise<{ refreshToken: stri
 
   if (!passwordMatches) {
     throw new ApiError(401, 'INVALID_CREDENTIALS', 'Invalid email or password.');
+  }
+
+  return buildSession(user.id);
+};
+
+export const loginWithGoogleProfile = async (
+  profile: GoogleOAuthProfile,
+): Promise<{ refreshToken: string; session: AuthSession }> => {
+  if (!profile.emailVerified) {
+    throw new ApiError(
+      401,
+      'GOOGLE_EMAIL_UNVERIFIED',
+      'Google could not confirm that email address.',
+    );
+  }
+
+  const linkedUser = await prisma.user.findUnique({
+    select: { id: true },
+    where: { googleAccountId: profile.id },
+  });
+
+  if (linkedUser) {
+    return buildSession(linkedUser.id);
+  }
+
+  let user: { id: string };
+
+  try {
+    user = await prisma.$transaction(async (transaction) => {
+      const userWithEmail = await transaction.user.findUnique({
+        select: {
+          avatarUrl: true,
+          googleAccountId: true,
+          id: true,
+          name: true,
+        },
+        where: { email: profile.email },
+      });
+
+      if (userWithEmail) {
+        if (
+          userWithEmail.googleAccountId &&
+          userWithEmail.googleAccountId !== profile.id
+        ) {
+          throw new ApiError(
+            409,
+            'GOOGLE_ACCOUNT_CONFLICT',
+            'That email is already linked to another Google account.',
+          );
+        }
+
+        return transaction.user.update({
+          data: getGoogleProfileUpdates(userWithEmail, profile),
+          select: { id: true },
+          where: { id: userWithEmail.id },
+        });
+      }
+
+      return transaction.user.create({
+        data: {
+          avatarUrl: profile.avatarUrl,
+          email: profile.email,
+          googleAccountId: profile.id,
+          name: profile.name,
+          role: 'FOUNDER',
+        },
+        select: { id: true },
+      });
+    });
+  } catch (error) {
+    if (error instanceof ApiError) {
+      throw error;
+    }
+
+    if (error instanceof Prisma.PrismaClientKnownRequestError && error.code === 'P2002') {
+      throw new ApiError(
+        409,
+        'GOOGLE_ACCOUNT_CONFLICT',
+        'That email is already linked to another Google account.',
+      );
+    }
+
+    throw error;
   }
 
   return buildSession(user.id);

@@ -120,13 +120,24 @@ export const projectIdParamSchema = z.object({
 });
 
 export const projectDocumentsQuerySchema = z.object({
-  type: z.preprocess((value) => {
-    if (typeof value === 'string') {
-      return value.trim().toLowerCase();
-    }
+  type: z.preprocess(
+    (value) => {
+      if (typeof value === 'string') {
+        return value.trim().toLowerCase();
+      }
 
-    return 'roadmap';
-  }, z.enum(['code_audit', 'roadmap', 'stack_advisor', 'technical_spec', 'rate_validator', 'vetting_scorecard'])),
+      return 'roadmap';
+    },
+    z.enum([
+      'code_audit',
+      'developer_jd',
+      'rate_validator',
+      'roadmap',
+      'stack_advisor',
+      'technical_spec',
+      'vetting_scorecard',
+    ]),
+  ),
 });
 
 export const stackAdviceOverridesSchema = z
