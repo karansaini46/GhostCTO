@@ -246,13 +246,88 @@ const acceptanceCriterionSchema = z
   })
   .strict();
 
-const quoteLineItemSchema = z
+const confidenceLevelSchema = z.enum(['low', 'medium', 'high']);
+
+const quoteVerdictSchema = z.enum([
+  'fair',
+  'risky',
+  'overpriced',
+  'under_scoped',
+  'unrealistic',
+]);
+
+const parsedScopeItemSchema = z
   .object({
-    amount: nonEmptyText('Quote amount', 80),
-    comment: nonEmptyText('Quote comment', 240),
-    concernLevel: z.enum(['low', 'medium', 'high']),
-    item: nonEmptyText('Quote line item', 220),
-    judgment: z.enum(['accept', 'clarify', 'push_back']),
+    complexity: z.enum(['low', 'medium', 'high']),
+    confidenceLevel: confidenceLevelSchema,
+    description: nonEmptyText('Scope item description', 280),
+    pricingConcern: nonEmptyText('Scope item pricing concern', 260),
+    scopeItem: nonEmptyText('Scope item', 180),
+    specificity: z.enum(['specific', 'partial', 'vague']),
+  })
+  .strict();
+
+const quotedPriceSchema = z
+  .object({
+    amount: z.number().positive().nullable(),
+    basis: z.enum(['fixed_bid', 'hourly', 'monthly', 'milestone', 'unclear']),
+    currency: z.string().trim().min(3).max(3).nullable(),
+    notes: nonEmptyText('Quoted price notes', 240),
+  })
+  .strict();
+
+const complexityEstimateSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    drivers: z.array(nonEmptyText('Complexity driver', 220)).min(2).max(8),
+    level: z.enum(['low', 'medium', 'high', 'very_high']),
+    rationale: nonEmptyText('Complexity rationale', 320),
+  })
+  .strict();
+
+const timelineRealismSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    concerns: z.array(nonEmptyText('Timeline concern', 220)).min(1).max(8),
+    rationale: nonEmptyText('Timeline rationale', 320),
+    verdict: z.enum(['realistic', 'aggressive', 'unrealistic', 'unclear']),
+  })
+  .strict();
+
+const priceFairnessSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    rationale: nonEmptyText('Price fairness rationale', 360),
+    verdict: quoteVerdictSchema,
+  })
+  .strict();
+
+const pricingRiskSchema = z
+  .object({
+    confidenceLevel: confidenceLevelSchema,
+    rationale: nonEmptyText('Pricing risk rationale', 300),
+    riskLevel: z.enum(['low', 'medium', 'high']),
+  })
+  .strict();
+
+const missingDeliverableSchema = z
+  .object({
+    deliverable: nonEmptyText('Missing deliverable', 180),
+    whyItMatters: nonEmptyText('Missing deliverable rationale', 260),
+  })
+  .strict();
+
+const contractGapSchema = z
+  .object({
+    gap: nonEmptyText('Contract gap', 200),
+    risk: nonEmptyText('Contract gap risk', 280),
+  })
+  .strict();
+
+const developerQuestionSchema = z
+  .object({
+    question: nonEmptyText('Question', 240),
+    reason: nonEmptyText('Question reason', 240),
   })
   .strict();
 
@@ -395,12 +470,22 @@ export const technicalSpecificationSchema = baseModuleOutputSchema.extend({
 });
 
 export const quoteAnalysisSchema = baseModuleOutputSchema.extend({
-  clarifyingQuestions: z.array(nonEmptyText('Clarifying question', 220)).min(2).max(8),
-  lineItems: z.array(quoteLineItemSchema).min(1).max(12),
+  dangerousContractGaps: z.array(contractGapSchema).min(2).max(10),
+  estimatedComplexity: complexityEstimateSchema,
+  missingDeliverables: z.array(missingDeliverableSchema).min(2).max(10),
   moduleType: z.literal('quote_analysis'),
+  negotiationScript: z.string().trim().min(120).max(4000),
+  overchargeRisk: pricingRiskSchema,
+  parsedScopeItems: z.array(parsedScopeItemSchema).min(1).max(16),
+  priceFairnessVerdict: priceFairnessSchema,
+  questionsToAskDeveloper: z.array(developerQuestionSchema).min(3).max(12),
+  quotedPrice: quotedPriceSchema,
   recommendation: nonEmptyText('Quote analysis recommendation', 320),
-  scopeGaps: z.array(nonEmptyText('Scope gap', 220)).min(1).max(10),
+  riskScore: z.number().int().min(0).max(100),
+  timelineRealism: timelineRealismSchema,
+  underchargeRisk: pricingRiskSchema,
   totalRiskLevel: z.enum(['low', 'medium', 'high', 'critical']),
+  vagueScopeFlags: z.array(nonEmptyText('Vague scope flag', 240)).min(1).max(10),
   vendorSummary: nonEmptyText('Vendor summary', 280),
   valueJudgment: nonEmptyText('Value judgment', 320),
 });

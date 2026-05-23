@@ -65,6 +65,10 @@ const normalizeDocumentType = (type: string) => {
     return 'technical_spec';
   }
 
+  if (type === 'QUOTE_ANALYSIS') {
+    return 'rate_validator';
+  }
+
   return type;
 };
 
