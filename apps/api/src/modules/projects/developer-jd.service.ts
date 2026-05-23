@@ -8,6 +8,7 @@ import {
   type ProjectPromptAnswer,
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
+import type { DeveloperJdRequestInput } from './project.schemas.js';
 
 const developerJdDocumentType = 'DEVELOPER_JD';
 
@@ -52,10 +53,36 @@ const toProjectPromptAnswers = (project: ProjectWorkspace): ProjectPromptAnswer[
     label: answer.label,
   }));
 
-const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext => ({
-  answers: toProjectPromptAnswers(project),
+const toHiringPreferenceAnswers = (input: DeveloperJdRequestInput): ProjectPromptAnswer[] => [
+  {
+    answer: input.hiringMode,
+    key: 'hiringMode',
+    label: 'Hiring mode',
+  },
+  {
+    answer: input.budgetRange,
+    key: 'developerBudgetRange',
+    label: 'Developer hiring budget',
+  },
+  {
+    answer: input.locationPreference,
+    key: 'locationPreference',
+    label: 'Location preference',
+  },
+  {
+    answer: input.urgency,
+    key: 'hiringUrgency',
+    label: 'Hiring urgency',
+  },
+];
+
+const toProjectPromptContext = (
+  project: ProjectWorkspace,
+  input: DeveloperJdRequestInput,
+): ProjectPromptContext => ({
+  answers: [...toProjectPromptAnswers(project), ...toHiringPreferenceAnswers(input)],
   biggestConcern: project.biggestConcern,
-  budgetRange: project.budgetRange,
+  budgetRange: input.budgetRange,
   currentStage: project.currentStage,
   existingAssets: toStringArray(project.existingAssets),
   founderTechnicalLevel: project.founderTechnicalLevel,
@@ -106,9 +133,13 @@ const getProjectForUser = async (userId: string, projectId: string) => {
 
 const toDocumentTitle = (roleTitle: string) => `Developer Job Description: ${roleTitle}`;
 
-export const createDeveloperJdForUser = async (userId: string, projectId: string) => {
+export const createDeveloperJdForUser = async (
+  userId: string,
+  projectId: string,
+  input: DeveloperJdRequestInput,
+) => {
   const project = await getProjectForUser(userId, projectId);
-  const promptContext = toProjectPromptContext(project);
+  const promptContext = toProjectPromptContext(project, input);
   const provider = getModelProvider();
   const schema = getGhostctoModuleSchema('developer_job_description');
   const prompt = buildGhostctoModulePrompt('developer_job_description', promptContext);
@@ -128,6 +159,7 @@ export const createDeveloperJdForUser = async (userId: string, projectId: string
         developerJobDescription: generation.data,
         generatedAt: generatedAt.toISOString(),
         moduleType: generation.data.moduleType,
+        request: input,
         usage: generation.usage
           ? {
               inputTokens: generation.usage.inputTokens ?? null,

@@ -148,8 +148,31 @@ export const technicalSpecRequestSchema = z
   })
   .strict();
 
+export const developerJdRequestSchema = z
+  .object({
+    budgetRange: z.enum([
+      'under_5000',
+      '5000_15000',
+      '15000_50000',
+      '50000_100000',
+      'over_100000',
+      'not_set',
+    ]),
+    hiringMode: z.enum(['freelancer', 'agency', 'co_founder', 'part_time', 'full_time']),
+    locationPreference: z.enum([
+      'no_preference',
+      'remote_anywhere',
+      'remote_us',
+      'timezone_overlap',
+      'local_preferred',
+    ]),
+    urgency: z.enum(['urgent', 'within_30_days', 'within_60_days', 'flexible']),
+  })
+  .strict();
+
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;
 export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchema>;
+export type DeveloperJdRequestInput = z.infer<typeof developerJdRequestSchema>;

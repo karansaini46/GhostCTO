@@ -167,7 +167,12 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
           label: 'Open writer',
           path: `/projects/${projectId}/specs`,
         }
-      : null;
+      : module.documentTypes.includes('developer_jd')
+        ? {
+            label: 'Open generator',
+            path: `/projects/${projectId}/developer-jd`,
+          }
+        : null;
   const status = document
     ? formatStatus(document.status)
     : contextReady

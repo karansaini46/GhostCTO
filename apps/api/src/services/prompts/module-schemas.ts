@@ -210,6 +210,14 @@ const developerJobSkillSchema = z
   })
   .strict();
 
+const technicalRequirementSchema = z
+  .object({
+    category: nonEmptyText('Requirement category', 120),
+    requirements: z.array(nonEmptyText('Technical requirement', 220)).min(1).max(6),
+    whyItMatters: nonEmptyText('Requirement rationale', 240),
+  })
+  .strict();
+
 const takeHomeTaskSchema = z
   .object({
     evaluationFocus: z.array(nonEmptyText('Evaluation focus', 180)).min(3).max(6),
@@ -418,6 +426,7 @@ export const techStackRecommendationSchema = baseModuleOutputSchema.extend({
 export const developerJobDescriptionSchema = baseModuleOutputSchema.extend({
   employmentType: z.enum(['contractor', 'fractional', 'full_time', 'agency', 'mixed']),
   evaluationRubric: z.array(evaluationRubricItemSchema).min(4).max(8),
+  jobPost: z.string().trim().min(400).max(12000),
   moduleType: z.literal('developer_job_description'),
   niceToHaveSkills: z.array(developerJobSkillSchema).min(2).max(10),
   priceTimelineGuidance: priceTimelineGuidanceSchema,
@@ -431,6 +440,7 @@ export const developerJobDescriptionSchema = baseModuleOutputSchema.extend({
   responsibilities: z.array(jobResponsibilitySchema).min(4).max(10),
   recommendation: nonEmptyText('Job description recommendation', 320),
   takeHomeTask: takeHomeTaskSchema,
+  technicalRequirements: z.array(technicalRequirementSchema).min(3).max(8),
 });
 
 export const technicalSpecificationSchema = baseModuleOutputSchema.extend({

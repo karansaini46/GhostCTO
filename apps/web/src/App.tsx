@@ -8,6 +8,7 @@ import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { PublicRoute } from './features/auth/PublicRoute';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { DeveloperJdPage } from './features/projects/DeveloperJdPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
@@ -64,6 +65,14 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id/specs"
+          />
+          <Route
+            element={
+              <AppShell>
+                <DeveloperJdPage />
+              </AppShell>
+            }
+            path="/projects/:id/developer-jd"
           />
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />
