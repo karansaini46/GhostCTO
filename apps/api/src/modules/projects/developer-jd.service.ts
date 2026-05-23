@@ -9,14 +9,7 @@ import {
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
 
-const roadmapDocumentType = 'roadmap';
-const stackAdviceDocumentType = 'STACK_ADVICE';
-const technicalSpecDocumentType = 'TECH_SPEC';
-const quoteAnalysisDocumentType = 'QUOTE_ANALYSIS';
-const codeAuditDocumentType = 'CODE_AUDIT';
-const vettingScorecardDocumentType = 'VETTING_SCORECARD';
 const developerJdDocumentType = 'DEVELOPER_JD';
-const roadmapDocumentTitle = 'Technical Roadmap';
 
 const projectWorkspaceInclude = {
   answers: {
@@ -28,7 +21,7 @@ const projectWorkspaceInclude = {
 
 type ProjectWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectWorkspaceInclude }>;
 
-type GeneratedRoadmapDocument = Prisma.GeneratedDocumentGetPayload<{
+type DeveloperJdDocument = Prisma.GeneratedDocumentGetPayload<{
   select: {
     completedAt: true;
     content: true;
@@ -76,35 +69,10 @@ const toProjectPromptContext = (project: ProjectWorkspace): ProjectPromptContext
   targetCustomer: project.targetCustomer,
 });
 
-const normalizeDocumentType = (type: string) => {
-  if (type === stackAdviceDocumentType) {
-    return 'stack_advisor';
-  }
+const normalizeDocumentType = (type: string) =>
+  type === developerJdDocumentType ? 'developer_jd' : type;
 
-  if (type === technicalSpecDocumentType) {
-    return 'technical_spec';
-  }
-
-  if (type === quoteAnalysisDocumentType) {
-    return 'rate_validator';
-  }
-
-  if (type === codeAuditDocumentType) {
-    return 'code_audit';
-  }
-
-  if (type === vettingScorecardDocumentType) {
-    return 'vetting_scorecard';
-  }
-
-  if (type === developerJdDocumentType) {
-    return 'developer_jd';
-  }
-
-  return type;
-};
-
-const serializeGeneratedDocument = (document: GeneratedRoadmapDocument) => ({
+const serializeGeneratedDocument = (document: DeveloperJdDocument) => ({
   completedAt: document.completedAt?.toISOString() ?? null,
   content: document.content,
   createdAt: document.createdAt.toISOString(),
@@ -136,17 +104,19 @@ const getProjectForUser = async (userId: string, projectId: string) => {
   return project;
 };
 
-export const generateRoadmapForUser = async (userId: string, projectId: string) => {
+const toDocumentTitle = (roleTitle: string) => `Developer Job Description: ${roleTitle}`;
+
+export const createDeveloperJdForUser = async (userId: string, projectId: string) => {
   const project = await getProjectForUser(userId, projectId);
   const promptContext = toProjectPromptContext(project);
   const provider = getModelProvider();
-  const schema = getGhostctoModuleSchema('roadmap');
-  const prompt = buildGhostctoModulePrompt('roadmap', promptContext);
+  const schema = getGhostctoModuleSchema('developer_job_description');
+  const prompt = buildGhostctoModulePrompt('developer_job_description', promptContext);
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
-    maxOutputTokens: 8192,
+    maxOutputTokens: 10000,
     prompt,
-    requestName: 'projects.roadmap.generate',
+    requestName: 'projects.developerJd.create',
     schema,
   });
 
@@ -155,9 +125,9 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
       completedAt: generatedAt,
       content: generation.data.reportMarkdown,
       metadata: {
+        developerJobDescription: generation.data,
         generatedAt: generatedAt.toISOString(),
         moduleType: generation.data.moduleType,
-        roadmap: generation.data,
         usage: generation.usage
           ? {
               inputTokens: generation.usage.inputTokens ?? null,
@@ -168,71 +138,15 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
       },
       projectId: project.id,
       status: 'COMPLETED',
-      summary: generation.data.executiveSummary,
-      title: roadmapDocumentTitle,
-      type: roadmapDocumentType,
+      summary: generation.data.roleSummary,
+      title: toDocumentTitle(generation.data.roleTitle),
+      type: developerJdDocumentType,
       userId,
     },
   });
 
   return {
+    developerJobDescription: generation.data,
     document: serializeGeneratedDocument(document),
-    roadmap: generation.data,
   };
-};
-
-export const listRoadmapDocumentsForUser = async (
-  userId: string,
-  projectId: string,
-  documentType:
-    | 'code_audit'
-    | 'developer_jd'
-    | 'rate_validator'
-    | 'roadmap'
-    | 'stack_advisor'
-    | 'technical_spec'
-    | 'vetting_scorecard' = 'roadmap',
-) => {
-  await getProjectForUser(userId, projectId);
-  let normalizedDocumentType = roadmapDocumentType;
-
-  if (documentType === 'stack_advisor') {
-    normalizedDocumentType = stackAdviceDocumentType;
-  } else if (documentType === 'technical_spec') {
-    normalizedDocumentType = technicalSpecDocumentType;
-  } else if (documentType === 'rate_validator') {
-    normalizedDocumentType = quoteAnalysisDocumentType;
-  } else if (documentType === 'code_audit') {
-    normalizedDocumentType = codeAuditDocumentType;
-  } else if (documentType === 'vetting_scorecard') {
-    normalizedDocumentType = vettingScorecardDocumentType;
-  } else if (documentType === 'developer_jd') {
-    normalizedDocumentType = developerJdDocumentType;
-  }
-
-  const documents = await prisma.generatedDocument.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    select: {
-      completedAt: true,
-      content: true,
-      createdAt: true,
-      id: true,
-      metadata: true,
-      projectId: true,
-      status: true,
-      summary: true,
-      title: true,
-      type: true,
-      updatedAt: true,
-    },
-    where: {
-      projectId,
-      type: normalizedDocumentType,
-      userId,
-    },
-  });
-
-  return documents.map(serializeGeneratedDocument);
 };
