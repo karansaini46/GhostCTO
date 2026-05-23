@@ -5,6 +5,7 @@ import { authenticateRequest, requireAuth } from '../../middleware/auth.js';
 import { createProjectChatMessage, listProjectChatMessages } from './chat.controller.js';
 import { generateCodeAudit } from './code-audit.controller.js';
 import { exportProjectDocumentPdf } from './document-export.controller.js';
+import { createDeveloperJd } from './developer-jd.controller.js';
 import { createProject, getProject, listProjects, updateProject } from './project.controller.js';
 import { analyzeQuote } from './quote-analysis.controller.js';
 import { generateRoadmap, listRoadmapDocuments } from './roadmap.controller.js';
@@ -29,6 +30,7 @@ projectRouter.get(
   '/:projectId/documents/:documentId/export.pdf',
   asyncHandler(exportProjectDocumentPdf),
 );
+projectRouter.post('/:id/developer-jd', asyncHandler(createDeveloperJd));
 projectRouter.get('/:id/documents', asyncHandler(listRoadmapDocuments));
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));

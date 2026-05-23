@@ -136,10 +136,10 @@ export const projectDocumentsQuerySchema = z.object({
     z.enum([
       'code_audit',
       'developer_jd',
+      'rate_validator',
       'roadmap',
       'stack_advisor',
       'technical_spec',
-      'rate_validator',
       'vetting_scorecard',
     ]),
   ),

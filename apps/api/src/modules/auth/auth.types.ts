@@ -15,3 +15,11 @@ export type AuthSession = {
   accessTokenExpiresAt: string;
   user: SafeUser;
 };
+
+export type GoogleOAuthProfile = {
+  avatarUrl: string | null;
+  email: string;
+  emailVerified: boolean;
+  id: string;
+  name: string | null;
+};

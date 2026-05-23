@@ -24,7 +24,7 @@ export class ApiError extends Error {
   }
 }
 
-const toApiUrl = (path: string) => new URL(path, apiBaseUrl).toString();
+export const toApiUrl = (path: string) => new URL(path, apiBaseUrl).toString();
 
 const readResponse = async <Body>(response: Response): Promise<Body> => {
   const text = await response.text();

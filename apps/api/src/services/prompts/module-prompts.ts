@@ -117,13 +117,19 @@ const developerJobDescriptionPrompt = (project: ProjectPromptContext) =>
     project,
     requirements: joinRequirements(
       'The markdown report must be usable as the foundation of a real hiring brief or contractor brief.',
-      'Focus on role scope, delivery expectations, required skills, interview signals, and the kind of evidence a candidate should provide.',
+      'The markdown report must include these headings: Role title, Seniority recommendation, Employment type, Project context, Responsibilities, Required skills, Nice-to-have skills, Screening questions, Practical take-home task, Evaluation rubric, Red flags, Price and timeline guidance.',
+      'Focus on role scope, delivery expectations, required skills, screening signals, practical work sample evidence, and hiring risks.',
+      'Match the role to the project context, budget, launch timeline, stage, founder technical level, product type, and must-have features.',
+      'Do not require every common technology. Only include technologies or specialties that are directly useful for this project.',
+      'Avoid an unrealistically broad full-stack role unless the project scope, budget, and timeline make that breadth necessary; if it is necessary, explain the tradeoff clearly.',
+      'Make the practical take-home task small enough for screening and close enough to the actual project to reveal delivery judgment.',
+      'Price and timeline guidance must be directional, tied to assumptions, and written for a founder comparing candidates or contractors.',
       'Use the cards array to surface the role, engagement style, and hiring priority.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleSummary, responsibilities, mustHaveSkills, niceToHaveSkills, interviewQuestions }. Skills are categorized by importance and each interview question includes what strong answers should show.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, responsibilities, requiredSkills, niceToHaveSkills, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }. Each screening question includes what strong answers should show.',
     schemaName: 'DeveloperJobDescriptionOutput',
-    task: 'Write a developer job description for the most appropriate first technical hire or contractor. Make it specific to the project stage and scope. Define the work the person must actually own, the skills that matter, the questions that should be asked in interview, and the mistakes to avoid when hiring for this role.',
+    task: 'Write a developer job description for the most appropriate first technical hire or contractor. Make it specific to the project stage, scope, budget, and launch timeline. Define the role title, seniority, engagement type, work the person must own, required skills, useful but optional skills, screening questions, practical take-home task, evaluation rubric, red flags, and expected price and timeline guidance.',
   });
 
 const technicalSpecificationPrompt = (project: ProjectPromptContext) =>
@@ -200,7 +206,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: developerJobDescriptionPrompt,
     schema: developerJobDescriptionSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleSummary, responsibilities, mustHaveSkills, niceToHaveSkills, interviewQuestions }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, responsibilities, requiredSkills, niceToHaveSkills, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }.',
     schemaName: 'DeveloperJobDescriptionOutput',
   },
   quote_analysis: {
