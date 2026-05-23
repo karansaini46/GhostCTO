@@ -124,12 +124,14 @@ const developerJobDescriptionPrompt = (project: ProjectPromptContext) =>
       'Avoid an unrealistically broad full-stack role unless the project scope, budget, and timeline make that breadth necessary; if it is necessary, explain the tradeoff clearly.',
       'Make the practical take-home task small enough for screening and close enough to the actual project to reveal delivery judgment.',
       'Price and timeline guidance must be directional, tied to assumptions, and written for a founder comparing candidates or contractors.',
+      'Write jobPost as a polished post the founder can paste into LinkedIn or Upwork with role overview, project context, responsibilities, requirements, engagement details, budget guidance, and application instructions.',
+      'Use the provided hiring mode, developer hiring budget, location preference, and hiring urgency to shape employment type, title, requirements, screening flow, and price and timeline guidance.',
       'Use the cards array to surface the role, engagement style, and hiring priority.',
     ),
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, responsibilities, requiredSkills, niceToHaveSkills, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }. Each screening question includes what strong answers should show.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, jobPost, responsibilities, requiredSkills, niceToHaveSkills, technicalRequirements, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }. Each screening question includes what strong answers should show.',
     schemaName: 'DeveloperJobDescriptionOutput',
-    task: 'Write a developer job description for the most appropriate first technical hire or contractor. Make it specific to the project stage, scope, budget, and launch timeline. Define the role title, seniority, engagement type, work the person must own, required skills, useful but optional skills, screening questions, practical take-home task, evaluation rubric, red flags, and expected price and timeline guidance.',
+    task: 'Write a developer job description for the most appropriate first technical hire, contractor, agency, or technical partner. Make it specific to the project stage, scope, budget, hiring mode, location preference, urgency, and launch timeline. Define the role title, seniority, engagement type, job post, work the person must own, required skills, useful but optional skills, technical requirements, screening questions, practical take-home task, evaluation rubric, red flags, and expected price and timeline guidance.',
   });
 
 const technicalSpecificationPrompt = (project: ProjectPromptContext) =>
@@ -200,7 +202,7 @@ export const ghostctoModulePrompts = {
     buildPrompt: developerJobDescriptionPrompt,
     schema: developerJobDescriptionSchema,
     schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, responsibilities, requiredSkills, niceToHaveSkills, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }.',
+      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, jobPost, responsibilities, requiredSkills, niceToHaveSkills, technicalRequirements, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }.',
     schemaName: 'DeveloperJobDescriptionOutput',
   },
   quote_analysis: {

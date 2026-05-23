@@ -1,4 +1,5 @@
 import { apiRequest } from '../../lib/api';
+import type { DeveloperJdGenerationInput, DeveloperJdOutput } from './developer-jd-types';
 import type { TechnicalSpecGenerationInput, TechnicalSpecOutput } from './technical-spec-types';
 import type {
   Project,
@@ -60,6 +61,20 @@ export const generateTechnicalSpecRequest = (
 ) =>
   apiRequest<{ document: Project['documents'][number]; technicalSpec: TechnicalSpecOutput }>(
     `/projects/${projectId}/specs`,
+    {
+      body: JSON.stringify(payload),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
+export const generateDeveloperJdRequest = (
+  accessToken: string,
+  projectId: string,
+  payload: DeveloperJdGenerationInput,
+) =>
+  apiRequest<{ developerJobDescription: DeveloperJdOutput; document: Project['documents'][number] }>(
+    `/projects/${projectId}/developer-jd`,
     {
       body: JSON.stringify(payload),
       headers: authHeaders(accessToken),
