@@ -35,6 +35,15 @@ const mustHaveFeatureSchema = z.string().trim().min(12).max(1000);
 
 const specContextItemSchema = z.string().trim().min(2).max(280);
 
+const optionalTrimmedText = (maxCharacters: number) =>
+  z
+    .string()
+    .trim()
+    .max(maxCharacters)
+    .optional()
+    .nullable()
+    .transform((value) => (value ? value : null));
+
 export const projectPayloadSchema = z
   .object({
     biggestConcern: detailedText('Biggest concern', 50, 8, 1200),
@@ -117,7 +126,7 @@ export const projectDocumentsQuerySchema = z.object({
     }
 
     return 'roadmap';
-  }, z.enum(['roadmap', 'stack_advisor', 'technical_spec'])),
+  }, z.enum(['roadmap', 'stack_advisor', 'technical_spec', 'rate_validator'])),
 });
 
 export const stackAdviceOverridesSchema = z
@@ -148,8 +157,27 @@ export const technicalSpecRequestSchema = z
   })
   .strict();
 
+export const quoteAnalysisRequestSchema = z
+  .object({
+    countryMarket: optionalTrimmedText(120),
+    currency: z
+      .string()
+      .trim()
+      .toUpperCase()
+      .regex(/^[A-Z]{3}$/, 'Currency must be a three-letter code.')
+      .optional()
+      .nullable()
+      .transform((value) => value ?? null),
+    deadline: optionalTrimmedText(160),
+    developerType: z.enum(['freelancer', 'agency', 'unknown']).optional().default('unknown'),
+    projectUrgency: z.enum(['urgent', 'within_30_days', 'within_60_days', 'flexible']),
+    proposalText: detailedText('Proposal text', 120, 18, 20000),
+  })
+  .strict();
+
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;
 export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchema>;
+export type QuoteAnalysisRequestInput = z.infer<typeof quoteAnalysisRequestSchema>;
