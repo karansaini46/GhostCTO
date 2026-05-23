@@ -15,6 +15,7 @@ import { RateValidatorPage } from './features/projects/RateValidatorPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
 import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
+import { VettingScorecardPage } from './features/projects/VettingScorecardPage';
 
 export const App = () => (
   <AuthProvider>
@@ -82,6 +83,14 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id/rate-validator"
+          />
+          <Route
+            element={
+              <AppShell>
+                <VettingScorecardPage />
+              </AppShell>
+            }
+            path="/projects/:id/vetting"
           />
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />

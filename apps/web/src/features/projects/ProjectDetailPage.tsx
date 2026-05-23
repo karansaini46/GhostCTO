@@ -168,16 +168,21 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
           path: `/projects/${projectId}/specs`,
         }
       : module.documentTypes.includes('rate_validator')
-      ? {
-          label: 'Open validator',
-          path: `/projects/${projectId}/rate-validator`,
-        }
-      : module.documentTypes.includes('code_audit')
         ? {
-            label: 'Open auditor',
-            path: `/projects/${projectId}/code-audit`,
+            label: 'Open validator',
+            path: `/projects/${projectId}/rate-validator`,
           }
-        : null;
+        : module.documentTypes.includes('code_audit')
+          ? {
+              label: 'Open auditor',
+              path: `/projects/${projectId}/code-audit`,
+            }
+          : module.documentTypes.includes('vetting_scorecard')
+            ? {
+                label: 'Open vetting',
+                path: `/projects/${projectId}/vetting`,
+              }
+            : null;
   const status = document
     ? formatStatus(document.status)
     : contextReady

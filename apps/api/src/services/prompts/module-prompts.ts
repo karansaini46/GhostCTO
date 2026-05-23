@@ -183,6 +183,8 @@ const vettingScorecardPrompt = (project: ProjectPromptContext) =>
     requirements: joinRequirements(
       'The markdown report must support an interview or vendor evaluation decision, not just summarize impressions.',
       'Explain the scoring criteria in practical terms and make the final recommendation explicit.',
+      'Treat the founder concern, pasted portfolio, and pasted proposal as primary evidence.',
+      'Make red flags prominent and include exact proof to request before hiring.',
       'Use the cards array for overall score, recommendation, and the most important strengths or concerns.',
       'Make the difference between hire, interview with caution, avoid, and need more info obvious.',
     ),
