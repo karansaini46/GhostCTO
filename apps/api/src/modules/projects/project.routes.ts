@@ -2,6 +2,7 @@ import { Router } from 'express';
 
 import { asyncHandler } from '../../middleware/async-handler.js';
 import { authenticateRequest, requireAuth } from '../../middleware/auth.js';
+import { createDeveloperJd } from './developer-jd.controller.js';
 import { createProject, getProject, listProjects, updateProject } from './project.controller.js';
 import { generateRoadmap, listRoadmapDocuments } from './roadmap.controller.js';
 import { generateStackAdvice } from './stack-advice.controller.js';
@@ -15,6 +16,7 @@ projectRouter.post('/', asyncHandler(createProject));
 projectRouter.post('/:id/roadmap', asyncHandler(generateRoadmap));
 projectRouter.post('/:id/stack-advice', asyncHandler(generateStackAdvice));
 projectRouter.post('/:id/specs', asyncHandler(generateTechnicalSpec));
+projectRouter.post('/:id/developer-jd', asyncHandler(createDeveloperJd));
 projectRouter.get('/:id/documents', asyncHandler(listRoadmapDocuments));
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));

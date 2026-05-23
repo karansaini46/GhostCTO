@@ -117,7 +117,7 @@ export const projectDocumentsQuerySchema = z.object({
     }
 
     return 'roadmap';
-  }, z.enum(['roadmap', 'stack_advisor', 'technical_spec'])),
+  }, z.enum(['roadmap', 'stack_advisor', 'technical_spec', 'developer_jd'])),
 });
 
 export const stackAdviceOverridesSchema = z

@@ -65,6 +65,10 @@ const normalizeDocumentType = (type: string) => {
     return 'technical_spec';
   }
 
+  if (type === 'DEVELOPER_JD') {
+    return 'developer_jd';
+  }
+
   return type;
 };
 

@@ -187,18 +187,60 @@ const jobResponsibilitySchema = z
   })
   .strict();
 
-const skillSchema = z
+const interviewQuestionSchema = z
   .object({
-    importance: z.enum(['must_have', 'nice_to_have']),
+    goodAnswerSignals: z.array(nonEmptyText('Good answer signal', 180)).max(4),
+    question: nonEmptyText('Interview question', 220),
+  })
+  .strict();
+
+const developerJobProjectContextSchema = z
+  .object({
+    budgetFit: nonEmptyText('Budget fit', 280),
+    hiringScope: nonEmptyText('Hiring scope', 320),
+    productContext: nonEmptyText('Product context', 420),
+    stageFit: nonEmptyText('Stage fit', 280),
+  })
+  .strict();
+
+const developerJobSkillSchema = z
+  .object({
     skill: nonEmptyText('Skill', 180),
     whyItMatters: nonEmptyText('Skill rationale', 240),
   })
   .strict();
 
-const interviewQuestionSchema = z
+const takeHomeTaskSchema = z
   .object({
-    goodAnswerSignals: z.array(nonEmptyText('Good answer signal', 180)).max(4),
-    question: nonEmptyText('Interview question', 220),
+    evaluationFocus: z.array(nonEmptyText('Evaluation focus', 180)).min(3).max(6),
+    expectedDeliverables: z.array(nonEmptyText('Expected deliverable', 180)).min(2).max(6),
+    instructions: z.array(nonEmptyText('Task instruction', 260)).min(3).max(8),
+    timeBox: nonEmptyText('Time box', 120),
+    title: nonEmptyText('Task title', 140),
+  })
+  .strict();
+
+const evaluationRubricItemSchema = z
+  .object({
+    concernSignal: nonEmptyText('Concern signal', 220),
+    criterion: nonEmptyText('Rubric criterion', 160),
+    strongSignal: nonEmptyText('Strong signal', 220),
+    weight: nonEmptyText('Rubric weight', 80),
+  })
+  .strict();
+
+const redFlagSchema = z
+  .object({
+    redFlag: nonEmptyText('Red flag', 220),
+    whyItMatters: nonEmptyText('Red flag rationale', 260),
+  })
+  .strict();
+
+const priceTimelineGuidanceSchema = z
+  .object({
+    assumptions: z.array(nonEmptyText('Price and timeline assumption', 200)).min(2).max(6),
+    priceGuidance: nonEmptyText('Price guidance', 320),
+    timelineGuidance: nonEmptyText('Timeline guidance', 320),
   })
   .strict();
 
@@ -374,13 +416,21 @@ export const techStackRecommendationSchema = baseModuleOutputSchema.extend({
 });
 
 export const developerJobDescriptionSchema = baseModuleOutputSchema.extend({
-  interviewQuestions: z.array(interviewQuestionSchema).min(5).max(10),
-  mustHaveSkills: z.array(skillSchema).min(4).max(12),
+  employmentType: z.enum(['contractor', 'fractional', 'full_time', 'agency', 'mixed']),
+  evaluationRubric: z.array(evaluationRubricItemSchema).min(4).max(8),
   moduleType: z.literal('developer_job_description'),
+  niceToHaveSkills: z.array(developerJobSkillSchema).min(2).max(10),
+  priceTimelineGuidance: priceTimelineGuidanceSchema,
+  projectContext: developerJobProjectContextSchema,
+  redFlags: z.array(redFlagSchema).min(4).max(10),
+  requiredSkills: z.array(developerJobSkillSchema).min(4).max(12),
+  roleTitle: nonEmptyText('Role title', 140),
   roleSummary: nonEmptyText('Role summary', 320),
+  screeningQuestions: z.array(interviewQuestionSchema).min(5).max(10),
+  seniorityRecommendation: nonEmptyText('Seniority recommendation', 280),
   responsibilities: z.array(jobResponsibilitySchema).min(4).max(10),
   recommendation: nonEmptyText('Job description recommendation', 320),
-  niceToHaveSkills: z.array(skillSchema).min(3).max(10),
+  takeHomeTask: takeHomeTaskSchema,
 });
 
 export const technicalSpecificationSchema = baseModuleOutputSchema.extend({
