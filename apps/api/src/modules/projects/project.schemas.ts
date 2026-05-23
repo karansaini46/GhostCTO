@@ -135,6 +135,7 @@ export const projectDocumentsQuerySchema = z.object({
       'roadmap',
       'stack_advisor',
       'technical_spec',
+      'vetting_scorecard',
     ]),
   ),
 });
@@ -203,6 +204,22 @@ export const quoteAnalysisRequestSchema = z
   })
   .strict();
 
+export const vettingRequestSchema = z
+  .object({
+    portfolioText: detailedText('Portfolio or profile text', 120, 18, 20000),
+    quote: optionalTrimmedText(5000),
+    subjectName: z.string().trim().min(2, 'Name is required.').max(120, 'Name is too long.'),
+    websiteUrl: z
+      .string()
+      .trim()
+      .url('Enter a valid website URL.')
+      .max(2048, 'Website URL is too long.')
+      .optional()
+      .nullable()
+      .transform((value) => (value ? value : null)),
+  })
+  .strict();
+
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
@@ -210,3 +227,4 @@ export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchem
 export type TechnicalSpecRequestInput = z.infer<typeof technicalSpecRequestSchema>;
 export type CodeAuditRequestInput = z.infer<typeof codeAuditRequestSchema>;
 export type QuoteAnalysisRequestInput = z.infer<typeof quoteAnalysisRequestSchema>;
+export type VettingRequestInput = z.infer<typeof vettingRequestSchema>;

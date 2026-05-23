@@ -14,6 +14,7 @@ const stackAdviceDocumentType = 'STACK_ADVICE';
 const technicalSpecDocumentType = 'TECH_SPEC';
 const quoteAnalysisDocumentType = 'QUOTE_ANALYSIS';
 const codeAuditDocumentType = 'CODE_AUDIT';
+const vettingScorecardDocumentType = 'VETTING_SCORECARD';
 const developerJdDocumentType = 'DEVELOPER_JD';
 const roadmapDocumentTitle = 'Technical Roadmap';
 
@@ -90,6 +91,10 @@ const normalizeDocumentType = (type: string) => {
 
   if (type === codeAuditDocumentType) {
     return 'code_audit';
+  }
+
+  if (type === vettingScorecardDocumentType) {
+    return 'vetting_scorecard';
   }
 
   if (type === developerJdDocumentType) {
@@ -185,7 +190,8 @@ export const listRoadmapDocumentsForUser = async (
     | 'rate_validator'
     | 'roadmap'
     | 'stack_advisor'
-    | 'technical_spec' = 'roadmap',
+    | 'technical_spec'
+    | 'vetting_scorecard' = 'roadmap',
 ) => {
   await getProjectForUser(userId, projectId);
   let normalizedDocumentType = roadmapDocumentType;
@@ -198,6 +204,8 @@ export const listRoadmapDocumentsForUser = async (
     normalizedDocumentType = quoteAnalysisDocumentType;
   } else if (documentType === 'code_audit') {
     normalizedDocumentType = codeAuditDocumentType;
+  } else if (documentType === 'vetting_scorecard') {
+    normalizedDocumentType = vettingScorecardDocumentType;
   } else if (documentType === 'developer_jd') {
     normalizedDocumentType = developerJdDocumentType;
   }

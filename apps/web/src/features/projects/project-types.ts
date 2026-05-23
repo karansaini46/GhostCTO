@@ -74,4 +74,5 @@ export type ProjectDocumentType =
   | 'roadmap'
   | 'stack_advisor'
   | 'technical_spec'
-  | 'rate_validator';
+  | 'rate_validator'
+  | 'vetting_scorecard';

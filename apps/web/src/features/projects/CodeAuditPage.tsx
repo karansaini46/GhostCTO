@@ -207,43 +207,110 @@ const buildQuestionsCopyText = (questions: CodeAuditQuestion[]) =>
 const buildActionsCopyText = (actions: CodeAuditAction[]) =>
   actions.map((action) => `- ${action.action}\n  - ${action.reason}`).join('\n').trim();
 
+const downloadTextFile = (filename: string, content: string, mimeType = 'text/markdown;charset=utf-8') => {
+  const blob = new Blob([content], { type: mimeType });
+  const url = window.URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.rel = 'noreferrer';
+  anchor.style.display = 'none';
+
+  document.body.appendChild(anchor);
+  anchor.click();
+  document.body.removeChild(anchor);
+  window.URL.revokeObjectURL(url);
+};
+
+const severityOrder: CodeAuditSeverity[] = ['critical', 'high', 'medium', 'low'];
+
+const severityLabels: Record<CodeAuditSeverity, string> = {
+  critical: 'Critical',
+  high: 'High',
+  low: 'Low',
+  medium: 'Medium',
+};
+
+const severityDescriptions: Record<CodeAuditSeverity, string> = {
+  critical: 'Blocks trust or continuation until fixed.',
+  high: 'Can create meaningful delivery, security, or cost risk.',
+  medium: 'Needs attention before the project grows further.',
+  low: 'Useful context, but not urgent.',
+};
+
+const getSeverityItems = (items: CodeAuditFinding[], severity: CodeAuditSeverity) =>
+  items.filter((item) => item.severity === severity);
+
+const buildFindingQuestion = (item: CodeAuditFinding) => {
+  if (item.category === 'security') {
+    return `Show me exactly how you would remove ${item.title.toLowerCase()} risk before the next release.`;
+  }
+
+  if (item.category === 'scalability') {
+    return `What would you change in the next sprint to make ${item.title.toLowerCase()} safe at higher usage?`;
+  }
+
+  if (item.category === 'maintainability') {
+    return `How would you make ${item.title.toLowerCase()} easier for another developer to own?`;
+  }
+
+  if (item.category === 'delivery_risk') {
+    return `What is the concrete plan to close ${item.title.toLowerCase()} without adding hidden scope?`;
+  }
+
+  return `What specific change would you make to address ${item.title.toLowerCase()}?`;
+};
+
 type FindingGroupProps = {
   items: CodeAuditFinding[];
   title: string;
+  tone: 'neutral' | 'success' | 'warning' | 'danger';
+  subtitle: string;
 };
 
-const FindingGroup = ({ items, title }: FindingGroupProps) => (
+const FindingGroup = ({ items, subtitle, title, tone }: FindingGroupProps) => (
   <Card>
     <CardHeader>
-      <CardTitle>{title}</CardTitle>
-      <CardDescription>
-        {items.length > 0 ? `${items.length} item${items.length === 1 ? '' : 's'}` : 'Nothing material flagged'}
-      </CardDescription>
+      <div className="flex items-start justify-between gap-3">
+        <div>
+          <CardTitle>{title}</CardTitle>
+          <CardDescription>{subtitle}</CardDescription>
+        </div>
+        <Badge variant={tone}>{items.length > 0 ? `${items.length} finding${items.length === 1 ? '' : 's'}` : 'Clear'}</Badge>
+      </div>
     </CardHeader>
     <CardContent className="space-y-4">
       {items.length > 0 ? (
         items.map((item, index) => (
           <div className={index === 0 ? '' : 'border-t border-border pt-4'} key={`${item.title}-${index}`}>
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={getSeverityVariant(item.severity)}>{item.severity.toUpperCase()}</Badge>
+              <Badge variant={getSeverityVariant(item.severity)}>{severityLabels[item.severity]}</Badge>
               <Badge variant={priorityTone[item.priority]}>{item.priority.toUpperCase()}</Badge>
-              <span className="text-sm font-semibold text-text">{item.title}</span>
+              <Badge variant="neutral">{formatCategoryLabel(item.category)}</Badge>
+              <Badge variant="neutral">Confidence {item.confidenceLevel}</Badge>
             </div>
-            <p className="mt-3 text-sm leading-6 text-text">{item.explanation}</p>
-            <div className="mt-3 grid gap-3 sm:grid-cols-2">
+            <p className="mt-3 text-sm font-semibold leading-6 text-text">{item.title}</p>
+            <p className="mt-2 text-sm leading-6 text-text">{item.explanation}</p>
+            <div className="mt-3 grid gap-3 lg:grid-cols-2">
               <div className="rounded-md border border-border bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
-                <p className="mt-2 text-sm leading-6 text-text">{item.evidence}</p>
+                <p className="text-xs uppercase tracking-normal text-muted">Why the founder should care</p>
+                <p className="mt-2 text-sm leading-6 text-text">{item.impact}</p>
               </div>
               <div className="rounded-md border border-border bg-surface-raised p-3">
                 <p className="text-xs uppercase tracking-normal text-muted">Suggested fix</p>
                 <p className="mt-2 text-sm leading-6 text-text">{item.suggestedFix}</p>
               </div>
             </div>
-            <div className="mt-3 flex flex-wrap items-center gap-2">
-              <Badge variant="neutral">{formatCategoryLabel(item.category)}</Badge>
-              <Badge variant="neutral">Confidence {item.confidenceLevel}</Badge>
-              <Badge variant={getSeverityVariant(item.severity)}>{item.impact}</Badge>
+            <div className="mt-3 rounded-md border border-border bg-surface-raised p-3">
+              <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+              <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-sm leading-6 text-text">
+                {item.evidence}
+              </pre>
+            </div>
+            <div className="mt-3 rounded-md border border-border bg-surface-raised p-3">
+              <p className="text-xs uppercase tracking-normal text-muted">What to ask the developer</p>
+              <p className="mt-2 text-sm leading-6 text-text">{buildFindingQuestion(item)}</p>
             </div>
           </div>
         ))
@@ -313,6 +380,14 @@ const CodeAuditPage = () => {
 
   const activeDocument = generatedDocument ?? historyDocuments[0]?.document ?? null;
   const activeAudit = generatedAudit ?? historyDocuments[0]?.audit ?? null;
+  const severityGroups = useMemo(
+    () =>
+      severityOrder.map((severity) => ({
+        items: activeAudit ? getSeverityItems(activeAudit.findings, severity) : [],
+        severity,
+      })),
+    [activeAudit],
+  );
 
   const handleCopied = useCallback((label: string) => {
     setCopyLabel(label);
@@ -349,6 +424,34 @@ const CodeAuditPage = () => {
       setIsGenerating(false);
     }
   };
+
+  const handleExportReport = useCallback(() => {
+    if (!activeAudit) {
+      return;
+    }
+
+    const exportSections = [
+      `# Code Audit`,
+      '',
+      `## Executive summary`,
+      activeAudit.executiveSummary,
+      '',
+      `## Recommendation`,
+      activeAudit.recommendation,
+      '',
+      `## Disclaimer`,
+      activeAudit.disclaimer,
+      '',
+      activeAudit.reportMarkdown,
+    ]
+      .filter(Boolean)
+      .join('\n');
+
+    const fileName = `code-audit-${id ?? 'project'}.md`;
+
+    downloadTextFile(fileName, exportSections);
+    handleCopied('export');
+  }, [activeAudit, handleCopied, id]);
 
   if (isLoading) {
     return <LoadingState label="Loading code audit workspace..." />;
@@ -430,9 +533,18 @@ const CodeAuditPage = () => {
               </div>
             )}
 
-            <div className="flex items-center justify-between gap-3">
+            <div className="rounded-md border border-border bg-surface-raised p-4">
+              <p className="text-xs uppercase tracking-normal text-muted">Review limits</p>
+              <ul className="mt-2 space-y-2 text-sm leading-6 text-text">
+                <li>Public GitHub repositories only. Private repositories are not accessible in this version.</li>
+                <li>This is an advisory review, not a penetration test, certification, or code warranty.</li>
+                <li>Evidence is drawn from the supplied source only. Missing context will be called out explicitly.</li>
+              </ul>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="max-w-2xl text-sm leading-6 text-muted">
-                This is an advisory review, not a complete penetration test or security certification.
+                Use the result to decide whether to keep investing, slow down, or ask for a clearer fix plan.
               </p>
               <Button isLoading={isGenerating} type="submit">
                 Run audit
@@ -474,17 +586,36 @@ const CodeAuditPage = () => {
                   >
                     Copy report
                   </Button>
+                  <Button onClick={handleExportReport} size="sm" variant="secondary">
+                    Export report
+                  </Button>
                   {copyLabel === 'report' ? <span className="text-sm text-success">Copied</span> : null}
+                  {copyLabel === 'export' ? <span className="text-sm text-success">Exported</span> : null}
                 </div>
               </CardContent>
             </Card>
 
             <Card>
               <CardHeader>
-                <CardTitle>Headline signals</CardTitle>
-                <CardDescription>Fast scan of the most important signals.</CardDescription>
+                <CardTitle>Audit snapshot</CardTitle>
+                <CardDescription>At-a-glance view of the report structure and signal strength.</CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
+                <div className="grid gap-3 sm:grid-cols-2">
+                  {severityOrder.map((severity) => {
+                    const count = getSeverityItems(activeAudit.findings, severity).length;
+
+                    return (
+                      <div className="rounded-md border border-border bg-surface-raised p-3" key={severity}>
+                        <div className="flex items-center justify-between gap-3">
+                          <span className="text-sm font-medium text-text">{severityLabels[severity]}</span>
+                          <Badge variant={getSeverityVariant(severity)}>{count}</Badge>
+                        </div>
+                        <p className="mt-2 text-sm leading-6 text-muted">{severityDescriptions[severity]}</p>
+                      </div>
+                    );
+                  })}
+                </div>
                 {activeAudit.cards.length > 0 ? (
                   activeAudit.cards.map((card) => (
                     <div className="rounded-md border border-border bg-surface-raised p-3" key={card.title}>
@@ -517,31 +648,57 @@ const CodeAuditPage = () => {
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <FindingGroup items={activeAudit.findings} title="Prioritized findings" />
-            <FindingGroup items={activeAudit.criticalRisks} title="Critical risks" />
-            <FindingGroup items={activeAudit.securityIssues} title="Security issues" />
-            <FindingGroup items={activeAudit.scalabilityIssues} title="Scalability issues" />
-            <FindingGroup items={activeAudit.maintainabilityIssues} title="Maintainability issues" />
-            <FindingGroup items={activeAudit.rushedWorkSignals} title="Signs of rushed or poor work" />
+            <FindingGroup
+              items={severityGroups.find(({ severity }) => severity === 'critical')?.items ?? []}
+              subtitle="Stop-the-line issues that should be resolved before more budget goes in."
+              title="Critical"
+              tone="danger"
+            />
+            <FindingGroup
+              items={severityGroups.find(({ severity }) => severity === 'high')?.items ?? []}
+              subtitle="Material issues that can increase cost, delay delivery, or expose risk."
+              title="High"
+              tone="danger"
+            />
+            <FindingGroup
+              items={severityGroups.find(({ severity }) => severity === 'medium')?.items ?? []}
+              subtitle="Problems that should be tracked before the project grows further."
+              title="Medium"
+              tone="warning"
+            />
+            <FindingGroup
+              items={severityGroups.find(({ severity }) => severity === 'low')?.items ?? []}
+              subtitle="Lower-priority issues that are useful to note but not urgent."
+              title="Low"
+              tone="success"
+            />
+            <Card className="xl:col-span-2">
+              <CardHeader>
+                <CardTitle>Good signs</CardTitle>
+                <CardDescription>Areas that look reasonable and should be kept.</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {activeAudit.acceptableAreas.length > 0 ? (
+                  activeAudit.acceptableAreas.map((item) => (
+                    <div className="rounded-md border border-border bg-surface-raised p-3" key={item.area}>
+                      <p className="text-sm font-medium text-text">{item.area}</p>
+                      <p className="mt-2 text-sm leading-6 text-text">{item.explanation}</p>
+                      <div className="mt-3 rounded-md border border-border bg-surface p-3">
+                        <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+                        <pre className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-text">
+                          {item.evidence}
+                        </pre>
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm leading-6 text-muted">Nothing material stood out as a good sign.</p>
+                )}
+              </CardContent>
+            </Card>
           </div>
 
           <div className="grid gap-4 xl:grid-cols-2">
-            <Card>
-              <CardHeader>
-                <CardTitle>What is acceptable</CardTitle>
-                <CardDescription>Areas that look reasonable for the current stage.</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-3">
-                {activeAudit.acceptableAreas.map((item) => (
-                  <div className="rounded-md border border-border bg-surface-raised p-3" key={item.area}>
-                    <p className="text-sm font-medium text-text">{item.area}</p>
-                    <p className="mt-2 text-sm leading-6 text-muted">{item.explanation}</p>
-                    <p className="mt-2 text-xs uppercase tracking-normal text-muted">{item.evidence}</p>
-                  </div>
-                ))}
-              </CardContent>
-            </Card>
-
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between gap-3">

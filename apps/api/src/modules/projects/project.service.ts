@@ -73,6 +73,10 @@ const normalizeDocumentType = (type: string) => {
     return 'code_audit';
   }
 
+  if (type === 'VETTING_SCORECARD') {
+    return 'vetting_scorecard';
+  }
+
   if (type === 'DEVELOPER_JD') {
     return 'developer_jd';
   }

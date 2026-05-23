@@ -397,7 +397,30 @@ const scorecardCriterionSchema = z
   .object({
     criterion: nonEmptyText('Scorecard criterion', 200),
     notes: nonEmptyText('Scorecard notes', 260),
-    score: z.number().int().min(1).max(5),
+    score: z.number().int().min(1).max(10),
+  })
+  .strict();
+
+const vettingScoreSectionSchema = z
+  .object({
+    reasoning: nonEmptyText('Score reasoning', 300),
+    score: z.number().int().min(1).max(10),
+  })
+  .strict();
+
+const vettingFlagSchema = z
+  .object({
+    evidence: nonEmptyText('Vetting evidence', 360),
+    item: nonEmptyText('Vetting item', 220),
+    whyItMatters: nonEmptyText('Vetting impact', 320),
+  })
+  .strict();
+
+const vettingQuestionSchema = z
+  .object({
+    question: nonEmptyText('Interview question', 240),
+    reason: nonEmptyText('Interview question reason', 280),
+    strongAnswerSignals: z.array(nonEmptyText('Strong answer signal', 180)).min(2).max(5),
   })
   .strict();
 
@@ -628,12 +651,20 @@ export const codeAuditSchema = baseModuleOutputSchema.extend({
 export const vettingScorecardSchema = baseModuleOutputSchema.extend({
   concernSummary: nonEmptyText('Concern summary', 320),
   criteria: z.array(scorecardCriterionSchema).min(5).max(12),
-  followUpQuestions: z.array(nonEmptyText('Follow-up question', 220)).min(2).max(10),
+  finalRecommendation: z.enum(['hire', 'interview_with_caution', 'avoid', 'need_more_info']),
+  greenFlags: z.array(vettingFlagSchema).min(2).max(10),
+  interviewQuestions: z.array(vettingQuestionSchema).min(4).max(12),
+  missingProof: z.array(vettingFlagSchema).min(1).max(10),
   moduleType: z.literal('vetting_scorecard'),
-  overallScore: z.number().int().min(1).max(100),
-  recommendation: nonEmptyText('Scorecard recommendation', 320),
+  overallScore: z.number().int().min(1).max(10),
+  overallScoreReasoning: nonEmptyText('Overall score reasoning', 360),
+  pricingRiskScore: vettingScoreSectionSchema,
+  portfolioProofScore: vettingScoreSectionSchema,
+  recommendation: nonEmptyText('Scorecard recommendation', 360),
+  redFlags: z.array(vettingFlagSchema).min(2).max(10),
   strengths: z.array(nonEmptyText('Strength', 220)).min(2).max(10),
-  verdict: z.enum(['proceed', 'proceed_with_caution', 'hold', 'reject']),
+  technicalDepthScore: vettingScoreSectionSchema,
+  communicationClarityScore: vettingScoreSectionSchema,
 });
 
 export type RoadmapOutput = z.infer<typeof roadmapOutputSchema>;

@@ -9,6 +9,7 @@ import { analyzeQuote } from './quote-analysis.controller.js';
 import { generateRoadmap, listRoadmapDocuments } from './roadmap.controller.js';
 import { generateStackAdvice } from './stack-advice.controller.js';
 import { generateTechnicalSpec } from './technical-spec.controller.js';
+import { generateVettingScorecard } from './vetting.controller.js';
 
 export const projectRouter = Router();
 
@@ -20,6 +21,7 @@ projectRouter.post('/:id/roadmap', asyncHandler(generateRoadmap));
 projectRouter.post('/:id/stack-advice', asyncHandler(generateStackAdvice));
 projectRouter.post('/:id/specs', asyncHandler(generateTechnicalSpec));
 projectRouter.post('/:id/quote-analysis', asyncHandler(analyzeQuote));
+projectRouter.post('/:id/vetting', asyncHandler(generateVettingScorecard));
 projectRouter.post('/:id/developer-jd', asyncHandler(createDeveloperJd));
 projectRouter.get('/:id/documents', asyncHandler(listRoadmapDocuments));
 projectRouter.get('/', asyncHandler(listProjects));
