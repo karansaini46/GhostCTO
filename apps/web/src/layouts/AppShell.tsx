@@ -17,6 +17,8 @@ const navigationItems = [
   { label: 'Billing', to: '/billing' },
 ];
 
+const adminNavigationItem = { label: 'Admin', to: '/admin' };
+
 const Brand = () => (
   <div className="flex items-center gap-3">
     <div className="flex h-9 w-9 items-center justify-center rounded-md border border-accent/35 bg-accent/10 text-sm font-semibold text-accent">
@@ -39,6 +41,8 @@ const MenuMark = () => (
 
 const SidebarContent = () => {
   const { user } = useAuth();
+  const visibleNavigationItems =
+    user?.role === 'ADMIN' ? [...navigationItems, adminNavigationItem] : navigationItems;
 
   return (
     <div className="flex h-full flex-col">
@@ -46,7 +50,7 @@ const SidebarContent = () => {
         <Brand />
       </div>
       <nav className="flex-1 space-y-1 px-3 py-5">
-        {navigationItems.map((item) => (
+        {visibleNavigationItems.map((item) => (
           <NavLink
             className={({ isActive }) =>
               cn(

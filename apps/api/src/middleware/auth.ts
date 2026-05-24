@@ -25,3 +25,17 @@ export const requireAuth: RequestHandler = (request, _response, next) => {
 
   next();
 };
+
+export const requireAdmin: RequestHandler = (request, _response, next) => {
+  if (!request.user) {
+    next(new ApiError(401, 'UNAUTHORIZED', 'Authentication required.'));
+    return;
+  }
+
+  if (request.user.role !== 'ADMIN') {
+    next(new ApiError(403, 'FORBIDDEN', 'Admin access required.'));
+    return;
+  }
+
+  next();
+};
