@@ -406,7 +406,7 @@ export const ProjectDetailPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate('/')}>Back to workspace</Button>}
+          actions={<Button onClick={() => navigate('/workspace')}>Back to workspace</Button>}
           description={error ?? 'Project not found.'}
           eyebrow="Project context"
           title="Unable to load project"
@@ -679,7 +679,7 @@ export const ProjectDetailPage = () => {
         </CardContent>
       </Card>
 
-      <Link className="text-sm font-medium text-accent hover:text-accent/80" to="/">
+      <Link className="text-sm font-medium text-accent hover:text-accent/80" to="/workspace">
         Back to workspace
       </Link>
     </div>

@@ -405,7 +405,7 @@ export const ProjectChatPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate('/')}>Back to workspace</Button>}
+          actions={<Button onClick={() => navigate('/workspace')}>Back to workspace</Button>}
           description={error ?? 'Project not found.'}
           eyebrow="Ongoing CTO Chat"
           title="Unable to load chat"

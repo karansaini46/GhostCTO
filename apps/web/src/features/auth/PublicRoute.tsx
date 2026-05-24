@@ -15,7 +15,7 @@ export const PublicRoute = () => {
   }
 
   if (status === 'authenticated') {
-    return <Navigate replace to="/" />;
+    return <Navigate replace to="/workspace" />;
   }
 
   return <Outlet />;
