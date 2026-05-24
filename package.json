@@ -14,6 +14,9 @@
     "dev:api": "pnpm --filter @ghostcto/api dev",
     "build": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api build",
     "lint": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api lint",
+    "test": "pnpm test:backend && pnpm test:frontend",
+    "test:backend": "pnpm --filter @ghostcto/api test",
+    "test:frontend": "pnpm --filter @ghostcto/web test",
     "format": "prettier --write ."
   },
   "devDependencies": {

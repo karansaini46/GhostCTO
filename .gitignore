@@ -1,11 +1,14 @@
 node_modules/
 dist/
 coverage/
+playwright-report/
+test-results/
 apps/api/src/generated/
 .DS_Store
 .env
 .env.*
 !.env.example
+!.env.test.example
 pnpm-debug.log*
 npm-debug.log*
 yarn-debug.log*

@@ -61,7 +61,7 @@ const toStringArray = (value: Prisma.JsonValue): string[] => {
   return value.filter((item): item is string => typeof item === 'string');
 };
 
-const buildAnswerRecords = (userId: string, input: ProjectAnswerInput) =>
+const buildAnswerRecords = (input: ProjectAnswerInput) =>
   answerDefinitions.flatMap((definition) => {
     const value = input[definition.key];
 
@@ -78,7 +78,6 @@ const buildAnswerRecords = (userId: string, input: ProjectAnswerInput) =>
         step: definition.step,
       },
       type: 'project_onboarding',
-      userId,
     };
   });
 
@@ -237,7 +236,7 @@ export const createProjectForUser = async (userId: string, input: ProjectPayload
       data: {
         ...buildProjectCreateData(userId, slug, input),
         answers: {
-          create: buildAnswerRecords(userId, input),
+          create: buildAnswerRecords(input),
         },
       },
       include: projectInclude,
@@ -305,13 +304,14 @@ export const updateProjectForUser = async (
       },
     });
 
-    const answers = buildAnswerRecords(userId, input);
+    const answers = buildAnswerRecords(input);
 
     for (const answer of answers) {
       await transaction.projectAnswer.upsert({
         create: {
           ...answer,
           projectId,
+          userId,
         },
         update: {
           answer: answer.answer,
