@@ -150,4 +150,30 @@ describe('generation routes', () => {
 
     expect(provider.generateStructured).not.toHaveBeenCalled();
   });
+
+  it('rejects unexpected bodies on bodyless generation routes', async () => {
+    const session = await createSession('owner');
+    const { project } = await createProject(session);
+    const provider = createMockProvider();
+
+    setModelProviderForTesting(provider);
+
+    await request(app)
+      .post(`/projects/${project.id}/roadmap`)
+      .set(session.authHeader)
+      .send({
+        unexpected: true,
+      })
+      .expect(400);
+
+    await request(app)
+      .post(`/projects/${project.id}/developer-jd`)
+      .set(session.authHeader)
+      .send({
+        roleTitle: 'Full-stack developer',
+      })
+      .expect(400);
+
+    expect(provider.generateStructured).not.toHaveBeenCalled();
+  });
 });

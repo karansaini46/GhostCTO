@@ -2,6 +2,9 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
+const nodeEnv = process.env.NODE_ENV ?? 'development';
+const isProduction = nodeEnv === 'production';
+
 const parsePort = (value: string | undefined): number => {
   const port = Number(value ?? 4000);
 
@@ -12,13 +15,50 @@ const parsePort = (value: string | undefined): number => {
   return port;
 };
 
-const parseOrigins = (value: string | undefined): string[] => {
-  const origins = value ?? 'http://localhost:5173';
+const normalizeOrigin = (origin: string): string => {
+  if (origin === '*') {
+    throw new Error('CLIENT_ORIGIN cannot include wildcard origins.');
+  }
 
-  return origins
+  let url: URL;
+
+  try {
+    url = new URL(origin);
+  } catch {
+    throw new Error('CLIENT_ORIGIN must contain valid HTTP or HTTPS origins.');
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('CLIENT_ORIGIN must contain only HTTP or HTTPS origins.');
+  }
+
+  if (url.username || url.password || url.pathname !== '/' || url.search || url.hash) {
+    throw new Error('CLIENT_ORIGIN entries must be origins, for example https://app.example.com.');
+  }
+
+  return url.origin;
+};
+
+const parseOrigins = (value: string | undefined): string[] => {
+  if (!value?.trim()) {
+    if (isProduction) {
+      throw new Error('CLIENT_ORIGIN is required in production.');
+    }
+
+    return ['http://localhost:5173'];
+  }
+
+  const origins = value
     .split(',')
     .map((origin) => origin.trim())
-    .filter(Boolean);
+    .filter(Boolean)
+    .map(normalizeOrigin);
+
+  if (!origins.length) {
+    throw new Error('CLIENT_ORIGIN must include at least one allowed origin.');
+  }
+
+  return [...new Set(origins)];
 };
 
 const parsePositiveInteger = (value: string | undefined, fallback: number): number => {
@@ -40,8 +80,6 @@ const parseSameSite = (value: string | undefined): 'lax' | 'strict' | 'none' => 
 
   throw new Error('AUTH_COOKIE_SAMESITE must be lax, strict, or none.');
 };
-
-const nodeEnv = process.env.NODE_ENV ?? 'development';
 
 export const config = {
   clientOrigins: parseOrigins(process.env.CLIENT_ORIGIN),
@@ -81,7 +119,7 @@ export const config = {
   googleFrontendRedirectUrl: process.env.GOOGLE_FRONTEND_REDIRECT_URL?.trim(),
   refreshTokenBytes: parsePositiveInteger(process.env.REFRESH_TOKEN_BYTES, 48),
   refreshTokenTtlDays: parsePositiveInteger(process.env.REFRESH_TOKEN_TTL_DAYS, 30),
-  isProduction: nodeEnv === 'production',
+  isProduction,
   jsonLimit: process.env.JSON_LIMIT ?? '1mb',
   modelProviderApiKey: process.env.MODEL_PROVIDER_API_KEY?.trim(),
   modelProviderBaseUrl:

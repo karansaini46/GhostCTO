@@ -1,10 +1,15 @@
 import request from 'supertest';
 import { describe, expect, it } from 'vitest';
 
+import { prisma } from '../../infrastructure/database/prisma.js';
 import { app, createSession, testPassword, uniqueEmail } from '../../test/helpers.js';
+import { hashToken } from './auth.tokens.js';
 
 const getRefreshCookie = (cookies: string[] | undefined) =>
   cookies?.find((cookie) => cookie.startsWith('ghostcto_refresh_token='));
+
+const getRefreshTokenFromCookie = (cookie: string) =>
+  cookie.split(';')[0]?.replace('ghostcto_refresh_token=', '') ?? '';
 
 describe('auth routes', () => {
   it('registers a founder account and returns a safe session', async () => {
@@ -27,7 +32,20 @@ describe('auth routes', () => {
       role: 'FOUNDER',
     });
     expect(response.body.user.passwordHash).toBeUndefined();
-    expect(getRefreshCookie(response.headers['set-cookie'])).toEqual(expect.any(String));
+
+    const refreshCookie = getRefreshCookie(response.headers['set-cookie']);
+
+    expect(refreshCookie).toEqual(expect.any(String));
+
+    const refreshToken = getRefreshTokenFromCookie(refreshCookie as string);
+    const refreshTokenRecord = await prisma.refreshToken.findUnique({
+      where: {
+        tokenHash: hashToken(refreshToken),
+      },
+    });
+
+    expect(refreshTokenRecord?.tokenHash).toHaveLength(64);
+    expect(refreshTokenRecord?.tokenHash).not.toBe(refreshToken);
   });
 
   it('rejects duplicate registrations', async () => {
@@ -45,6 +63,20 @@ describe('auth routes', () => {
     expect(response.body.error).toMatchObject({
       code: 'EMAIL_IN_USE',
     });
+  });
+
+  it('rejects unknown fields on auth mutations', async () => {
+    const response = await request(app)
+      .post('/auth/register')
+      .send({
+        email: uniqueEmail(),
+        name: 'Extra Field Founder',
+        password: testPassword,
+        plan: 'LIFETIME',
+      })
+      .expect(400);
+
+    expect(response.body.error.code).toBe('VALIDATION_ERROR');
   });
 
   it('logs in with valid credentials and rejects invalid credentials', async () => {

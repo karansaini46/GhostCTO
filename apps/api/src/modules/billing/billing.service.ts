@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { config } from '../../core/config.js';
 import { prisma } from '../../infrastructure/database/prisma.js';
 import { ApiError } from '../../lib/api-error.js';
@@ -90,9 +92,15 @@ const verifyGumroadLicense = async (
   return (await response.json()) as GumroadLicenseVerificationResponse;
 };
 
+const hashLicenseKey = (licenseKey: string) =>
+  crypto.createHash('sha256').update(licenseKey).digest('hex');
+
+const getLicenseKeyLast4 = (licenseKey: string) => licenseKey.trim().slice(-4);
+
 const getPaymentProviderId = (
   purchase: NonNullable<GumroadLicenseVerificationResponse['purchase']>,
-) => purchase.sale_id ?? purchase.id ?? purchase.license_key ?? 'gumroad-license';
+  licenseKey: string,
+) => purchase.sale_id ?? purchase.id ?? `license:${hashLicenseKey(licenseKey)}`;
 
 const toAmountCents = (purchase: NonNullable<GumroadLicenseVerificationResponse['purchase']>) => {
   const amount = Number(purchase.price ?? 0);
@@ -102,7 +110,13 @@ const toAmountCents = (purchase: NonNullable<GumroadLicenseVerificationResponse[
 
 const toSerializablePurchase = (
   purchase: NonNullable<GumroadLicenseVerificationResponse['purchase']>,
-) => JSON.parse(JSON.stringify(purchase)) as Record<string, unknown>;
+) => {
+  const serialized = JSON.parse(JSON.stringify(purchase)) as Record<string, unknown>;
+
+  delete serialized.license_key;
+
+  return serialized;
+};
 
 const isActivePurchase = (purchase: NonNullable<GumroadLicenseVerificationResponse['purchase']>) =>
   !purchase.refunded &&
@@ -173,16 +187,38 @@ export const verifyLicenseForUser = async (userId: string, input: LicenseVerific
   }
 
   const now = new Date();
-  const providerPaymentId = getPaymentProviderId(purchase);
+  const providerPaymentId = getPaymentProviderId(purchase, input.licenseKey);
   const amountCents = toAmountCents(purchase);
   const currency = toCurrencyCode(purchase.currency);
   const metadata = {
-    licenseKey: input.licenseKey,
+    licenseKeyHash: hashLicenseKey(input.licenseKey),
+    licenseKeyLast4: getLicenseKeyLast4(input.licenseKey),
     purchase: toSerializablePurchase(purchase),
     verifiedAt: now.toISOString(),
   } as Prisma.InputJsonValue;
 
   const [user, payment] = await prisma.$transaction(async (transaction) => {
+    const existingPayment = await transaction.payment.findUnique({
+      select: {
+        id: true,
+        userId: true,
+      },
+      where: {
+        provider_providerPaymentId: {
+          provider: 'GUMROAD',
+          providerPaymentId,
+        },
+      },
+    });
+
+    if (existingPayment && existingPayment.userId !== userId) {
+      throw new ApiError(
+        409,
+        'LICENSE_ALREADY_REDEEMED',
+        'This license key is already linked to another account.',
+      );
+    }
+
     const updatedUser = await transaction.user.update({
       data: {
         plan: 'LIFETIME',
@@ -193,38 +229,32 @@ export const verifyLicenseForUser = async (userId: string, input: LicenseVerific
       },
     });
 
-    const savedPayment = await transaction.payment.upsert({
-      create: {
-        amountCents,
-        currency,
-        metadata,
-        paidAt: now,
-        provider: 'GUMROAD',
-        providerCustomerId: purchase.purchaser_id ?? purchase.email ?? null,
-        providerPaymentId,
-        providerProductId: purchase.product_id ?? null,
-        status: 'PAID',
-        type: 'lifetime_access',
-        userId,
-      },
-      update: {
-        amountCents,
-        currency,
-        metadata,
-        paidAt: now,
-        providerCustomerId: purchase.purchaser_id ?? purchase.email ?? null,
-        providerProductId: purchase.product_id ?? null,
-        status: 'PAID',
-        type: 'lifetime_access',
-        userId,
-      },
-      where: {
-        provider_providerPaymentId: {
-          provider: 'GUMROAD',
-          providerPaymentId,
-        },
-      },
-    });
+    const paymentData = {
+      amountCents,
+      currency,
+      metadata,
+      paidAt: now,
+      providerCustomerId: purchase.purchaser_id ?? purchase.email ?? null,
+      providerProductId: purchase.product_id ?? null,
+      status: 'PAID' as const,
+      type: 'lifetime_access',
+      userId,
+    };
+
+    const savedPayment = existingPayment
+      ? await transaction.payment.update({
+          data: paymentData,
+          where: {
+            id: existingPayment.id,
+          },
+        })
+      : await transaction.payment.create({
+          data: {
+            ...paymentData,
+            provider: 'GUMROAD',
+            providerPaymentId,
+          },
+        });
 
     return [updatedUser, savedPayment] as const;
   });

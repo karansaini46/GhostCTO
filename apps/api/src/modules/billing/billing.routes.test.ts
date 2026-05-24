@@ -1,6 +1,7 @@
 import request from 'supertest';
 import { describe, expect, it, vi } from 'vitest';
 
+import { prisma } from '../../infrastructure/database/prisma.js';
 import { app, createSession } from '../../test/helpers.js';
 
 describe('billing routes', () => {
@@ -65,6 +66,22 @@ describe('billing routes', () => {
       type: 'lifetime_access',
     });
     expect(response.body.billingStatus.plan).toBe('LIFETIME');
+
+    const payment = await prisma.payment.findUnique({
+      where: {
+        provider_providerPaymentId: {
+          provider: 'GUMROAD',
+          providerPaymentId: 'sale-1',
+        },
+      },
+    });
+    const metadata = payment?.metadata as
+      | { licenseKey?: string; licenseKeyHash?: string; purchase?: { license_key?: string } }
+      | undefined;
+
+    expect(metadata?.licenseKey).toBeUndefined();
+    expect(metadata?.licenseKeyHash).toHaveLength(64);
+    expect(metadata?.purchase?.license_key).toBeUndefined();
   });
 
   it('maps inactive or invalid Gumroad licenses to a validation error', async () => {
@@ -98,5 +115,57 @@ describe('billing routes', () => {
       .expect(400);
 
     expect(response.body.error.code).toBe('INVALID_LICENSE_KEY');
+  });
+
+  it('prevents a license from being linked to another account', async () => {
+    const owner = await createSession('owner');
+    const other = await createSession('other');
+
+    vi.stubGlobal(
+      'fetch',
+      vi.fn(
+        async () =>
+          new Response(
+            JSON.stringify({
+              purchase: {
+                currency: 'usd',
+                email: owner.user.email,
+                license_key: 'shared-license-key',
+                price: 149,
+                product_id: 'test-product',
+                purchaser_id: 'customer-1',
+                sale_id: 'shared-sale',
+                sale_timestamp: '2026-05-01T00:00:00.000Z',
+              },
+              success: true,
+              uses: 1,
+            }),
+            {
+              headers: {
+                'Content-Type': 'application/json',
+              },
+              status: 200,
+            },
+          ),
+      ),
+    );
+
+    await request(app)
+      .post('/billing/verify')
+      .set(owner.authHeader)
+      .send({
+        licenseKey: 'shared-license-key',
+      })
+      .expect(201);
+
+    const response = await request(app)
+      .post('/billing/verify')
+      .set(other.authHeader)
+      .send({
+        licenseKey: 'shared-license-key',
+      })
+      .expect(409);
+
+    expect(response.body.error.code).toBe('LICENSE_ALREADY_REDEEMED');
   });
 });
