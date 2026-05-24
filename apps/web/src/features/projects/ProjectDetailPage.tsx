@@ -15,6 +15,8 @@ import {
   PageHeader,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { getBillingStatusRequest } from '../billing/billing-api';
+import type { BillingStatus } from '../billing/billing-types';
 import { exportProjectDocumentPdfRequest, getProjectRequest } from './project-api';
 import { getProjectOptionLabel } from './project-options';
 import type { Project, ProjectAnswer, ProjectDocument } from './project-types';
@@ -178,11 +180,12 @@ const DetailBlock = ({ label, value }: DetailBlockProps) => (
 type ModuleCardProps = {
   contextReady: boolean;
   document: ProjectDocument | null;
+  isLocked: boolean;
   module: WorkspaceModule;
   projectId: string;
 };
 
-const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardProps) => {
+const ModuleCard = ({ contextReady, document, isLocked, module, projectId }: ModuleCardProps) => {
   const moduleLink =
     module.title === 'CTO Chat'
       ? {
@@ -217,16 +220,22 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
                 : null;
   const status = document
     ? formatStatus(document.status)
+    : isLocked
+      ? 'Locked'
     : contextReady
       ? 'Ready'
       : 'Needs context';
   const variant = document
     ? getStatusVariant(document.status)
+    : isLocked
+      ? 'warning'
     : contextReady
       ? 'accent'
       : 'warning';
   const nextAction = !contextReady
     ? 'Complete summary, customer, stage, and launch scope first'
+    : isLocked
+      ? 'Activate lifetime access to unlock this module'
     : document
       ? document.status === 'COMPLETED'
         ? 'Review the saved document'
@@ -250,9 +259,9 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
         <div className="mt-4">
           <Link
             className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium tracking-normal text-text transition-colors hover:border-accent/35 hover:bg-surface-raised/80"
-            to={moduleLink.path}
+            to={isLocked && !document ? '/billing' : moduleLink.path}
           >
-            {moduleLink.label}
+            {isLocked && !document ? 'Unlock access' : moduleLink.label}
           </Link>
         </div>
       ) : null}
@@ -263,10 +272,11 @@ const ModuleCard = ({ contextReady, document, module, projectId }: ModuleCardPro
 export const ProjectDetailPage = () => {
   const navigate = useNavigate();
   const { id } = useParams();
-  const { accessToken } = useAuth();
+  const { accessToken, user } = useAuth();
   const [error, setError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportingDocumentId, setExportingDocumentId] = useState<string | null>(null);
+  const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<Project | null>(null);
 
@@ -327,6 +337,34 @@ export const ProjectDetailPage = () => {
       active = false;
     };
   }, [accessToken, id]);
+
+  useEffect(() => {
+    if (!accessToken) {
+      return;
+    }
+
+    let active = true;
+
+    const loadBillingStatus = async () => {
+      try {
+        const response = await getBillingStatusRequest(accessToken);
+
+        if (active) {
+          setBillingStatus(response.billingStatus);
+        }
+      } catch {
+        if (active) {
+          setBillingStatus(null);
+        }
+      }
+    };
+
+    void loadBillingStatus();
+
+    return () => {
+      active = false;
+    };
+  }, [accessToken]);
 
   const moduleDocuments = useMemo(() => {
     const documentsByType = new Map<string, ProjectDocument>();
@@ -393,6 +431,8 @@ export const ProjectDetailPage = () => {
     project.currentStage &&
     project.mustHaveFeatures.length > 0,
   );
+  const isLifetimePlan = user?.plan === 'LIFETIME';
+  const generationLimitReached = !isLifetimePlan && billingStatus?.access.canGenerate === false;
 
   return (
     <div className="space-y-8">
@@ -412,7 +452,26 @@ export const ProjectDetailPage = () => {
         <Badge>{project.industry ?? 'Industry not set'}</Badge>
         <Badge>{getProjectOptionLabel.currentStage(project.currentStage)}</Badge>
         <Badge>{contextReady ? 'Context ready' : 'Context needs review'}</Badge>
+        <Badge variant={isLifetimePlan ? 'success' : 'warning'}>
+          {isLifetimePlan ? 'Lifetime access' : 'Free plan'}
+        </Badge>
       </div>
+
+      {generationLimitReached ? (
+        <Card className="border-warning/35 bg-warning/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div>
+              <p className="text-sm font-medium text-warning">Free document limit reached</p>
+              <p className="mt-1 text-sm leading-6 text-muted">
+                Activate lifetime access to generate more project documents.
+              </p>
+            </div>
+            <Button onClick={() => navigate('/billing')} variant="secondary">
+              Open billing
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
 
       <Card>
         <CardHeader>
@@ -458,6 +517,9 @@ export const ProjectDetailPage = () => {
               <ModuleCard
                 contextReady={contextReady}
                 document={document}
+                isLocked={
+                  generationLimitReached && module.documentTypes.length > 0 && !document
+                }
                 key={module.title}
                 module={module}
                 projectId={project.id}
@@ -534,8 +596,15 @@ export const ProjectDetailPage = () => {
 
       <Card>
         <CardHeader>
-          <CardTitle>Recent documents</CardTitle>
-          <CardDescription>Latest completed and in-progress project documents.</CardDescription>
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+            <div>
+              <CardTitle>Recent documents</CardTitle>
+              <CardDescription>Latest completed and in-progress project documents.</CardDescription>
+            </div>
+            <Button onClick={() => navigate(`/projects/${project.id}/documents`)} variant="secondary">
+              View all documents
+            </Button>
+          </div>
         </CardHeader>
         <CardContent>
           {exportError ? (
@@ -557,6 +626,7 @@ export const ProjectDetailPage = () => {
                           {document.title}
                         </h3>
                         <Badge>{getDocumentTypeLabel(document.type)}</Badge>
+                        <Badge variant="accent">v{document.version}</Badge>
                       </div>
                       <p className="mt-2 text-sm leading-6 text-muted">
                         {document.summary ?? 'No summary saved for this document.'}

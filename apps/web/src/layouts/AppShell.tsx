@@ -4,6 +4,7 @@ import { NavLink, useNavigate } from 'react-router-dom';
 
 import { Button } from '../components/ui';
 import { useAuth } from '../features/auth/auth-context';
+import { getPlanLabel } from '../features/billing/billing-plan';
 import { cn } from '../lib/cn';
 
 type AppShellProps = {
@@ -13,6 +14,7 @@ type AppShellProps = {
 const navigationItems = [
   { label: 'Workspace', to: '/' },
   { label: 'New project', to: '/projects/new' },
+  { label: 'Billing', to: '/billing' },
 ];
 
 const Brand = () => (
@@ -35,39 +37,47 @@ const MenuMark = () => (
   </span>
 );
 
-const SidebarContent = () => (
-  <div className="flex h-full flex-col">
-    <div className="border-b border-border px-5 py-5">
-      <Brand />
-    </div>
-    <nav className="flex-1 space-y-1 px-3 py-5">
-      {navigationItems.map((item) => (
-        <NavLink
-          className={({ isActive }) =>
-            cn(
-              'flex w-full items-center rounded-md px-3 py-2.5 text-left text-sm font-medium tracking-normal transition-colors',
-              isActive
-                ? 'bg-surface-raised text-text'
-                : 'text-muted hover:bg-surface-raised hover:text-text',
-            )
-          }
-          key={item.label}
-          to={item.to}
-        >
-          {item.label}
-        </NavLink>
-      ))}
-    </nav>
-    <div className="border-t border-border p-4">
-      <div className="rounded-lg border border-border bg-surface-raised p-4">
-        <p className="text-sm font-medium tracking-normal text-text">Private workspace</p>
-        <p className="mt-1 text-sm leading-6 text-muted">
-          Structured for account review and project execution.
-        </p>
+const SidebarContent = () => {
+  const { user } = useAuth();
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="border-b border-border px-5 py-5">
+        <Brand />
+      </div>
+      <nav className="flex-1 space-y-1 px-3 py-5">
+        {navigationItems.map((item) => (
+          <NavLink
+            className={({ isActive }) =>
+              cn(
+                'flex w-full items-center rounded-md px-3 py-2.5 text-left text-sm font-medium tracking-normal transition-colors',
+                isActive
+                  ? 'bg-surface-raised text-text'
+                  : 'text-muted hover:bg-surface-raised hover:text-text',
+              )
+            }
+            key={item.label}
+            to={item.to}
+          >
+            {item.label}
+          </NavLink>
+        ))}
+      </nav>
+      <div className="border-t border-border p-4">
+        <div className="rounded-lg border border-border bg-surface-raised p-4">
+          <p className="text-sm font-medium tracking-normal text-text">
+            {getPlanLabel(user?.plan)} plan
+          </p>
+          <p className="mt-1 text-sm leading-6 text-muted">
+            {user?.plan === 'LIFETIME'
+              ? 'All workspace features are unlocked.'
+              : 'Free limits apply until lifetime access is active.'}
+          </p>
+        </div>
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 export const AppShell = ({ children }: AppShellProps) => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);

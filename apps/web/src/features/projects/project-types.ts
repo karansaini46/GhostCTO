@@ -31,11 +31,13 @@ export type ProjectDocument = {
   content: string | null;
   id: string;
   metadata: unknown;
+  projectId: string | null;
   status: string;
   summary: string | null;
   title: string;
   type: string;
   updatedAt: string;
+  version: number;
 };
 
 export type ProjectChatMessageRole = 'founder' | 'advisor' | 'system';

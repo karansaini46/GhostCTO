@@ -8,6 +8,11 @@ import {
   type ProjectPromptAnswer,
   type ProjectPromptContext,
 } from '../../services/prompts/index.js';
+import {
+  createVersionedGeneratedDocument,
+  serializeGeneratedDocument,
+} from './document-history.service.js';
+import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { VettingRequestInput } from './project.schemas.js';
 
 const vettingScorecardType = 'VETTING_SCORECARD';
@@ -22,22 +27,6 @@ const projectWorkspaceInclude = {
 } satisfies Prisma.ProjectInclude;
 
 type ProjectWorkspace = Prisma.ProjectGetPayload<{ include: typeof projectWorkspaceInclude }>;
-
-type GeneratedVettingDocument = Prisma.GeneratedDocumentGetPayload<{
-  select: {
-    completedAt: true;
-    content: true;
-    createdAt: true;
-    id: true;
-    metadata: true;
-    projectId: true;
-    status: true;
-    summary: true;
-    title: true;
-    type: true;
-    updatedAt: true;
-  };
-}>;
 
 type VettingReportRecord = Prisma.VettingReportGetPayload<{
   select: {
@@ -119,23 +108,6 @@ const toProjectPromptContext = (
   targetCustomer: project.targetCustomer,
 });
 
-const normalizeDocumentType = (type: string) =>
-  type === vettingScorecardType ? 'vetting_scorecard' : type;
-
-const serializeGeneratedDocument = (document: GeneratedVettingDocument) => ({
-  completedAt: document.completedAt?.toISOString() ?? null,
-  content: document.content,
-  createdAt: document.createdAt.toISOString(),
-  id: document.id,
-  metadata: document.metadata,
-  projectId: document.projectId,
-  status: document.status,
-  summary: document.summary,
-  title: document.title,
-  type: normalizeDocumentType(document.type),
-  updatedAt: document.updatedAt.toISOString(),
-});
-
 const serializeVettingReport = (report: VettingReportRecord) => ({
   completedAt: report.completedAt?.toISOString() ?? null,
   createdAt: report.createdAt.toISOString(),
@@ -178,6 +150,7 @@ export const generateVettingScorecardForUser = async (
   input: VettingRequestInput,
 ) => {
   const project = await getProjectForUser(userId, projectId);
+  await enforceDailyGenerationLimitForUser(userId);
   const promptContext = toProjectPromptContext(project, input);
   const provider = getModelProvider();
   const schema = getGhostctoModuleSchema('vetting_scorecard');
@@ -238,38 +211,23 @@ export const generateVettingScorecardForUser = async (
       },
     });
 
-    const generatedDocument = await transaction.generatedDocument.create({
-      data: {
-        completedAt: generatedAt,
-        content: generation.data.reportMarkdown,
-        metadata: {
-          generatedAt: generatedAt.toISOString(),
-          moduleType: generation.data.moduleType,
-          request: input,
-          usage,
-          vettingReportId: vettingReportRecord.id,
-          vettingScorecard: generation.data,
-        },
-        projectId: project.id,
-        status: 'COMPLETED',
-        summary,
-        title: vettingScorecardTitle,
-        type: vettingScorecardType,
-        userId,
+    const generatedDocument = await createVersionedGeneratedDocument(transaction, {
+      completedAt: generatedAt,
+      content: generation.data.reportMarkdown,
+      metadata: {
+        generatedAt: generatedAt.toISOString(),
+        moduleType: generation.data.moduleType,
+        request: input,
+        usage,
+        vettingReportId: vettingReportRecord.id,
+        vettingScorecard: generation.data,
       },
-      select: {
-        completedAt: true,
-        content: true,
-        createdAt: true,
-        id: true,
-        metadata: true,
-        projectId: true,
-        status: true,
-        summary: true,
-        title: true,
-        type: true,
-        updatedAt: true,
-      },
+      projectId: project.id,
+      status: 'COMPLETED',
+      summary,
+      title: vettingScorecardTitle,
+      type: vettingScorecardType,
+      userId,
     });
 
     return {

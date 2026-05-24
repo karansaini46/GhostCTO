@@ -15,6 +15,7 @@ const getAccessTokenSecret = () => {
 
 export type AccessTokenPayload = {
   email: string;
+  plan: SafeUser['plan'];
   role: SafeUser['role'];
   tokenType: 'access';
 };
@@ -23,6 +24,7 @@ export const createAccessToken = (user: SafeUser): string =>
   jwt.sign(
     {
       email: user.email,
+      plan: user.plan,
       role: user.role,
       tokenType: 'access' as const,
     } satisfies AccessTokenPayload,

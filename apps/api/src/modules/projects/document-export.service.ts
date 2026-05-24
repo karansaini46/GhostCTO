@@ -75,6 +75,7 @@ const documentSelect = {
   title: true,
   type: true,
   updatedAt: true,
+  version: true,
 } satisfies Prisma.GeneratedDocumentSelect;
 
 type ExportDocument = Prisma.GeneratedDocumentGetPayload<{ select: typeof documentSelect }>;
@@ -909,6 +910,10 @@ const buildHtmlDocument = (document: ExportDocumentWithProject, exportedAt: Date
               <div class="meta-value">${escapeHtml(formatDate(documentDate))}</div>
             </div>
             <div class="meta-item">
+              <div class="meta-label">Version</div>
+              <div class="meta-value">v${document.version}</div>
+            </div>
+            <div class="meta-item">
               <div class="meta-label">Project</div>
               <div class="meta-value">${escapeHtml(document.project.name)}</div>
             </div>
@@ -1021,6 +1026,6 @@ export const exportProjectDocumentPdfForUser = async (
 
   return {
     buffer,
-    filename: `${sanitizeFilename(document.project.name)}-${sanitizeFilename(document.title)}.pdf`,
+    filename: `${sanitizeFilename(document.project.name)}-${sanitizeFilename(document.title)}-v${document.version}.pdf`,
   };
 };

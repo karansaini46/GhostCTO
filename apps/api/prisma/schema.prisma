@@ -45,6 +45,11 @@ enum PaymentStatus {
   CANCELLED
 }
 
+enum BillingPlan {
+  FREE
+  LIFETIME
+}
+
 model User {
   id              String              @id @default(uuid()) @db.Uuid
   email           String              @unique
@@ -54,6 +59,7 @@ model User {
   supabaseUserId  String?             @unique
   googleAccountId String?             @unique
   role            UserRole            @default(FOUNDER)
+  plan            BillingPlan         @default(FREE)
   createdAt       DateTime            @default(now()) @db.Timestamptz(6)
   updatedAt       DateTime            @updatedAt @db.Timestamptz(6)
   projects        Project[]
@@ -67,6 +73,7 @@ model User {
   refreshTokens   RefreshToken[]
 
   @@index([createdAt])
+  @@index([plan])
 }
 
 model Project {
@@ -141,6 +148,7 @@ model GeneratedDocument {
   summary     String?
   content     String?
   metadata    Json       @default("{}")
+  version     Int        @default(1)
   completedAt DateTime?  @db.Timestamptz(6)
   createdAt   DateTime   @default(now()) @db.Timestamptz(6)
   updatedAt   DateTime   @updatedAt @db.Timestamptz(6)
@@ -151,6 +159,7 @@ model GeneratedDocument {
   @@index([projectId])
   @@index([type])
   @@index([status])
+  @@index([projectId, type, version])
   @@index([createdAt])
 }
 

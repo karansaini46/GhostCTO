@@ -64,6 +64,16 @@ export const config = {
     15 * 60 * 1000,
   ),
   bcryptRounds: parsePositiveInteger(process.env.BCRYPT_ROUNDS, 12),
+  generationRateLimitMax: parsePositiveInteger(process.env.GENERATION_RATE_LIMIT_MAX, 20),
+  generationRateLimitWindowMs: parsePositiveInteger(
+    process.env.GENERATION_RATE_LIMIT_WINDOW_MS,
+    60 * 1000,
+  ),
+  lifetimeDailyGenerationLimit: parsePositiveInteger(
+    process.env.LIFETIME_DAILY_GENERATION_LIMIT,
+    100,
+  ),
+  unpaidDailyGenerationLimit: parsePositiveInteger(process.env.UNPAID_DAILY_GENERATION_LIMIT, 3),
   googleCallbackUrl: process.env.GOOGLE_CALLBACK_URL?.trim(),
   googleClientId: process.env.GOOGLE_CLIENT_ID?.trim(),
   googleClientSecret: process.env.GOOGLE_CLIENT_SECRET?.trim(),
