@@ -6,7 +6,7 @@ export const AdminRoute = () => {
   const { user } = useAuth();
 
   if (user?.role !== 'ADMIN') {
-    return <Navigate replace to="/" />;
+    return <Navigate replace to="/dashboard" />;
   }
 
   return <Outlet />;

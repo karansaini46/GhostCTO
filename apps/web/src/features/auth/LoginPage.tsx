@@ -38,7 +38,7 @@ export const LoginPage = () => {
 
     try {
       await login({ email, password });
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (submissionError) {
       setFormError(
         submissionError instanceof ApiError ? submissionError.message : 'Unable to sign in.',
