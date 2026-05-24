@@ -77,6 +77,7 @@ Create local `.env` files from the committed examples before running the apps.
 - `PUPPETEER_EXECUTABLE_PATH`: Optional browser executable path.
 - `GUMROAD_ACCESS_TOKEN`: Gumroad access token.
 - `GUMROAD_WEBHOOK_SECRET`: Gumroad webhook signing secret.
+- `GUMROAD_PRODUCT_ID`: Gumroad product ID used for license verification.
 - `MODEL_PROVIDER_API_KEY`: Provider key for model-backed workflows.
 
 ## Workspace Layout

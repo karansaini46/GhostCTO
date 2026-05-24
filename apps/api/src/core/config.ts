@@ -69,6 +69,7 @@ export const config = {
     process.env.GENERATION_RATE_LIMIT_WINDOW_MS,
     60 * 1000,
   ),
+  gumroadProductId: process.env.GUMROAD_PRODUCT_ID?.trim(),
   lifetimeDailyGenerationLimit: parsePositiveInteger(
     process.env.LIFETIME_DAILY_GENERATION_LIMIT,
     100,
