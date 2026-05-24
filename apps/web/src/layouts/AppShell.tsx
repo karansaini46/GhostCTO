@@ -12,7 +12,7 @@ type AppShellProps = {
 };
 
 const navigationItems = [
-  { label: 'Workspace', to: '/' },
+  { label: 'Workspace', to: '/dashboard' },
   { label: 'New project', to: '/projects/new' },
   { label: 'Billing', to: '/billing' },
 ];

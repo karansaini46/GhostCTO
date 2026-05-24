@@ -40,7 +40,7 @@ export const RegisterPage = () => {
     try {
       const trimmedName = name.trim();
       await register({ email, name: trimmedName || undefined, password });
-      navigate('/', { replace: true });
+      navigate('/dashboard', { replace: true });
     } catch (submissionError) {
       setFormError(
         submissionError instanceof ApiError ? submissionError.message : 'Unable to create account.',

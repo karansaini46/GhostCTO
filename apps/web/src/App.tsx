@@ -5,12 +5,14 @@ import { AdminRoute } from './features/auth/AdminRoute';
 import { AppShell } from './layouts/AppShell';
 import { AuthProvider } from './features/auth/auth-store';
 import { BillingPage } from './features/billing/BillingPage';
+import { DemoProjectPage } from './features/demo/DemoProjectPage';
 import { LoginPage } from './features/auth/LoginPage';
 import { LogoutPage } from './features/auth/LogoutPage';
 import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { PublicRoute } from './features/auth/PublicRoute';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { LandingPage } from './features/landing/LandingPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
 import { DocumentDetailPage } from './features/projects/DocumentDetailPage';
 import { DocumentsPage } from './features/projects/DocumentsPage';
@@ -27,6 +29,8 @@ export const App = () => (
   <AuthProvider>
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
+        <Route path="/demo" element={<DemoProjectPage />} />
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -40,7 +44,7 @@ export const App = () => (
                 <DashboardPage />
               </AppShell>
             }
-            path="/"
+            path="/dashboard"
           />
           <Route
             element={

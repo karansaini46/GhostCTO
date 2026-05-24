@@ -49,6 +49,7 @@ Create local `.env` files from the committed examples before running the apps.
 ### Web
 
 - `VITE_API_BASE_URL`: Base URL for browser requests to the API.
+- `VITE_DEMO_MODE`: Set to `true` to enable the read-only demo project route with static sample data.
 
 ### API
 
