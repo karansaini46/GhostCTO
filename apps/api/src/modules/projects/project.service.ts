@@ -2,7 +2,11 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../infrastructure/database/prisma.js';
 import { ApiError } from '../../lib/api-error.js';
 import { normalizeGeneratedDocumentType } from './document-history.service.js';
-import type { ProjectPayloadInput, UpdateProjectPayloadInput } from './project.schemas.js';
+import type {
+  DeleteProjectPayloadInput,
+  ProjectPayloadInput,
+  UpdateProjectPayloadInput,
+} from './project.schemas.js';
 
 const answerDefinitions = [
   { key: 'name', label: 'Project name', step: 'foundation' },
@@ -336,4 +340,43 @@ export const updateProjectForUser = async (
   });
 
   return toProjectResponse(project);
+};
+
+export const deleteProjectForUser = async (
+  userId: string,
+  projectId: string,
+  input: DeleteProjectPayloadInput,
+) => {
+  await prisma.$transaction(async (transaction) => {
+    const project = await transaction.project.findUnique({
+      select: { id: true, name: true },
+      where: {
+        id_userId: {
+          id: projectId,
+          userId,
+        },
+      },
+    });
+
+    if (!project) {
+      throw new ApiError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    }
+
+    if (input.confirmationName !== project.name) {
+      throw new ApiError(
+        400,
+        'PROJECT_DELETE_CONFIRMATION_MISMATCH',
+        'Type the project name exactly to delete it.',
+      );
+    }
+
+    await transaction.project.delete({
+      where: {
+        id_userId: {
+          id: projectId,
+          userId,
+        },
+      },
+    });
+  });
 };

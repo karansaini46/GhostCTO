@@ -14,7 +14,18 @@ export const loginSchema = z.object({
   password: passwordSchema,
 });
 
+export const updateProfileSchema = z
+  .object({
+    name: z
+      .string()
+      .trim()
+      .max(120)
+      .transform((value) => (value ? value : null)),
+  })
+  .strict();
+
 export const emptyBodySchema = z.object({}).strict();
 
 export type RegisterInput = z.infer<typeof registerSchema>;
 export type LoginInput = z.infer<typeof loginSchema>;
+export type UpdateProfileInput = z.infer<typeof updateProfileSchema>;

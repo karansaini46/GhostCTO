@@ -15,6 +15,7 @@ const navigationItems = [
   { label: 'Workspace', to: '/workspace' },
   { label: 'New project', to: '/projects/new' },
   { label: 'Billing', to: '/billing' },
+  { label: 'Account', to: '/settings' },
 ];
 
 const adminNavigationItem = { label: 'Admin', to: '/admin' };

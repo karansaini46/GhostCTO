@@ -248,8 +248,15 @@ export const DashboardPage = () => {
       <div className="grid gap-5 xl:grid-cols-[1.1fr_0.9fr]">
         <Card>
           <CardHeader>
-            <CardTitle>Account</CardTitle>
-            <CardDescription>The founder profile attached to this workspace.</CardDescription>
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+              <div>
+                <CardTitle>Account</CardTitle>
+                <CardDescription>The founder profile attached to this workspace.</CardDescription>
+              </div>
+              <Button onClick={() => navigate('/settings')} size="sm" variant="secondary">
+                Account settings
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">

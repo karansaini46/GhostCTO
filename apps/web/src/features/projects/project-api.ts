@@ -44,6 +44,17 @@ export const updateProjectRequest = (
     method: 'PATCH',
   });
 
+export const deleteProjectRequest = (
+  accessToken: string,
+  projectId: string,
+  confirmationName: string,
+) =>
+  apiRequest<void>(`/projects/${projectId}`, {
+    body: JSON.stringify({ confirmationName }),
+    headers: authHeaders(accessToken),
+    method: 'DELETE',
+  });
+
 export const generateStackAdviceRequest = (
   accessToken: string,
   projectId: string,
@@ -124,9 +135,12 @@ export const listProjectDocumentsRequest = (
 ) => {
   const query = type ? `?type=${type}` : '';
 
-  return apiRequest<{ documents: Project['documents'] }>(`/projects/${projectId}/documents${query}`, {
-    headers: authHeaders(accessToken),
-  });
+  return apiRequest<{ documents: Project['documents'] }>(
+    `/projects/${projectId}/documents${query}`,
+    {
+      headers: authHeaders(accessToken),
+    },
+  );
 };
 
 export const getProjectDocumentRequest = (
