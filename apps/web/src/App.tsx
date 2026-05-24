@@ -23,6 +23,8 @@ import { StackAdvicePage } from './features/projects/StackAdvicePage';
 import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
 import { VettingScorecardPage } from './features/projects/VettingScorecardPage';
+import { AccountSettingsPage } from './features/settings/AccountSettingsPage';
+import { ProjectSettingsPage } from './features/settings/ProjectSettingsPage';
 
 export const App = () => (
   <AuthProvider>
@@ -63,10 +65,26 @@ export const App = () => (
           <Route
             element={
               <AppShell>
+                <AccountSettingsPage />
+              </AppShell>
+            }
+            path="/settings"
+          />
+          <Route
+            element={
+              <AppShell>
                 <ProjectDetailPage />
               </AppShell>
             }
             path="/projects/:id"
+          />
+          <Route
+            element={
+              <AppShell>
+                <ProjectSettingsPage />
+              </AppShell>
+            }
+            path="/projects/:id/settings"
           />
           <Route
             element={

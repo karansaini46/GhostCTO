@@ -222,25 +222,25 @@ const ModuleCard = ({ contextReady, document, isLocked, module, projectId }: Mod
     ? formatStatus(document.status)
     : isLocked
       ? 'Locked'
-    : contextReady
-      ? 'Ready'
-      : 'Needs context';
+      : contextReady
+        ? 'Ready'
+        : 'Needs context';
   const variant = document
     ? getStatusVariant(document.status)
     : isLocked
       ? 'warning'
-    : contextReady
-      ? 'accent'
-      : 'warning';
+      : contextReady
+        ? 'accent'
+        : 'warning';
   const nextAction = !contextReady
     ? 'Complete summary, customer, stage, and launch scope first'
     : isLocked
       ? 'Activate lifetime access to unlock this module'
-    : document
-      ? document.status === 'COMPLETED'
-        ? 'Review the saved document'
-        : 'Check the current document status'
-      : module.whenReady;
+      : document
+        ? document.status === 'COMPLETED'
+          ? 'Review the saved document'
+          : 'Check the current document status'
+        : module.whenReady;
 
   return (
     <div className="rounded-lg border border-border bg-surface p-4">
@@ -438,9 +438,17 @@ export const ProjectDetailPage = () => {
     <div className="space-y-8">
       <PageHeader
         actions={
-          <Button onClick={() => navigate('/projects/new')} variant="secondary">
-            New project
-          </Button>
+          <>
+            <Button
+              onClick={() => navigate(`/projects/${project.id}/settings`)}
+              variant="secondary"
+            >
+              Project settings
+            </Button>
+            <Button onClick={() => navigate('/projects/new')} variant="secondary">
+              New project
+            </Button>
+          </>
         }
         description={`Created ${formatDate(project.createdAt)}. Last updated ${formatDate(project.updatedAt)}.`}
         eyebrow="Project workspace"
@@ -517,9 +525,7 @@ export const ProjectDetailPage = () => {
               <ModuleCard
                 contextReady={contextReady}
                 document={document}
-                isLocked={
-                  generationLimitReached && module.documentTypes.length > 0 && !document
-                }
+                isLocked={generationLimitReached && module.documentTypes.length > 0 && !document}
                 key={module.title}
                 module={module}
                 projectId={project.id}
@@ -601,7 +607,10 @@ export const ProjectDetailPage = () => {
               <CardTitle>Recent documents</CardTitle>
               <CardDescription>Latest completed and in-progress project documents.</CardDescription>
             </div>
-            <Button onClick={() => navigate(`/projects/${project.id}/documents`)} variant="secondary">
+            <Button
+              onClick={() => navigate(`/projects/${project.id}/documents`)}
+              variant="secondary"
+            >
               View all documents
             </Button>
           </div>

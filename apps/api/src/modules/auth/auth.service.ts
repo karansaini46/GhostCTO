@@ -12,7 +12,7 @@ import {
   verifyAccessToken,
 } from './auth.tokens.js';
 import type { AuthSession, GoogleOAuthProfile, SafeUser } from './auth.types.js';
-import type { LoginInput, RegisterInput } from './auth.schemas.js';
+import type { LoginInput, RegisterInput, UpdateProfileInput } from './auth.schemas.js';
 
 const safeUserSelect = {
   avatarUrl: true,
@@ -30,9 +30,7 @@ const userWithPasswordSelect = {
   passwordHash: true,
 } satisfies Prisma.UserSelect;
 
-const toSafeUser = (
-  user: Prisma.UserGetPayload<{ select: typeof safeUserSelect }>,
-): SafeUser => ({
+const toSafeUser = (user: Prisma.UserGetPayload<{ select: typeof safeUserSelect }>): SafeUser => ({
   avatarUrl: user.avatarUrl,
   createdAt: user.createdAt.toISOString(),
   email: user.email,
@@ -43,7 +41,9 @@ const toSafeUser = (
   updatedAt: user.updatedAt.toISOString(),
 });
 
-const buildSession = async (userId: string): Promise<{ refreshToken: string; session: AuthSession }> => {
+const buildSession = async (
+  userId: string,
+): Promise<{ refreshToken: string; session: AuthSession }> => {
   const user = await prisma.user.findUnique({
     select: safeUserSelect,
     where: { id: userId },
@@ -92,7 +92,9 @@ const getUserByEmailWithPassword = async (email: string) =>
     where: { email },
   });
 
-export const registerUser = async (input: RegisterInput): Promise<{ refreshToken: string; session: AuthSession }> => {
+export const registerUser = async (
+  input: RegisterInput,
+): Promise<{ refreshToken: string; session: AuthSession }> => {
   const existingUser = await prisma.user.findUnique({
     select: { id: true },
     where: { email: input.email },
@@ -127,7 +129,9 @@ export const registerUser = async (input: RegisterInput): Promise<{ refreshToken
   return buildSession(user.id);
 };
 
-export const loginUser = async (input: LoginInput): Promise<{ refreshToken: string; session: AuthSession }> => {
+export const loginUser = async (
+  input: LoginInput,
+): Promise<{ refreshToken: string; session: AuthSession }> => {
   const user = await getUserByEmailWithPassword(input.email);
 
   if (!user?.passwordHash) {
@@ -178,10 +182,7 @@ export const loginWithGoogleProfile = async (
       });
 
       if (userWithEmail) {
-        if (
-          userWithEmail.googleAccountId &&
-          userWithEmail.googleAccountId !== profile.id
-        ) {
+        if (userWithEmail.googleAccountId && userWithEmail.googleAccountId !== profile.id) {
           throw new ApiError(
             409,
             'GOOGLE_ACCOUNT_CONFLICT',
@@ -293,7 +294,9 @@ export const logoutUserSession = async (rawRefreshToken: string): Promise<void> 
   });
 };
 
-export const authenticateAccessToken = async (authorizationHeader: string | undefined): Promise<SafeUser | null> => {
+export const authenticateAccessToken = async (
+  authorizationHeader: string | undefined,
+): Promise<SafeUser | null> => {
   const token = authorizationHeader?.startsWith('Bearer ')
     ? authorizationHeader.slice('Bearer '.length).trim()
     : null;
@@ -331,6 +334,21 @@ export const getSafeUserById = async (userId: string): Promise<SafeUser> => {
   if (!user) {
     throw new ApiError(401, 'UNAUTHORIZED', 'Authentication required.');
   }
+
+  return toSafeUser(user);
+};
+
+export const updateUserProfile = async (
+  userId: string,
+  input: UpdateProfileInput,
+): Promise<SafeUser> => {
+  const user = await prisma.user.update({
+    data: {
+      name: input.name,
+    },
+    select: safeUserSelect,
+    where: { id: userId },
+  });
 
   return toSafeUser(user);
 };

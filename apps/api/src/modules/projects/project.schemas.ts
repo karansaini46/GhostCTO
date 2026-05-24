@@ -115,6 +115,12 @@ export const updateProjectPayloadSchema = projectPayloadSchema
     message: 'Provide at least one project field to update.',
   });
 
+export const deleteProjectPayloadSchema = z
+  .object({
+    confirmationName: z.string().min(1).max(200),
+  })
+  .strict();
+
 export const projectIdParamSchema = z.object({
   id: z.string().uuid(),
 });
@@ -263,6 +269,7 @@ export const chatMessagesQuerySchema = z
 
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
+export type DeleteProjectPayloadInput = z.infer<typeof deleteProjectPayloadSchema>;
 export type DocumentDetailParamsInput = z.infer<typeof documentDetailParamsSchema>;
 export type DocumentExportParamsInput = z.infer<typeof documentExportParamsSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
