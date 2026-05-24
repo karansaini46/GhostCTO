@@ -9,6 +9,7 @@ import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { PublicRoute } from './features/auth/PublicRoute';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { LandingPage } from './features/landing/LandingPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
 import { DocumentDetailPage } from './features/projects/DocumentDetailPage';
 import { DocumentsPage } from './features/projects/DocumentsPage';
@@ -25,6 +26,7 @@ export const App = () => (
   <AuthProvider>
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
@@ -38,7 +40,7 @@ export const App = () => (
                 <DashboardPage />
               </AppShell>
             }
-            path="/"
+            path="/workspace"
           />
           <Route
             element={
