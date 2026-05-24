@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import { AdminPage } from './features/admin/AdminPage';
+import { AdminRoute } from './features/auth/AdminRoute';
 import { AppShell } from './layouts/AppShell';
 import { AuthProvider } from './features/auth/auth-store';
 import { BillingPage } from './features/billing/BillingPage';
@@ -128,6 +130,16 @@ export const App = () => (
             }
             path="/projects/:id/vetting"
           />
+          <Route element={<AdminRoute />}>
+            <Route
+              element={
+                <AppShell>
+                  <AdminPage />
+                </AppShell>
+              }
+              path="/admin"
+            />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>
