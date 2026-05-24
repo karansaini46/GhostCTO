@@ -1,21 +1,22 @@
-import { useCallback, useEffect, useState } from 'react';
+import { FormEvent, useCallback, useEffect, useState } from 'react';
 
 import {
   Badge,
+  Button,
   Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
+  Input,
   LoadingState,
   PageHeader,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
-import { getBillingStatusRequest } from './billing-api';
+import { getBillingStatusRequest, verifyLicenseRequest } from './billing-api';
 import { getPlanLabel } from './billing-plan';
 import type { BillingStatus } from './billing-types';
-
-const upgradeUrl = import.meta.env.VITE_UPGRADE_URL?.trim() || null;
 
 const usagePercent = (used: number, limit: number) => {
   if (limit <= 0) {
@@ -49,9 +50,13 @@ const UsageRow = ({ label, limit, used }: UsageRowProps) => (
 );
 
 export const BillingPage = () => {
-  const { accessToken, user } = useAuth();
+  const { accessToken, updateUser, user } = useAuth();
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [licenseKey, setLicenseKey] = useState('');
+  const [success, setSuccess] = useState(false);
 
   const loadBillingStatus = useCallback(async () => {
     if (!accessToken) {
@@ -74,6 +79,35 @@ export const BillingPage = () => {
 
   const currentPlan = billingStatus?.plan ?? user?.plan ?? 'FREE';
   const hasLifetimeAccess = currentPlan === 'LIFETIME';
+
+  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+
+    if (!accessToken) {
+      return;
+    }
+
+    setError(null);
+    setSuccess(false);
+    setIsSubmitting(true);
+
+    try {
+      const response = await verifyLicenseRequest(accessToken, licenseKey);
+
+      updateUser(response.user);
+      setBillingStatus(response.billingStatus);
+      setLicenseKey('');
+      setSuccess(true);
+    } catch (requestError) {
+      if (requestError instanceof ApiError && requestError.message === 'Invalid license key') {
+        setError('Invalid license key');
+      } else {
+        setError('Unable to activate lifetime access.');
+      }
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -106,23 +140,31 @@ export const BillingPage = () => {
                 )}
               </div>
 
-              {!hasLifetimeAccess ? (
-                <div className="space-y-4">
-                  <p className="text-sm leading-6 text-muted">
-                    Lifetime access is applied automatically after a paid purchase is recorded for
-                    your account.
-                  </p>
-                  {upgradeUrl ? (
-                    <a
-                      className="inline-flex h-10 items-center justify-center rounded-md border border-accent/70 bg-accent px-4 text-sm font-medium tracking-normal text-background transition-colors hover:bg-accent/90"
-                      href={upgradeUrl}
-                      rel="noreferrer"
-                      target="_blank"
-                    >
-                      Upgrade to lifetime access
-                    </a>
-                  ) : null}
+              {success ? (
+                <div className="rounded-md border border-success/35 bg-success/5 p-4 text-sm font-medium text-success">
+                  Lifetime access activated
                 </div>
+              ) : null}
+
+              {error ? (
+                <div className="rounded-md border border-danger/35 bg-danger/5 p-4 text-sm font-medium text-danger">
+                  {error}
+                </div>
+              ) : null}
+
+              {!hasLifetimeAccess ? (
+                <form className="space-y-4" onSubmit={handleSubmit}>
+                  <Input
+                    autoComplete="off"
+                    label="License key"
+                    onChange={(event) => setLicenseKey(event.target.value)}
+                    placeholder="Paste your license key"
+                    value={licenseKey}
+                  />
+                  <Button disabled={!licenseKey.trim()} isLoading={isSubmitting} type="submit">
+                    Activate Lifetime Access
+                  </Button>
+                </form>
               ) : null}
             </CardContent>
           </Card>
