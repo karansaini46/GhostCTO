@@ -17,6 +17,8 @@ import {
 import { cn } from '../../lib/cn';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { GenerationLimitCallout } from './generation-errors';
+import { isGenerationLimitError } from './generation-error-utils';
 import {
   createProjectChatMessageRequest,
   getProjectRequest,
@@ -209,6 +211,7 @@ export const ProjectChatPage = () => {
   const [pagination, setPagination] = useState<ProjectChatPagination | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [sendError, setSendError] = useState<string | null>(null);
+  const [sendLimitMessage, setSendLimitMessage] = useState<string | null>(null);
 
   const loadWorkspace = useCallback(async () => {
     if (!accessToken || !id) {
@@ -352,6 +355,7 @@ export const ProjectChatPage = () => {
 
     setDraft('');
     setSendError(null);
+    setSendLimitMessage(null);
     setIsSending(true);
     setOutboxMessage({
       content: trimmed,
@@ -370,6 +374,7 @@ export const ProjectChatPage = () => {
           : 'The message could not be sent. Review the text and try again.';
 
       setSendError(message);
+      setSendLimitMessage(isGenerationLimitError(error) ? message : null);
       setOutboxMessage({
         content: trimmed,
         createdAt: new Date().toISOString(),
@@ -490,7 +495,9 @@ export const ProjectChatPage = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {sendError && outboxMessage?.status === 'failed' ? (
+            {sendLimitMessage ? <GenerationLimitCallout message={sendLimitMessage} /> : null}
+
+            {sendError && outboxMessage?.status === 'failed' && !sendLimitMessage ? (
               <div className="rounded-md border border-danger/35 bg-danger/5 p-4">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm leading-6 text-danger">{sendError}</p>

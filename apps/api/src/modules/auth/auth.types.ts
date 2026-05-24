@@ -1,4 +1,4 @@
-import type { UserRole } from '../../generated/prisma/enums.js';
+import type { BillingPlan, UserRole } from '../../generated/prisma/enums.js';
 
 export type SafeUser = {
   avatarUrl: string | null;
@@ -6,6 +6,7 @@ export type SafeUser = {
   email: string;
   id: string;
   name: string | null;
+  plan: BillingPlan;
   role: UserRole;
   updatedAt: string;
 };

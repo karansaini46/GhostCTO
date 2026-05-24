@@ -124,24 +124,35 @@ export const documentExportParamsSchema = z.object({
   projectId: z.string().uuid(),
 });
 
+export const documentDetailParamsSchema = z.object({
+  documentId: z.string().uuid(),
+  id: z.string().uuid(),
+});
+
 export const projectDocumentsQuerySchema = z.object({
   type: z.preprocess(
     (value) => {
+      if (value === undefined || value === null || value === '') {
+        return undefined;
+      }
+
       if (typeof value === 'string') {
         return value.trim().toLowerCase();
       }
 
-      return 'roadmap';
+      return undefined;
     },
-    z.enum([
-      'code_audit',
-      'developer_jd',
-      'rate_validator',
-      'roadmap',
-      'stack_advisor',
-      'technical_spec',
-      'vetting_scorecard',
-    ]),
+    z
+      .enum([
+        'code_audit',
+        'developer_jd',
+        'rate_validator',
+        'roadmap',
+        'stack_advisor',
+        'technical_spec',
+        'vetting_scorecard',
+      ])
+      .optional(),
   ),
 });
 
@@ -252,6 +263,7 @@ export const chatMessagesQuerySchema = z
 
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
+export type DocumentDetailParamsInput = z.infer<typeof documentDetailParamsSchema>;
 export type DocumentExportParamsInput = z.infer<typeof documentExportParamsSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;

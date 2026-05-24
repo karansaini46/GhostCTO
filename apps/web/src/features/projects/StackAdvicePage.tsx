@@ -15,6 +15,8 @@ import {
   Select,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { GenerationLimitCallout } from './generation-errors';
+import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import { budgetRangeOptions, getProjectOptionLabel, technicalLevelOptions } from './project-options';
 import {
   generateStackAdviceRequest,
@@ -337,6 +339,7 @@ export const StackAdvicePage = () => {
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
   const [progressIndex, setProgressIndex] = useState(0);
 
@@ -348,6 +351,7 @@ export const StackAdvicePage = () => {
     setIsLoading(true);
     setError(null);
     setHistoryError(null);
+    setLimitMessage(null);
 
     try {
       const [projectResponse, documentsResponse] = await Promise.all([
@@ -432,6 +436,7 @@ export const StackAdvicePage = () => {
 
     setIsGenerating(true);
     setError(null);
+    setLimitMessage(null);
 
     try {
       const response = await generateStackAdviceRequest(accessToken, id, constraintState);
@@ -443,8 +448,14 @@ export const StackAdvicePage = () => {
         const existing = current.filter((document) => document.id !== response.document.id);
         return [response.document, ...existing];
       });
-    } catch {
-      setError('Unable to generate stack advice right now.');
+    } catch (requestError) {
+      const message = getGenerationErrorMessage(
+        requestError,
+        'Unable to generate stack advice right now.',
+      );
+
+      setError(message);
+      setLimitMessage(isGenerationLimitError(requestError) ? message : null);
     } finally {
       setIsGenerating(false);
     }
@@ -475,16 +486,20 @@ export const StackAdvicePage = () => {
           eyebrow="Project workspace"
           title="Stack Advisor"
         />
-        <Card className="border-danger/35 bg-danger/5">
-          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <p className="text-sm leading-6 text-muted">
-              The workspace may be unavailable, or your account may not have access to the project.
-            </p>
-            <Button onClick={loadWorkspace} variant="secondary">
-              Try again
-            </Button>
-          </CardContent>
-        </Card>
+        {limitMessage ? (
+          <GenerationLimitCallout message={limitMessage} />
+        ) : (
+          <Card className="border-danger/35 bg-danger/5">
+            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <p className="text-sm leading-6 text-muted">
+                The workspace may be unavailable, or your account may not have access to the project.
+              </p>
+              <Button onClick={loadWorkspace} variant="secondary">
+                Try again
+              </Button>
+            </CardContent>
+          </Card>
+        )}
       </div>
     );
   }
