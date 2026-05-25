@@ -39,8 +39,13 @@ Default local URLs:
 - `pnpm dev:web` starts the web app.
 - `pnpm dev:api` starts the API server.
 - `pnpm build` builds both apps.
+- `pnpm build:api` builds the API for production.
+- `pnpm build:web` builds the web app for production.
+- `pnpm build:production` builds both production apps explicitly.
 - `pnpm lint` checks both apps.
 - `pnpm format` formats the workspace.
+
+Deployment instructions are in [DEPLOYMENT.md](DEPLOYMENT.md).
 
 ## Environment Variables
 
@@ -48,7 +53,7 @@ Create local `.env` files from the committed examples before running the apps.
 
 ### Web
 
-- `VITE_API_BASE_URL`: Base URL for browser requests to the API.
+- `VITE_API_URL`: Base URL for browser requests to the API.
 
 ### API
 
