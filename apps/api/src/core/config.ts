@@ -93,6 +93,34 @@ const parseSameSite = (value: string | undefined): 'lax' | 'strict' | 'none' => 
   throw new Error('AUTH_COOKIE_SAMESITE must be lax, strict, or none.');
 };
 
+const normalizeBaseUrl = (value: string | undefined): string | undefined => {
+  const trimmedValue = value?.trim();
+
+  if (!trimmedValue) {
+    return undefined;
+  }
+
+  let url: URL;
+
+  try {
+    url = new URL(trimmedValue);
+  } catch {
+    throw new Error('MODEL_PROVIDER_BASE_URL must be a valid HTTP or HTTPS URL.');
+  }
+
+  if (url.protocol !== 'http:' && url.protocol !== 'https:') {
+    throw new Error('MODEL_PROVIDER_BASE_URL must be an HTTP or HTTPS URL.');
+  }
+
+  if (url.username || url.password || url.search || url.hash) {
+    throw new Error(
+      'MODEL_PROVIDER_BASE_URL cannot include credentials, query strings, or hashes.',
+    );
+  }
+
+  return trimmedValue.replace(/\/+$/, '');
+};
+
 export const config = {
   clientOrigins: parseOrigins(process.env.CLIENT_ORIGIN),
   databaseUrl: process.env.DATABASE_URL?.trim(),
@@ -134,6 +162,8 @@ export const config = {
   isProduction,
   jsonLimit: process.env.JSON_LIMIT ?? '1mb',
   modelProviderApiKey: process.env.MODEL_PROVIDER_API_KEY?.trim(),
+  modelProviderBaseUrl: normalizeBaseUrl(process.env.MODEL_PROVIDER_BASE_URL),
+  modelProviderModel: process.env.MODEL_PROVIDER_MODEL?.trim() || undefined,
   nodeEnv,
   pdfBrowserExecutablePath: process.env.PUPPETEER_EXECUTABLE_PATH?.trim() || undefined,
   port: parsePort(process.env.PORT),

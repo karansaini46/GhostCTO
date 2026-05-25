@@ -98,6 +98,7 @@ SUPABASE_SERVICE_ROLE_KEY=<supabase-service-role-key>
 ```
 
 Render sets `PORT` automatically. Set it manually only if the service needs a custom port.
+`MODEL_PROVIDER_MODEL` and `MODEL_PROVIDER_BASE_URL` are optional overrides; omit them to use the server defaults.
 
 After the first Render deploy finishes, verify the API:
 

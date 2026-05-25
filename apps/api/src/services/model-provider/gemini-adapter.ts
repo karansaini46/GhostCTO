@@ -15,14 +15,17 @@ import type {
   EnhancedGenerateContentResponse,
   GenerateContentRequest,
   GenerativeModel,
+  RequestOptions,
 } from '@google/generative-ai';
 import type { z, ZodType } from 'zod';
 
 type GeminiAdapterOptions = {
   apiKey?: string;
+  baseUrl?: string;
   createModel?: (model: string) => Pick<GenerativeModel, 'generateContent'>;
   defaultMaxOutputTokens?: number;
   defaultTemperature?: number;
+  modelName?: string;
 };
 
 type GeminiUsageMetadata = {
@@ -81,12 +84,15 @@ export class GeminiModelProvider implements ModelProvider {
   private readonly createModel: (model: string) => Pick<GenerativeModel, 'generateContent'>;
   private readonly defaultMaxOutputTokens: number;
   private readonly defaultTemperature: number;
+  private readonly modelName?: string;
 
   constructor({
     apiKey,
+    baseUrl,
     createModel,
     defaultMaxOutputTokens = 4096,
     defaultTemperature = 0.2,
+    modelName,
   }: GeminiAdapterOptions) {
     if (!apiKey) {
       throw new ModelProviderError({
@@ -99,12 +105,14 @@ export class GeminiModelProvider implements ModelProvider {
       this.createModel = createModel;
     } else {
       const client = new GoogleProviderClient(apiKey);
+      const requestOptions: RequestOptions | undefined = baseUrl ? { baseUrl } : undefined;
 
-      this.createModel = (model) => client.getGenerativeModel({ model });
+      this.createModel = (model) => client.getGenerativeModel({ model }, requestOptions);
     }
 
     this.defaultMaxOutputTokens = defaultMaxOutputTokens;
     this.defaultTemperature = defaultTemperature;
+    this.modelName = modelName;
   }
 
   async generateText(input: GenerateTextInput): Promise<GenerateTextResult> {
@@ -186,7 +194,7 @@ export class GeminiModelProvider implements ModelProvider {
     let response: GeminiResponse;
 
     try {
-      const model = this.createModel(resolveModelName(modelTier));
+      const model = this.createModel(this.modelName ?? resolveModelName(modelTier));
       const request: GenerateContentRequest = {
         contents: [
           {
