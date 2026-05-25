@@ -39,6 +39,7 @@ Default local URLs:
 - `pnpm dev:web` starts the web app.
 - `pnpm dev:api` starts the API server.
 - `pnpm build` builds both apps.
+- `pnpm typecheck` type-checks both apps.
 - `pnpm lint` checks both apps.
 - `pnpm format` formats the workspace.
 

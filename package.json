@@ -13,6 +13,7 @@
     "dev:web": "pnpm --filter @ghostcto/web dev",
     "dev:api": "pnpm --filter @ghostcto/api dev",
     "build": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api build",
+    "typecheck": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api typecheck",
     "lint": "pnpm -r --filter @ghostcto/web --filter @ghostcto/api lint",
     "test": "pnpm test:backend && pnpm test:frontend",
     "test:backend": "pnpm --filter @ghostcto/api test",
