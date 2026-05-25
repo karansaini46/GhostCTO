@@ -1,6 +1,7 @@
 import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../infrastructure/database/prisma.js';
 import { ApiError } from '../../lib/api-error.js';
+import type { DocumentFeedbackPayloadInput } from './project.schemas.js';
 
 export type ProjectDocumentType =
   | 'code_audit'
@@ -58,8 +59,25 @@ export const generatedDocumentSelect = {
   version: true,
 } satisfies Prisma.GeneratedDocumentSelect;
 
+const generatedDocumentFeedbackSelect = {
+  comment: true,
+  createdAt: true,
+  documentId: true,
+  documentType: true,
+  id: true,
+  issueType: true,
+  projectId: true,
+  rating: true,
+  updatedAt: true,
+  usefulness: true,
+} satisfies Prisma.GeneratedDocumentFeedbackSelect;
+
 export type GeneratedDocumentRecord = Prisma.GeneratedDocumentGetPayload<{
   select: typeof generatedDocumentSelect;
+}>;
+
+type GeneratedDocumentFeedbackRecord = Prisma.GeneratedDocumentFeedbackGetPayload<{
+  select: typeof generatedDocumentFeedbackSelect;
 }>;
 
 type DocumentCreateClient = Pick<Prisma.TransactionClient, 'generatedDocument'>;
@@ -76,10 +94,36 @@ type CreateGeneratedDocumentInput = {
   userId: string;
 };
 
-export const serializeGeneratedDocument = (document: GeneratedDocumentRecord) => ({
+const feedbackRatingByUsefulness = {
+  NEEDS_WORK: 2,
+  USEFUL: 3,
+  WRONG: 1,
+} satisfies Record<DocumentFeedbackPayloadInput['usefulness'], number>;
+
+const serializeGeneratedDocumentFeedback = (feedback: GeneratedDocumentFeedbackRecord | null) =>
+  feedback
+    ? {
+        comment: feedback.comment,
+        createdAt: feedback.createdAt.toISOString(),
+        documentId: feedback.documentId,
+        documentType: normalizeGeneratedDocumentType(feedback.documentType),
+        id: feedback.id,
+        issueType: feedback.issueType,
+        projectId: feedback.projectId,
+        rating: feedback.rating,
+        updatedAt: feedback.updatedAt.toISOString(),
+        usefulness: feedback.usefulness,
+      }
+    : null;
+
+export const serializeGeneratedDocument = (
+  document: GeneratedDocumentRecord,
+  feedback?: GeneratedDocumentFeedbackRecord | null,
+) => ({
   completedAt: document.completedAt?.toISOString() ?? null,
   content: document.content,
   createdAt: document.createdAt.toISOString(),
+  feedback: serializeGeneratedDocumentFeedback(feedback ?? null),
   id: document.id,
   metadata: document.metadata,
   projectId: document.projectId,
@@ -157,7 +201,19 @@ export const listProjectDocumentsForUser = async (
     orderBy: {
       createdAt: 'desc',
     },
-    select: generatedDocumentSelect,
+    select: {
+      ...generatedDocumentSelect,
+      feedback: {
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        select: generatedDocumentFeedbackSelect,
+        take: 1,
+        where: {
+          userId,
+        },
+      },
+    },
     where: {
       projectId,
       type: storedTypes
@@ -169,7 +225,9 @@ export const listProjectDocumentsForUser = async (
     },
   });
 
-  return documents.map(serializeGeneratedDocument);
+  return documents.map((document) =>
+    serializeGeneratedDocument(document, document.feedback[0] ?? null),
+  );
 };
 
 export const getProjectDocumentForUser = async (
@@ -180,7 +238,19 @@ export const getProjectDocumentForUser = async (
   await assertProjectForUser(userId, projectId);
 
   const document = await prisma.generatedDocument.findFirst({
-    select: generatedDocumentSelect,
+    select: {
+      ...generatedDocumentSelect,
+      feedback: {
+        orderBy: {
+          updatedAt: 'desc',
+        },
+        select: generatedDocumentFeedbackSelect,
+        take: 1,
+        where: {
+          userId,
+        },
+      },
+    },
     where: {
       id: documentId,
       projectId,
@@ -192,5 +262,61 @@ export const getProjectDocumentForUser = async (
     throw new ApiError(404, 'DOCUMENT_NOT_FOUND', 'Document not found.');
   }
 
-  return serializeGeneratedDocument(document);
+  return serializeGeneratedDocument(document, document.feedback[0] ?? null);
+};
+
+export const upsertProjectDocumentFeedbackForUser = async (
+  userId: string,
+  projectId: string,
+  documentId: string,
+  input: DocumentFeedbackPayloadInput,
+) => {
+  await assertProjectForUser(userId, projectId);
+
+  const document = await prisma.generatedDocument.findFirst({
+    select: {
+      id: true,
+      type: true,
+    },
+    where: {
+      id: documentId,
+      projectId,
+      userId,
+    },
+  });
+
+  if (!document) {
+    throw new ApiError(404, 'DOCUMENT_NOT_FOUND', 'Document not found.');
+  }
+
+  const documentType = normalizeGeneratedDocumentType(document.type);
+  const rating = feedbackRatingByUsefulness[input.usefulness];
+  const feedback = await prisma.generatedDocumentFeedback.upsert({
+    create: {
+      comment: input.comment,
+      documentId: document.id,
+      documentType,
+      issueType: input.usefulness === 'USEFUL' ? null : input.issueType,
+      projectId,
+      rating,
+      usefulness: input.usefulness,
+      userId,
+    },
+    select: generatedDocumentFeedbackSelect,
+    update: {
+      comment: input.comment,
+      documentType,
+      issueType: input.usefulness === 'USEFUL' ? null : input.issueType,
+      rating,
+      usefulness: input.usefulness,
+    },
+    where: {
+      documentId_userId: {
+        documentId: document.id,
+        userId,
+      },
+    },
+  });
+
+  return serializeGeneratedDocumentFeedback(feedback);
 };

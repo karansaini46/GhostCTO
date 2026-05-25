@@ -174,5 +174,5 @@ export const listRoadmapDocumentsForUser = async (
     },
   });
 
-  return documents.map(serializeGeneratedDocument);
+  return documents.map((document) => serializeGeneratedDocument(document));
 };

@@ -4,6 +4,11 @@ import { prisma } from '../../infrastructure/database/prisma.js';
 
 export type AdminStats = {
   audits: number;
+  documentFeedbackAverages: Array<{
+    averageRating: number;
+    documentType: string;
+    feedbackCount: number;
+  }>;
   generatedDocuments: number;
   payments: number;
   projects: number;
@@ -67,7 +72,15 @@ const toAdminUserLookup = (
 });
 
 export const getAdminStats = async (): Promise<AdminStats> => {
-  const [users, projects, generatedDocuments, audits, quoteAnalyses, payments] =
+  const [
+    users,
+    projects,
+    generatedDocuments,
+    audits,
+    quoteAnalyses,
+    payments,
+    documentFeedbackAverages,
+  ] =
     await prisma.$transaction([
       prisma.user.count(),
       prisma.project.count(),
@@ -75,10 +88,27 @@ export const getAdminStats = async (): Promise<AdminStats> => {
       prisma.auditReport.count(),
       prisma.quoteAnalysis.count(),
       prisma.payment.count(),
+      prisma.generatedDocumentFeedback.groupBy({
+        _avg: {
+          rating: true,
+        },
+        _count: {
+          rating: true,
+        },
+        by: ['documentType'],
+        orderBy: {
+          documentType: 'asc',
+        },
+      }),
     ]);
 
   return {
     audits,
+    documentFeedbackAverages: documentFeedbackAverages.map((item) => ({
+      averageRating: item._avg?.rating ?? 0,
+      documentType: item.documentType,
+      feedbackCount: typeof item._count === 'object' ? (item._count.rating ?? 0) : 0,
+    })),
     generatedDocuments,
     payments,
     projects,

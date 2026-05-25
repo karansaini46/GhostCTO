@@ -17,9 +17,10 @@ import {
   Textarea,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import { generateCodeAuditRequest, getProjectRequest, listProjectDocumentsRequest } from './project-api';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 import type {
   CodeAuditAction,
   CodeAuditDocumentMetadata,
@@ -435,6 +436,17 @@ const CodeAuditPage = () => {
     }
   };
 
+  const handleFeedbackSaved = useCallback((feedback: ProjectDocumentFeedback) => {
+    setGeneratedDocument((current) =>
+      current?.id === feedback.documentId ? { ...current, feedback } : current,
+    );
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === feedback.documentId ? { ...document, feedback } : document,
+      ),
+    );
+  }, []);
+
   const handleExportReport = useCallback(() => {
     if (!activeAudit) {
       return;
@@ -566,6 +578,15 @@ const CodeAuditPage = () => {
 
       {activeAudit ? (
         <div className="space-y-6">
+          {activeDocument ? (
+            <DocumentFeedbackPanel
+              accessToken={accessToken}
+              document={activeDocument}
+              onFeedbackSaved={handleFeedbackSaved}
+              projectId={project.id}
+            />
+          ) : null}
+
           <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
             <Card>
               <CardHeader>

@@ -169,6 +169,31 @@ export const documentDetailParamsSchema = z
   })
   .strict();
 
+export const documentFeedbackPayloadSchema = z
+  .object({
+    comment: z
+      .string()
+      .trim()
+      .max(2000, 'Comment is too long.')
+      .optional()
+      .nullable()
+      .transform((value) => (value ? value : null)),
+    issueType: z
+      .enum([
+        'MISSING_CONTEXT',
+        'INCORRECT_CONTENT',
+        'TOO_GENERIC',
+        'MISSING_DETAIL',
+        'HARD_TO_ACT_ON',
+        'OTHER',
+      ])
+      .optional()
+      .nullable()
+      .transform((value) => value ?? null),
+    usefulness: z.enum(['USEFUL', 'NEEDS_WORK', 'WRONG']),
+  })
+  .strict();
+
 export const projectDocumentsQuerySchema = z
   .object({
     type: z.preprocess(
@@ -312,6 +337,7 @@ export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type DeleteProjectPayloadInput = z.infer<typeof deleteProjectPayloadSchema>;
 export type DocumentDetailParamsInput = z.infer<typeof documentDetailParamsSchema>;
+export type DocumentFeedbackPayloadInput = z.infer<typeof documentFeedbackPayloadSchema>;
 export type DocumentExportParamsInput = z.infer<typeof documentExportParamsSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;
