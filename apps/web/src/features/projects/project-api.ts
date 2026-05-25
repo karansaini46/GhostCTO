@@ -55,6 +55,26 @@ export const deleteProjectRequest = (
     method: 'DELETE',
   });
 
+export const generateRoadmapRequest = (accessToken: string, projectId: string) =>
+  apiRequest<{ document: Project['documents'][number]; roadmap: unknown }>(
+    `/projects/${projectId}/roadmap`,
+    {
+      body: JSON.stringify({}),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
+export const createDeveloperJdRequest = (accessToken: string, projectId: string) =>
+  apiRequest<{ developerJobDescription: unknown; document: Project['documents'][number] }>(
+    `/projects/${projectId}/developer-jd`,
+    {
+      body: JSON.stringify({}),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
 export const generateStackAdviceRequest = (
   accessToken: string,
   projectId: string,

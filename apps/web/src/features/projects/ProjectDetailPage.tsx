@@ -17,7 +17,14 @@ import {
 import { useAuth } from '../auth/auth-context';
 import { getBillingStatusRequest } from '../billing/billing-api';
 import type { BillingStatus } from '../billing/billing-types';
-import { exportProjectDocumentPdfRequest, getProjectRequest } from './project-api';
+import { GenerationLimitCallout } from './generation-errors';
+import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
+import {
+  createDeveloperJdRequest,
+  exportProjectDocumentPdfRequest,
+  generateRoadmapRequest,
+  getProjectRequest,
+} from './project-api';
 import { getProjectOptionLabel } from './project-options';
 import type { Project, ProjectAnswer, ProjectDocument } from './project-types';
 
@@ -95,6 +102,8 @@ type WorkspaceModule = {
   title: string;
   whenReady: string;
 };
+
+type BodylessGenerationType = 'developer_jd' | 'roadmap';
 
 const workspaceModules: WorkspaceModule[] = [
   {
@@ -180,12 +189,24 @@ const DetailBlock = ({ label, value }: DetailBlockProps) => (
 type ModuleCardProps = {
   contextReady: boolean;
   document: ProjectDocument | null;
+  generationType: BodylessGenerationType | null;
+  isGenerating: boolean;
   isLocked: boolean;
   module: WorkspaceModule;
+  onGenerate: (generationType: BodylessGenerationType) => void;
   projectId: string;
 };
 
-const ModuleCard = ({ contextReady, document, isLocked, module, projectId }: ModuleCardProps) => {
+const ModuleCard = ({
+  contextReady,
+  document,
+  generationType,
+  isGenerating,
+  isLocked,
+  module,
+  onGenerate,
+  projectId,
+}: ModuleCardProps) => {
   const moduleLink =
     module.title === 'CTO Chat'
       ? {
@@ -217,7 +238,12 @@ const ModuleCard = ({ contextReady, document, isLocked, module, projectId }: Mod
                     label: 'Open vetting',
                     path: `/projects/${projectId}/vetting`,
                   }
-                : null;
+                : document
+                  ? {
+                      label: 'Open document',
+                      path: `/projects/${projectId}/documents/${document.id}`,
+                    }
+                  : null;
   const status = document
     ? formatStatus(document.status)
     : isLocked
@@ -265,6 +291,27 @@ const ModuleCard = ({ contextReady, document, isLocked, module, projectId }: Mod
           </Link>
         </div>
       ) : null}
+      {!moduleLink && generationType ? (
+        <div className="mt-4">
+          {isLocked ? (
+            <Link
+              className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium tracking-normal text-text transition-colors hover:border-accent/35 hover:bg-surface-raised/80"
+              to="/billing"
+            >
+              Unlock access
+            </Link>
+          ) : (
+            <Button
+              disabled={!contextReady}
+              isLoading={isGenerating}
+              onClick={() => onGenerate(generationType)}
+              variant="secondary"
+            >
+              {generationType === 'roadmap' ? 'Generate roadmap' : 'Create JD'}
+            </Button>
+          )}
+        </div>
+      ) : null}
     </div>
   );
 };
@@ -276,6 +323,9 @@ export const ProjectDetailPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [exportError, setExportError] = useState<string | null>(null);
   const [exportingDocumentId, setExportingDocumentId] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
+  const [generationLimitMessage, setGenerationLimitMessage] = useState<string | null>(null);
+  const [generatingModule, setGeneratingModule] = useState<BodylessGenerationType | null>(null);
   const [billingStatus, setBillingStatus] = useState<BillingStatus | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<Project | null>(null);
@@ -291,6 +341,8 @@ export const ProjectDetailPage = () => {
     try {
       const response = await getProjectRequest(accessToken, id);
       setProject(response.project);
+      setGenerationError(null);
+      setGenerationLimitMessage(null);
     } catch {
       setError('Unable to load this project.');
     } finally {
@@ -398,6 +450,47 @@ export const ProjectDetailPage = () => {
     }
   };
 
+  const handleGenerateBodylessDocument = async (generationType: BodylessGenerationType) => {
+    if (!accessToken || !project) {
+      return;
+    }
+
+    setGenerationError(null);
+    setGenerationLimitMessage(null);
+    setGeneratingModule(generationType);
+
+    try {
+      const response =
+        generationType === 'roadmap'
+          ? await generateRoadmapRequest(accessToken, project.id)
+          : await createDeveloperJdRequest(accessToken, project.id);
+
+      setProject((current) =>
+        current
+          ? {
+              ...current,
+              documents: [
+                response.document,
+                ...current.documents.filter((document) => document.id !== response.document.id),
+              ],
+            }
+          : current,
+      );
+    } catch (requestError) {
+      const message = getGenerationErrorMessage(
+        requestError,
+        generationType === 'roadmap'
+          ? 'Unable to generate the roadmap right now.'
+          : 'Unable to create the developer JD right now.',
+      );
+
+      setGenerationError(message);
+      setGenerationLimitMessage(isGenerationLimitError(requestError) ? message : null);
+    } finally {
+      setGeneratingModule(null);
+    }
+  };
+
   if (isLoading) {
     return <LoadingState label="Loading project workspace" />;
   }
@@ -481,6 +574,19 @@ export const ProjectDetailPage = () => {
         </Card>
       ) : null}
 
+      {generationLimitMessage ? (
+        <GenerationLimitCallout message={generationLimitMessage} />
+      ) : generationError ? (
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-danger">{generationError}</p>
+            <Button onClick={() => setGenerationError(null)} variant="secondary">
+              Dismiss
+            </Button>
+          </CardContent>
+        </Card>
+      ) : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Project summary</CardTitle>
@@ -525,9 +631,23 @@ export const ProjectDetailPage = () => {
               <ModuleCard
                 contextReady={contextReady}
                 document={document}
+                generationType={
+                  module.documentTypes.includes('roadmap')
+                    ? 'roadmap'
+                    : module.documentTypes.includes('developer_jd')
+                      ? 'developer_jd'
+                      : null
+                }
+                isGenerating={
+                  generatingModule !== null &&
+                  (module.documentTypes.includes(generatingModule) ||
+                    (generatingModule === 'developer_jd' &&
+                      module.documentTypes.includes('developer_jd')))
+                }
                 isLocked={generationLimitReached && module.documentTypes.length > 0 && !document}
                 key={module.title}
                 module={module}
+                onGenerate={handleGenerateBodylessDocument}
                 projectId={project.id}
               />
             );
