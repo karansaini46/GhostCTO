@@ -16,7 +16,6 @@ process.env.GENERATION_RATE_LIMIT_MAX ??= '10000';
 process.env.GUMROAD_PRODUCT_ID ??= 'test-product';
 process.env.JWT_SECRET ??= 'test-secret-used-only-for-local-api-test-runs-change-in-production';
 process.env.MODEL_PROVIDER_API_KEY ??= 'test-model-provider-key';
-process.env.MODEL_PROVIDER_MODEL ??= 'test-model';
 process.env.NODE_ENV = 'test';
 process.env.REFRESH_TOKEN_BYTES ??= '32';
 
