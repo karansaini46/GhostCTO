@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import crypto from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 
 import dotenv from 'dotenv';
@@ -29,9 +30,8 @@ const env = {
   DIRECT_URL: testDatabaseUrl,
   GENERATION_RATE_LIMIT_MAX: process.env.GENERATION_RATE_LIMIT_MAX ?? '10000',
   GUMROAD_PRODUCT_ID: process.env.GUMROAD_PRODUCT_ID ?? 'test-product',
-  JWT_SECRET:
-    process.env.JWT_SECRET ?? 'test-secret-used-only-for-local-api-test-runs-change-in-production',
-  MODEL_PROVIDER_API_KEY: process.env.MODEL_PROVIDER_API_KEY ?? 'test-model-provider-key',
+  JWT_SECRET: process.env.JWT_SECRET ?? crypto.randomUUID(),
+  MODEL_PROVIDER_API_KEY: process.env.MODEL_PROVIDER_API_KEY ?? '',
   NODE_ENV: 'test',
   REFRESH_TOKEN_BYTES: process.env.REFRESH_TOKEN_BYTES ?? '32',
 };

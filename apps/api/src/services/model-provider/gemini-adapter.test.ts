@@ -9,7 +9,7 @@ const createProvider = () => {
   const models: string[] = [];
 
   const provider = new GeminiModelProvider({
-    apiKey: 'test-model-provider-key',
+    apiKey: 'local-provider',
     createModel: (model) => {
       models.push(model);
 
