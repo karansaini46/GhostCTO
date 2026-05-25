@@ -58,7 +58,19 @@ const parseOrigins = (value: string | undefined): string[] => {
     throw new Error('CLIENT_ORIGIN must include at least one allowed origin.');
   }
 
-  return [...new Set(origins)];
+  const uniqueOrigins = [...new Set(origins)];
+
+  if (isProduction) {
+    if (uniqueOrigins.length !== 1) {
+      throw new Error('CLIENT_ORIGIN must include exactly one production frontend origin.');
+    }
+
+    if (!uniqueOrigins[0]?.startsWith('https://')) {
+      throw new Error('CLIENT_ORIGIN must be an HTTPS origin in production.');
+    }
+  }
+
+  return uniqueOrigins;
 };
 
 const parsePositiveInteger = (value: string | undefined, fallback: number): number => {
