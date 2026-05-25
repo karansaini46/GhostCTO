@@ -32,7 +32,6 @@ const env = {
   JWT_SECRET:
     process.env.JWT_SECRET ?? 'test-secret-used-only-for-local-api-test-runs-change-in-production',
   MODEL_PROVIDER_API_KEY: process.env.MODEL_PROVIDER_API_KEY ?? 'test-model-provider-key',
-  MODEL_PROVIDER_MODEL: process.env.MODEL_PROVIDER_MODEL ?? 'test-model',
   NODE_ENV: 'test',
   REFRESH_TOKEN_BYTES: process.env.REFRESH_TOKEN_BYTES ?? '32',
 };

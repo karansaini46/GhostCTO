@@ -235,6 +235,7 @@ export const generateCodeAuditForUser = async (
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
     maxOutputTokens: 12288,
+    modelTier: 'pro',
     prompt,
     requestName: 'projects.codeAudit.generate',
     schema,

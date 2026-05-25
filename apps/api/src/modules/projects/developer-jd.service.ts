@@ -88,6 +88,7 @@ export const createDeveloperJdForUser = async (userId: string, projectId: string
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
     maxOutputTokens: 10000,
+    modelTier: 'quality',
     prompt,
     requestName: 'projects.developerJd.create',
     schema,
