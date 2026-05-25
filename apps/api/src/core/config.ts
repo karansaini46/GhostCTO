@@ -134,9 +134,6 @@ export const config = {
   isProduction,
   jsonLimit: process.env.JSON_LIMIT ?? '1mb',
   modelProviderApiKey: process.env.MODEL_PROVIDER_API_KEY?.trim(),
-  modelProviderBaseUrl:
-    process.env.MODEL_PROVIDER_BASE_URL?.trim() || 'https://generativelanguage.googleapis.com',
-  modelProviderModel: process.env.MODEL_PROVIDER_MODEL?.trim(),
   nodeEnv,
   pdfBrowserExecutablePath: process.env.PUPPETEER_EXECUTABLE_PATH?.trim() || undefined,
   port: parsePort(process.env.PORT),

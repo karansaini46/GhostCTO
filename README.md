@@ -39,6 +39,7 @@ Default local URLs:
 - `pnpm dev:web` starts the web app.
 - `pnpm dev:api` starts the API server.
 - `pnpm build` builds both apps.
+- `pnpm typecheck` type-checks both apps.
 - `pnpm build:api` builds the API for production.
 - `pnpm build:web` builds the web app for production.
 - `pnpm build:production` builds both production apps explicitly.
@@ -83,7 +84,7 @@ Create local `.env` files from the committed examples before running the apps.
 - `GUMROAD_ACCESS_TOKEN`: Gumroad access token.
 - `GUMROAD_WEBHOOK_SECRET`: Gumroad webhook signing secret.
 - `GUMROAD_PRODUCT_ID`: Gumroad product ID used for license verification.
-- `MODEL_PROVIDER_API_KEY`: Provider key for model-backed workflows.
+- `MODEL_PROVIDER_API_KEY`: Google Gemini key for model-backed workflows. Model selection is managed server-side.
 
 ## Workspace Layout
 
