@@ -8,6 +8,8 @@ let provider: ModelProvider | null = null;
 export const createConfiguredModelProvider = (): ModelProvider =>
   new GeminiModelProvider({
     apiKey: config.modelProviderApiKey,
+    baseUrl: config.modelProviderBaseUrl,
+    modelName: config.modelProviderModel,
   });
 
 export const getModelProvider = () => {

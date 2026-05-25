@@ -5,7 +5,7 @@ import { MODELS } from './models.js';
 import type { GenerativeModel } from '@google/generative-ai';
 import type { ModelTier } from './models.js';
 
-const createProvider = () => {
+const createProvider = (options: { modelName?: string } = {}) => {
   const models: string[] = [];
 
   const provider = new GeminiModelProvider({
@@ -40,6 +40,7 @@ const createProvider = () => {
         }),
       } as Pick<GenerativeModel, 'generateContent'>;
     },
+    modelName: options.modelName,
   });
 
   return {
@@ -84,5 +85,17 @@ describe('GeminiModelProvider', () => {
       pro: 'gemini-2.5-pro',
     });
     expect(Object.values(MODELS).every((model) => !model.includes('1.5'))).toBe(true);
+  });
+
+  it('uses the configured model name when one is provided', async () => {
+    const { models, provider } = createProvider({ modelName: 'gemini-custom' });
+
+    await provider.generateText({
+      modelTier: 'pro',
+      prompt: 'Write a concise founder update.',
+      requestName: 'test.request',
+    });
+
+    expect(models).toEqual(['gemini-custom']);
   });
 });
