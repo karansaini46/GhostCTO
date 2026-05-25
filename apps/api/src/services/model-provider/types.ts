@@ -1,4 +1,5 @@
 import type { z, ZodType } from 'zod';
+import type { ModelTier } from './models.js';
 
 export type ModelProviderUsage = {
   inputTokens?: number;
@@ -8,6 +9,7 @@ export type ModelProviderUsage = {
 
 export type GenerateTextInput = {
   maxOutputTokens?: number;
+  modelTier?: ModelTier;
   prompt: string;
   requestName?: string;
   temperature?: number;

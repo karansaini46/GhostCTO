@@ -209,18 +209,58 @@ export const AdminPage = () => {
         <CardContent>
           {isLoadingStats ? <LoadingState label="Loading admin stats" /> : null}
           {!isLoadingStats && stats ? (
-            <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
-              {statsConfig.map((item) => (
-                <div
-                  className="rounded-lg border border-border bg-surface-raised p-4"
-                  key={item.key}
-                >
-                  <p className="text-xs uppercase tracking-normal text-muted">{item.label}</p>
-                  <p className="mt-2 text-2xl font-semibold tracking-normal text-text">
-                    {stats[item.key].toLocaleString()}
-                  </p>
+            <div className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
+                {statsConfig.map((item) => (
+                  <div
+                    className="rounded-lg border border-border bg-surface-raised p-4"
+                    key={item.key}
+                  >
+                    <p className="text-xs uppercase tracking-normal text-muted">{item.label}</p>
+                    <p className="mt-2 text-2xl font-semibold tracking-normal text-text">
+                      {stats[item.key].toLocaleString()}
+                    </p>
+                  </div>
+                ))}
+              </div>
+
+              <div>
+                <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
+                  <div>
+                    <h2 className="text-sm font-semibold tracking-normal text-text">
+                      Document feedback
+                    </h2>
+                    <p className="mt-1 text-sm leading-6 text-muted">
+                      Average rating by document type.
+                    </p>
+                  </div>
+                  <Badge>{stats.documentFeedbackAverages.length} types rated</Badge>
                 </div>
-              ))}
+                {stats.documentFeedbackAverages.length > 0 ? (
+                  <div className="mt-4 grid gap-3 md:grid-cols-2 xl:grid-cols-3">
+                    {stats.documentFeedbackAverages.map((item) => (
+                      <div
+                        className="rounded-md border border-border bg-surface-raised p-4"
+                        key={item.documentType}
+                      >
+                        <p className="text-xs uppercase tracking-normal text-muted">
+                          {formatLabel(item.documentType)}
+                        </p>
+                        <p className="mt-2 text-2xl font-semibold tracking-normal text-text">
+                          {item.averageRating.toFixed(2)}
+                        </p>
+                        <p className="mt-1 text-sm text-muted">
+                          {item.feedbackCount.toLocaleString()} ratings
+                        </p>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="mt-4 rounded-md border border-border bg-surface-raised p-4">
+                    <p className="text-sm leading-6 text-muted">No document feedback recorded yet.</p>
+                  </div>
+                )}
+              </div>
             </div>
           ) : null}
         </CardContent>

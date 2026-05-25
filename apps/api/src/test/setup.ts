@@ -1,3 +1,5 @@
+import crypto from 'node:crypto';
+
 import { afterAll, afterEach, beforeEach, vi } from 'vitest';
 
 const testDatabaseUrl = process.env.TEST_DATABASE_URL?.trim();
@@ -14,9 +16,7 @@ process.env.DATABASE_URL = testDatabaseUrl;
 process.env.DIRECT_URL = testDatabaseUrl;
 process.env.GENERATION_RATE_LIMIT_MAX ??= '10000';
 process.env.GUMROAD_PRODUCT_ID ??= 'test-product';
-process.env.JWT_SECRET ??= 'test-secret-used-only-for-local-api-test-runs-change-in-production';
-process.env.MODEL_PROVIDER_API_KEY ??= 'test-model-provider-key';
-process.env.MODEL_PROVIDER_MODEL ??= 'test-model';
+process.env.JWT_SECRET ??= crypto.randomUUID();
 process.env.NODE_ENV = 'test';
 process.env.REFRESH_TOKEN_BYTES ??= '32';
 
@@ -37,6 +37,7 @@ const resetDatabase = async () => {
       "QuoteAnalysis",
       "AuditReport",
       "ChatMessage",
+      "GeneratedDocumentFeedback",
       "GeneratedDocument",
       "ProjectAnswer",
       "Project",

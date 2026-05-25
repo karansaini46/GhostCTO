@@ -262,7 +262,11 @@ const getSelectionReason = (path: string) => {
     return 'CI workflow configuration';
   }
 
-  if (lower.endsWith('dockerfile') || lower.endsWith('docker-compose.yml') || lower.endsWith('docker-compose.yaml')) {
+  if (
+    lower.endsWith('dockerfile') ||
+    lower.endsWith('docker-compose.yml') ||
+    lower.endsWith('docker-compose.yaml')
+  ) {
     return 'Deployment and runtime configuration';
   }
 
@@ -329,7 +333,11 @@ const getSelectionScore = (path: string) => {
     score += 95;
   }
 
-  if (lower.endsWith('dockerfile') || lower.endsWith('docker-compose.yml') || lower.endsWith('docker-compose.yaml')) {
+  if (
+    lower.endsWith('dockerfile') ||
+    lower.endsWith('docker-compose.yml') ||
+    lower.endsWith('docker-compose.yaml')
+  ) {
     score += 90;
   }
 
@@ -355,7 +363,12 @@ const getSelectionScore = (path: string) => {
     score += 70;
   }
 
-  if (lower.endsWith('.ts') || lower.endsWith('.tsx') || lower.endsWith('.js') || lower.endsWith('.jsx')) {
+  if (
+    lower.endsWith('.ts') ||
+    lower.endsWith('.tsx') ||
+    lower.endsWith('.js') ||
+    lower.endsWith('.jsx')
+  ) {
     score += 45;
   }
 
@@ -367,7 +380,12 @@ const getSelectionScore = (path: string) => {
     score += 35;
   }
 
-  if (lower.includes('test') || lower.includes('__tests__') || lower.includes('.spec.') || lower.includes('.test.')) {
+  if (
+    lower.includes('test') ||
+    lower.includes('__tests__') ||
+    lower.includes('.spec.') ||
+    lower.includes('.test.')
+  ) {
     score += 15;
   }
 
@@ -409,12 +427,8 @@ const tryParseJson = (value: string) => {
   }
 };
 
-const toApiError = (
-  statusCode: number,
-  code: string,
-  message: string,
-  expose = true,
-) => new ApiError(statusCode, code, message, expose);
+const toApiError = (statusCode: number, code: string, message: string, expose = true) =>
+  new ApiError(statusCode, code, message, expose);
 
 const handleGithubError = async (response: Response) => {
   const body = await response.text();
@@ -430,11 +444,7 @@ const handleGithubError = async (response: Response) => {
     (response.headers.get('x-ratelimit-remaining') === '0' ||
       message.toLowerCase().includes('rate limit'))
   ) {
-    throw toApiError(
-      429,
-      'GITHUB_RATE_LIMITED',
-      'GitHub rate limit reached. Try again later.',
-    );
+    throw toApiError(429, 'GITHUB_RATE_LIMITED', 'GitHub rate limit reached. Try again later.');
   }
 
   if (response.status === 404) {
@@ -456,7 +466,7 @@ const handleGithubError = async (response: Response) => {
   throw toApiError(
     response.status >= 500 ? 502 : response.status,
     'GITHUB_REQUEST_FAILED',
-    message || 'GitHub request failed.',
+    message ? 'GitHub could not complete the repository request.' : 'GitHub request failed.',
   );
 };
 
@@ -508,7 +518,10 @@ export const parseGithubRepositoryUrl = (repoUrl: string): GithubRepositoryRefer
 
   const hostname = parsed.hostname.toLowerCase();
 
-  if (parsed.protocol !== 'https:' || (hostname !== 'github.com' && hostname !== 'www.github.com')) {
+  if (
+    parsed.protocol !== 'https:' ||
+    (hostname !== 'github.com' && hostname !== 'www.github.com')
+  ) {
     throw toApiError(400, 'GITHUB_INVALID_URL', 'Provide a valid GitHub repository URL.');
   }
 
@@ -563,7 +576,10 @@ const fetchRepositoryMetadata = async (reference: GithubRepositoryReference) => 
   } satisfies GithubRepositoryMetadata;
 };
 
-const fetchDefaultBranchTreeSha = async (reference: GithubRepositoryReference, defaultBranch: string) => {
+const fetchDefaultBranchTreeSha = async (
+  reference: GithubRepositoryReference,
+  defaultBranch: string,
+) => {
   const branch = await githubRequest<GithubBranchResponse>(
     `/repos/${encodeURIComponent(reference.owner)}/${encodeURIComponent(reference.repo)}/branches/${encodeURIComponent(defaultBranch)}`,
   );
@@ -655,7 +671,9 @@ const sortCandidateFiles = (a: GithubTreeEntry, b: GithubTreeEntry) => {
 
 const formatSize = (value: number) => `${Math.round(value / 1024)} KB`;
 
-export const fetchPublicGithubRepository = async (repoUrl: string): Promise<GithubRepositorySnapshot> => {
+export const fetchPublicGithubRepository = async (
+  repoUrl: string,
+): Promise<GithubRepositorySnapshot> => {
   const reference = parseGithubRepositoryUrl(repoUrl);
   const metadata = await fetchRepositoryMetadata(reference);
   const treeSha = await fetchDefaultBranchTreeSha(reference, metadata.defaultBranch);

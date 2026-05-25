@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 
 import { ApiError } from '../../lib/api-error.js';
 import { sendJson } from '../../lib/responses.js';
-import { projectIdParamSchema } from './project.schemas.js';
+import { emptyMutationBodySchema, projectIdParamSchema } from './project.schemas.js';
 import { createDeveloperJdForUser } from './developer-jd.service.js';
 
 const getUserId = (request: Parameters<RequestHandler>[0]) => {
@@ -16,6 +16,7 @@ const getUserId = (request: Parameters<RequestHandler>[0]) => {
 export const createDeveloperJd: RequestHandler = async (request, response, next) => {
   try {
     const params = projectIdParamSchema.parse(request.params);
+    emptyMutationBodySchema.parse(request.body ?? {});
     const result = await createDeveloperJdForUser(getUserId(request), params.id);
 
     sendJson(response, result, 201);

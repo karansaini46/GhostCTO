@@ -273,6 +273,7 @@ export const generateTechnicalSpecForUser = async (
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
     maxOutputTokens: 12288,
+    modelTier: 'quality',
     prompt,
     requestName: 'projects.technicalSpec.generate',
     schema: technicalSpecOutputSchema,
