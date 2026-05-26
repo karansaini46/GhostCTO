@@ -294,23 +294,23 @@ const FindingGroup = ({ items, subtitle, title, tone }: FindingGroupProps) => (
             <p className="mt-3 text-sm font-semibold leading-6 text-text">{item.title}</p>
             <p className="mt-2 text-sm leading-6 text-text">{item.explanation}</p>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
-              <div className="rounded-md border border-border bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-normal text-muted">Why the founder should care</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Why the founder should care</p>
                 <p className="mt-2 text-sm leading-6 text-text">{item.impact}</p>
               </div>
-              <div className="rounded-md border border-border bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-normal text-muted">Suggested fix</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Suggested fix</p>
                 <p className="mt-2 text-sm leading-6 text-text">{item.suggestedFix}</p>
               </div>
             </div>
-            <div className="mt-3 rounded-md border border-border bg-surface-raised p-3">
-              <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+            <div className="mt-3 rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Evidence</p>
               <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-sm leading-6 text-text">
                 {item.evidence}
               </pre>
             </div>
-            <div className="mt-3 rounded-md border border-border bg-surface-raised p-3">
-              <p className="text-xs uppercase tracking-normal text-muted">What to ask the developer</p>
+            <div className="mt-3 rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">What to ask the developer</p>
               <p className="mt-2 text-sm leading-6 text-text">{buildFindingQuestion(item)}</p>
             </div>
           </div>
@@ -514,7 +514,7 @@ const CodeAuditPage = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             {formState.sourceMode === 'repo' ? (
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-normal text-muted" htmlFor="repo-url">
+                <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted" htmlFor="repo-url">
                   Public GitHub repository URL
                 </label>
                 <Input
@@ -527,7 +527,7 @@ const CodeAuditPage = () => {
               </div>
             ) : (
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-normal text-muted" htmlFor="code-snippet">
+                <label className="text-xs font-semibold uppercase tracking-[0.14em] text-muted" htmlFor="code-snippet">
                   Pasted code
                 </label>
                 <Textarea
@@ -543,8 +543,8 @@ const CodeAuditPage = () => {
               </div>
             )}
 
-            <div className="rounded-md border border-border bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-normal text-muted">Review limits</p>
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Review limits</p>
               <ul className="mt-2 space-y-2 text-sm leading-6 text-text">
                 <li>Public GitHub repositories only. Private repositories are not accessible in this version.</li>
                 <li>This is an advisory review, not a penetration test, certification, or code warranty.</li>
@@ -581,8 +581,8 @@ const CodeAuditPage = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm leading-6 text-text">{activeAudit.recommendation}</p>
-                <div className="rounded-md border border-border bg-surface-raised p-4">
-                  <p className="text-xs uppercase tracking-normal text-muted">Disclaimer</p>
+                <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Disclaimer</p>
                   <p className="mt-2 text-sm leading-6 text-text">{activeAudit.disclaimer}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -616,7 +616,7 @@ const CodeAuditPage = () => {
                     const count = getSeverityItems(activeAudit.findings, severity).length;
 
                     return (
-                      <div className="rounded-md border border-border bg-surface-raised p-3" key={severity}>
+                      <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3" key={severity}>
                         <div className="flex items-center justify-between gap-3">
                           <span className="text-sm font-medium text-text">{severityLabels[severity]}</span>
                           <Badge variant={getSeverityVariant(severity)}>{count}</Badge>
@@ -628,7 +628,7 @@ const CodeAuditPage = () => {
                 </div>
                 {activeAudit.cards.length > 0 ? (
                   activeAudit.cards.map((card) => (
-                    <div className="rounded-md border border-border bg-surface-raised p-3" key={card.title}>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3" key={card.title}>
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-sm font-medium text-text">{card.title}</span>
                         <Badge
@@ -690,11 +690,11 @@ const CodeAuditPage = () => {
               <CardContent className="space-y-3">
                 {activeAudit.acceptableAreas.length > 0 ? (
                   activeAudit.acceptableAreas.map((item) => (
-                    <div className="rounded-md border border-border bg-surface-raised p-3" key={item.area}>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3" key={item.area}>
                       <p className="text-sm font-medium text-text">{item.area}</p>
                       <p className="mt-2 text-sm leading-6 text-text">{item.explanation}</p>
                       <div className="mt-3 rounded-md border border-border bg-surface p-3">
-                        <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Evidence</p>
                         <pre className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-text">
                           {item.evidence}
                         </pre>
@@ -731,7 +731,7 @@ const CodeAuditPage = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {activeAudit.questionsForDeveloper.map((item) => (
-                  <div className="rounded-md border border-border bg-surface-raised p-3" key={item.question}>
+                  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3" key={item.question}>
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant={item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'neutral'}>
                         {item.priority.toUpperCase()}
@@ -768,7 +768,7 @@ const CodeAuditPage = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {activeAudit.recommendedNextActions.map((action) => (
-                <div className="rounded-md border border-border bg-surface-raised p-3" key={action.action}>
+                <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3" key={action.action}>
                   <div className="flex flex-wrap items-center gap-2">
                     <Badge variant={action.priority === 'high' ? 'danger' : action.priority === 'medium' ? 'warning' : 'neutral'}>
                       {action.priority.toUpperCase()}
@@ -795,18 +795,18 @@ const CodeAuditPage = () => {
               {activeDocument ? (
                 <>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Document type</p>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Document type</p>
                       <p className="mt-2 text-sm font-medium text-text">{formatLabel(activeDocument.type)}</p>
                     </div>
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Completed</p>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Completed</p>
                       <p className="mt-2 text-sm font-medium text-text">
                         {activeDocument.completedAt ? formatDate(activeDocument.completedAt) : 'Pending'}
                       </p>
                     </div>
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Summary</p>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Summary</p>
                       <p className="mt-2 text-sm font-medium leading-6 text-text">{activeDocument.summary ?? 'Not set'}</p>
                     </div>
                   </div>
@@ -828,11 +828,11 @@ const CodeAuditPage = () => {
             <CardContent className="space-y-3">
               {historyDocuments.length > 0 ? (
                 historyDocuments.map(({ document, audit }) => (
-                  <div className="rounded-md border border-border bg-surface-raised p-3" key={document.id}>
+                  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3" key={document.id}>
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-text">{document.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-normal text-muted">
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                           {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                         </p>
                       </div>

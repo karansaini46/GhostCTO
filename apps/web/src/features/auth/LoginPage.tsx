@@ -50,14 +50,14 @@ export const LoginPage = () => {
 
   return (
     <AuthFormShell
-      description="Sign in to your founder workspace."
+      description="Return to your projects, documents, and technical planning notes."
       title="Welcome back"
     >
       <div className="space-y-4">
         <GoogleSignInButton disabled={isSubmitting} />
         <div className="flex items-center gap-3">
           <span className="h-px flex-1 bg-border" />
-          <span className="text-xs font-medium uppercase tracking-normal text-muted">
+          <span className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
             or use email
           </span>
           <span className="h-px flex-1 bg-border" />
@@ -83,7 +83,9 @@ export const LoginPage = () => {
           value={password}
         />
         {formError || error ? (
-          <p className="text-sm leading-6 text-danger">{formError ?? error}</p>
+          <p className="rounded-md border border-danger/25 bg-danger/10 p-3 text-sm leading-6 text-danger">
+            {formError ?? error}
+          </p>
         ) : null}
         <Button className="w-full" isLoading={isSubmitting} type="submit">
           Sign in
@@ -91,7 +93,7 @@ export const LoginPage = () => {
       </form>
       <p className="mt-5 text-sm text-muted">
         Need an account?{' '}
-        <Link className="font-medium text-accent hover:text-accent/80" to="/register">
+        <Link className="font-semibold text-accent hover:text-accent/80" to="/register">
           Create one
         </Link>
       </p>

@@ -111,14 +111,14 @@ export const AccountSettingsPage = () => {
               value={name}
             />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
-              <div className="rounded-md border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-normal text-muted">Email</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Email</p>
                 <p className="mt-2 break-all text-sm font-medium text-text">
                   {user?.email ?? 'Not available'}
                 </p>
               </div>
-              <div className="rounded-md border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-normal text-muted">Plan</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Plan</p>
                 <div className="mt-2">
                   <Badge variant={user?.plan === 'LIFETIME' ? 'success' : 'warning'}>
                     {getPlanLabel(user?.plan)}
@@ -142,14 +142,14 @@ export const AccountSettingsPage = () => {
             <CardDescription>Read-only account information.</CardDescription>
           </CardHeader>
           <CardContent className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1">
-            <div className="rounded-md border border-border bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-normal text-muted">Role</p>
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Role</p>
               <div className="mt-2">
                 <Badge variant="accent">{user ? formatStatus(user.role) : 'Founder'}</Badge>
               </div>
             </div>
-            <div className="rounded-md border border-border bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-normal text-muted">Created</p>
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Created</p>
               <p className="mt-2 text-sm font-medium text-text">
                 {user ? formatDate(user.createdAt) : 'Unknown'}
               </p>

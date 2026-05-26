@@ -135,6 +135,8 @@ const formatConstraintKey = (key: string) => {
   return formatLabel(key);
 };
 
+const getStackLayerLabel = (key: string) => stackAdviceLayerLabels[key] ?? formatLabel(key);
+
 const deriveTargetScale = (project: Project | null) => {
   if (!project?.currentStage) {
     return 'early_mvp';
@@ -232,7 +234,7 @@ const getDocumentOverrides = (document: ProjectDocument) => {
 
 const buildDeveloperBrief = (output: StackAdviceOutput) => {
   const layerLines = output.categories.map(
-    (category) => `- ${stackAdviceLayerLabels[category.category]}: ${category.recommendation}`,
+    (category) => `- ${getStackLayerLabel(category.category)}: ${category.recommendation}`,
   );
 
   return [
@@ -299,8 +301,8 @@ const defaultConstraintState = (project: Project | null): StackAdviceConstraintS
 });
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -689,7 +691,7 @@ export const StackAdvicePage = () => {
                                 {isSelected ? 'Active' : 'Saved'}
                               </Badge>
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -854,11 +856,11 @@ export const StackAdvicePage = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   {currentOutput.categories.map((category) => (
-                    <div className="rounded-md border border-border bg-surface-raised p-4" key={category.category}>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={category.category}>
                       <div className="flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <p className="text-xs uppercase tracking-normal text-muted">
-                            {stackAdviceLayerLabels[category.category]}
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                            {getStackLayerLabel(category.category)}
                           </p>
                           <h3 className="mt-1 text-sm font-semibold tracking-normal text-text">
                             {category.recommendation}
@@ -874,7 +876,7 @@ export const StackAdvicePage = () => {
                           <Button
                             onClick={async () => {
                               const text = [
-                                `${stackAdviceLayerLabels[category.category]}: ${category.recommendation}`,
+                                `${getStackLayerLabel(category.category)}: ${category.recommendation}`,
                                 '',
                                 `Why it fits: ${category.whyItFits}`,
                                 `Why not ${category.commonAlternative}: ${category.whyNotCommonAlternative}`,
@@ -883,7 +885,7 @@ export const StackAdvicePage = () => {
                                 `Founder explanation: ${category.founderExplanation}`,
                               ].join('\n');
                               await copyText(text);
-                              saveCopiedLabel(stackAdviceLayerLabels[category.category]);
+                              saveCopiedLabel(getStackLayerLabel(category.category));
                             }}
                             size="sm"
                             variant="ghost"
@@ -922,7 +924,7 @@ export const StackAdvicePage = () => {
                           .map(
                             (category) =>
                               [
-                                stackAdviceLayerLabels[category.category],
+                                getStackLayerLabel(category.category),
                                 category.recommendation,
                                 category.commonAlternative,
                                 category.costRisk,
@@ -947,7 +949,7 @@ export const StackAdvicePage = () => {
                 <CardContent className="overflow-x-auto">
                   <table className="min-w-full border-separate border-spacing-0">
                     <thead>
-                      <tr className="text-left text-xs uppercase tracking-normal text-muted">
+                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                         <th className="border-b border-border px-3 py-3 font-medium">Layer</th>
                         <th className="border-b border-border px-3 py-3 font-medium">Recommendation</th>
                         <th className="border-b border-border px-3 py-3 font-medium">Alternative</th>
@@ -959,7 +961,7 @@ export const StackAdvicePage = () => {
                       {currentOutput.categories.map((category) => (
                         <tr key={category.category}>
                           <td className="border-b border-border px-3 py-4 align-top text-sm text-text">
-                            {stackAdviceLayerLabels[category.category]}
+                            {getStackLayerLabel(category.category)}
                           </td>
                           <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-text">
                             {category.recommendation}
@@ -1003,7 +1005,7 @@ export const StackAdvicePage = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <pre className="whitespace-pre-wrap rounded-md border border-border bg-surface-raised p-4 text-sm leading-6 text-text">
+                    <pre className="whitespace-pre-wrap rounded-panel border border-subtle bg-surface-card shadow-sm p-4 text-sm leading-6 text-text">
                       {developerBrief}
                     </pre>
                   </CardContent>
@@ -1031,7 +1033,7 @@ export const StackAdvicePage = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="rounded-md border border-border bg-surface-raised p-4">
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
                       <div className="mb-4 flex flex-wrap items-center gap-2">
                         <Badge variant="accent">Markdown</Badge>
                         {copiedLabel ? <Badge>{copiedLabel} copied</Badge> : null}
@@ -1073,7 +1075,7 @@ export const StackAdvicePage = () => {
                   </CardHeader>
                   <CardContent className="grid gap-3">
                     {currentOutput.assumptions.map((assumption) => (
-                      <div className="rounded-md border border-border bg-surface-raised p-4" key={assumption.text}>
+                      <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={assumption.text}>
                         <p className="text-sm leading-6 text-text">{assumption.text}</p>
                         {assumption.reason ? (
                           <p className="mt-2 text-sm leading-6 text-muted">{assumption.reason}</p>
@@ -1116,7 +1118,7 @@ export const StackAdvicePage = () => {
                   <CardContent className="grid gap-4">
                     <div className="grid gap-3">
                       {currentOutput.risks.map((risk) => (
-                        <div className="rounded-md border border-border bg-surface-raised p-4" key={risk.risk}>
+                        <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={risk.risk}>
                           <p className="text-sm font-medium tracking-normal text-text">{risk.risk}</p>
                           <p className="mt-2 text-sm leading-6 text-muted">{risk.impact}</p>
                           <p className="mt-2 text-sm leading-6 text-muted">{risk.mitigation}</p>
@@ -1125,7 +1127,7 @@ export const StackAdvicePage = () => {
                     </div>
                     <div className="grid gap-3">
                       {currentOutput.nextSteps.map((step) => (
-                        <div className="rounded-md border border-border bg-surface-raised p-4" key={step.action}>
+                        <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={step.action}>
                           <p className="text-sm font-medium tracking-normal text-text">{step.action}</p>
                           {step.reason ? <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p> : null}
                         </div>

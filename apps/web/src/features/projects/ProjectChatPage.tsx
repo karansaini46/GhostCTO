@@ -108,10 +108,10 @@ type ContextCardProps = {
 };
 
 const ContextCard = ({ action, emptyText, label, title, value }: ContextCardProps) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
     <div className="flex items-start justify-between gap-3">
       <div className="min-w-0">
-        <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
         <h3 className="mt-1 text-sm font-semibold tracking-normal text-text">{title}</h3>
       </div>
       {action ? (
@@ -150,7 +150,7 @@ const MessageBubble = ({ message, status }: MessageBubbleProps) => {
       >
         <div className="mb-2 flex flex-wrap items-center gap-2">
           <Badge variant={isFounder ? 'accent' : 'neutral'}>
-            {isFounder ? 'Founder' : 'Technical co-founder'}
+            {isFounder ? 'Founder' : 'Project advisor'}
           </Badge>
           <span className="text-xs text-muted">
             {status === 'sending'
@@ -606,8 +606,8 @@ export const ProjectChatPage = () => {
                 }
                 value={getDocumentExcerpt(latestDocuments.quoteOrAudit)}
               />
-              <div className="rounded-md border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-normal text-muted">Workspace facts</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Workspace facts</p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Badge>{getProjectOptionLabel.budgetRange(project.budgetRange)}</Badge>
                   <Badge>

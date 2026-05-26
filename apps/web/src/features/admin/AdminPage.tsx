@@ -55,7 +55,7 @@ type UserResultProps = {
 };
 
 const UserResult = ({ user }: UserResultProps) => (
-  <div className="rounded-lg border border-border bg-surface-raised p-4">
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
     <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
       <div className="min-w-0 space-y-2">
         <div className="flex flex-wrap items-center gap-2">
@@ -73,42 +73,42 @@ const UserResult = ({ user }: UserResultProps) => (
       </div>
       <div className="grid gap-3 sm:grid-cols-2 lg:w-[26rem]">
         <div className="rounded-md border border-border bg-surface p-3">
-          <p className="text-xs uppercase tracking-normal text-muted">User ID</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">User ID</p>
           <p className="mt-1 break-all text-sm font-medium text-text">{user.id}</p>
         </div>
         <div className="rounded-md border border-border bg-surface p-3">
-          <p className="text-xs uppercase tracking-normal text-muted">Created</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Created</p>
           <p className="mt-1 text-sm font-medium text-text">{formatDate(user.createdAt)}</p>
         </div>
       </div>
     </div>
     <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
       <div className="rounded-md border border-border bg-surface p-3">
-        <p className="text-xs uppercase tracking-normal text-muted">Projects</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Projects</p>
         <p className="mt-1 text-lg font-semibold tracking-normal text-text">
           {user.counts.projects}
         </p>
       </div>
       <div className="rounded-md border border-border bg-surface p-3">
-        <p className="text-xs uppercase tracking-normal text-muted">Documents</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Documents</p>
         <p className="mt-1 text-lg font-semibold tracking-normal text-text">
           {user.counts.generatedDocuments}
         </p>
       </div>
       <div className="rounded-md border border-border bg-surface p-3">
-        <p className="text-xs uppercase tracking-normal text-muted">Audits</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Audits</p>
         <p className="mt-1 text-lg font-semibold tracking-normal text-text">
           {user.counts.audits}
         </p>
       </div>
       <div className="rounded-md border border-border bg-surface p-3">
-        <p className="text-xs uppercase tracking-normal text-muted">Quotes</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Quotes</p>
         <p className="mt-1 text-lg font-semibold tracking-normal text-text">
           {user.counts.quoteAnalyses}
         </p>
       </div>
       <div className="rounded-md border border-border bg-surface p-3">
-        <p className="text-xs uppercase tracking-normal text-muted">Payments</p>
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Payments</p>
         <p className="mt-1 text-lg font-semibold tracking-normal text-text">
           {user.counts.payments}
         </p>
@@ -212,10 +212,10 @@ export const AdminPage = () => {
             <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
               {statsConfig.map((item) => (
                 <div
-                  className="rounded-lg border border-border bg-surface-raised p-4"
+                  className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                   key={item.key}
                 >
-                  <p className="text-xs uppercase tracking-normal text-muted">{item.label}</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{item.label}</p>
                   <p className="mt-2 text-2xl font-semibold tracking-normal text-text">
                     {stats[item.key].toLocaleString()}
                   </p>
@@ -249,7 +249,7 @@ export const AdminPage = () => {
           </form>
 
           {!isSearching && hasSearched && users.length === 0 ? (
-            <div className="rounded-lg border border-border bg-surface-raised p-4">
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
               <p className="text-sm font-medium text-text">No matching user found.</p>
               <p className="mt-1 text-sm leading-6 text-muted">
                 Check the spelling and search with the account email on file.

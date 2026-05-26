@@ -276,8 +276,8 @@ const CopyButton = ({
 );
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -650,7 +650,7 @@ export const RateValidatorPage = () => {
                                 {isSelected ? 'Active' : 'Saved'}
                               </Badge>
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -821,7 +821,7 @@ export const RateValidatorPage = () => {
                   <CardContent className="grid gap-2">
                     {currentOutput.timelineRealism.concerns.map((concern) => (
                       <div
-                        className="rounded-md border border-border bg-surface-raised px-3 py-2 text-sm leading-6 text-text"
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm px-3 py-2 text-sm leading-6 text-text"
                         key={concern}
                       >
                         {concern}
@@ -850,7 +850,7 @@ export const RateValidatorPage = () => {
                 <CardContent className="grid gap-3">
                   {currentOutput.questionsToAskDeveloper.map((item, index) => (
                     <div
-                      className="rounded-md border border-border bg-surface-raised p-4"
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                       key={item.question}
                     >
                       <div className="flex flex-wrap items-start gap-3">
@@ -884,7 +884,7 @@ export const RateValidatorPage = () => {
                   </div>
                 </CardHeader>
                 <CardContent>
-                  <div className="rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
                     {currentOutput.negotiationScript}
                   </div>
                 </CardContent>
@@ -934,7 +934,7 @@ export const RateValidatorPage = () => {
                   <div className="grid gap-3">
                     {currentOutput.parsedScopeItems.map((item) => (
                       <div
-                        className="rounded-md border border-border bg-surface-raised p-4"
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                         key={`${item.scopeItem}-${item.description}`}
                       >
                         <div className="flex flex-wrap items-start justify-between gap-3">
@@ -970,7 +970,7 @@ export const RateValidatorPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[720px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
                   {selectedDocument.content}
                 </div>
               </CardContent>

@@ -13,12 +13,14 @@ import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
+import { DeveloperJdPage } from './features/projects/DeveloperJdPage';
 import { DocumentDetailPage } from './features/projects/DocumentDetailPage';
 import { DocumentsPage } from './features/projects/DocumentsPage';
 import { ProjectChatPage } from './features/projects/ProjectChatPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { RateValidatorPage } from './features/projects/RateValidatorPage';
+import { RoadmapPage } from './features/projects/RoadmapPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
 import { VettingScorecardPage } from './features/projects/VettingScorecardPage';
@@ -115,6 +117,22 @@ export const App = () => (
               </AppShell>
             }
             path="/projects/:id/code-audit"
+          />
+          <Route
+            element={
+              <AppShell>
+                <RoadmapPage />
+              </AppShell>
+            }
+            path="/projects/:id/roadmap"
+          />
+          <Route
+            element={
+              <AppShell>
+                <DeveloperJdPage />
+              </AppShell>
+            }
+            path="/projects/:id/developer-jd"
           />
           <Route
             element={

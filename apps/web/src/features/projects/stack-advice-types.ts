@@ -1,15 +1,4 @@
-export type StackAdviceCategoryKey =
-  | 'frontend'
-  | 'backend'
-  | 'database'
-  | 'auth'
-  | 'hosting'
-  | 'payments'
-  | 'analytics'
-  | 'email'
-  | 'file_storage'
-  | 'monitoring'
-  | 'ai_tools';
+export type StackAdviceCategoryKey = string;
 
 export type StackAdviceCard = {
   detail?: string | null;
@@ -79,8 +68,7 @@ export type StackAdviceDocumentMetadata = {
   stackAdvice?: StackAdviceOutput;
 };
 
-export const stackAdviceLayerLabels: Record<StackAdviceCategoryKey, string> = {
-  ai_tools: 'AI tools',
+export const stackAdviceLayerLabels: Record<string, string> = {
   analytics: 'Analytics',
   auth: 'Authentication',
   backend: 'Backend',

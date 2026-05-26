@@ -1,16 +1,16 @@
 import { FormEvent, useCallback, useEffect, useState } from 'react';
+import { CheckCircle2, KeyRound } from 'lucide-react';
 
 import {
   Badge,
   Button,
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
   Input,
   LoadingState,
   PageHeader,
+  SectionHeader,
+  Surface,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
@@ -33,14 +33,14 @@ type UsageRowProps = {
 };
 
 const UsageRow = ({ label, limit, used }: UsageRowProps) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
+  <div className="rounded-panel border border-subtle bg-surface-card p-4">
     <div className="flex items-center justify-between gap-4">
-      <p className="text-sm font-medium text-text">{label}</p>
+      <p className="text-sm font-semibold text-text">{label}</p>
       <p className="text-sm text-muted">
         {used} / {limit}
       </p>
     </div>
-    <div className="mt-3 h-2 rounded-full bg-border">
+    <div className="mt-3 h-2 rounded-full bg-surface-soft">
       <div
         className="h-2 rounded-full bg-accent"
         style={{ width: `${usagePercent(used, limit)}%` }}
@@ -112,7 +112,7 @@ export const BillingPage = () => {
   return (
     <div className="space-y-8">
       <PageHeader
-        description="Manage access for projects, documents, and chat usage."
+        description="Review your plan, activate lifetime access, and see current usage without noisy pricing tables."
         eyebrow="Billing"
         title="Plan and access"
       />
@@ -120,71 +120,86 @@ export const BillingPage = () => {
       {isLoading ? <LoadingState label="Loading billing details" /> : null}
 
       {!isLoading ? (
-        <div className="grid gap-5 xl:grid-cols-[0.9fr_1.1fr]">
-          <Card>
-            <CardHeader>
-              <CardTitle>Current plan</CardTitle>
-              <CardDescription>Lifetime access removes the free plan limits.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-5">
-              <div className="flex flex-wrap items-center gap-3">
+        <div className="grid gap-5 xl:grid-cols-[1.05fr_0.95fr]">
+          <Surface className="p-6 sm:p-7" tone="elevated">
+            <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
+              <div>
                 <Badge variant={hasLifetimeAccess ? 'success' : 'warning'}>
                   {getPlanLabel(currentPlan)}
                 </Badge>
-                {hasLifetimeAccess ? (
-                  <p className="text-sm font-medium text-success">
-                    Lifetime access activated
-                  </p>
-                ) : (
-                  <p className="text-sm text-muted">Free plan limits are active.</p>
-                )}
+                <h2 className="mt-4 font-editorial text-4xl font-semibold text-text">
+                  {hasLifetimeAccess ? 'Lifetime access is active.' : 'Activate lifetime access.'}
+                </h2>
+                <p className="mt-3 max-w-2xl text-sm leading-7 text-secondary">
+                  {hasLifetimeAccess
+                    ? 'Your workspace has the paid access attached to this account.'
+                    : 'Unlock more room for project planning, documents, and project-aware conversations.'}
+                </p>
               </div>
+              <div className="rounded-panel border border-accent/20 bg-accent-soft p-4 lg:w-72">
+                <p className="text-sm font-semibold text-text">Included</p>
+                <ul className="mt-3 space-y-2 text-sm leading-6 text-secondary">
+                  {['Project planning tools', 'Founder-readable reports', 'Export where supported'].map((item) => (
+                    <li className="flex gap-2" key={item}>
+                      <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-accent" />
+                      <span>{item}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            </div>
 
-              {success ? (
-                <div className="rounded-md border border-success/35 bg-success/5 p-4 text-sm font-medium text-success">
-                  Lifetime access activated
-                </div>
-              ) : null}
+            {success ? (
+              <div className="mt-5 rounded-panel border border-success/25 bg-success/10 p-4 text-sm font-semibold text-success">
+                Lifetime access activated.
+              </div>
+            ) : null}
 
-              {error ? (
-                <div className="rounded-md border border-danger/35 bg-danger/5 p-4 text-sm font-medium text-danger">
-                  {error}
-                </div>
-              ) : null}
+            {error ? (
+              <div className="mt-5 rounded-panel border border-danger/25 bg-danger/10 p-4 text-sm font-semibold text-danger">
+                {error}
+              </div>
+            ) : null}
 
-              {!hasLifetimeAccess ? (
-                <form className="space-y-4" onSubmit={handleSubmit}>
-                  <Input
-                    autoComplete="off"
-                    label="License key"
-                    onChange={(event) => setLicenseKey(event.target.value)}
-                    placeholder="Paste your license key"
-                    value={licenseKey}
-                  />
-                  <Button disabled={!licenseKey.trim()} isLoading={isSubmitting} type="submit">
-                    Activate Lifetime Access
-                  </Button>
-                </form>
-              ) : null}
-            </CardContent>
-          </Card>
+            {!hasLifetimeAccess ? (
+              <form className="mt-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-end" onSubmit={handleSubmit}>
+                <Input
+                  autoComplete="off"
+                  label="License key"
+                  onChange={(event) => setLicenseKey(event.target.value)}
+                  placeholder="Paste your license key"
+                  value={licenseKey}
+                />
+                <Button
+                  disabled={!licenseKey.trim()}
+                  isLoading={isSubmitting}
+                  leftIcon={<KeyRound />}
+                  type="submit"
+                >
+                  Activate
+                </Button>
+              </form>
+            ) : null}
+          </Surface>
 
           <Card>
-            <CardHeader>
-              <CardTitle>Usage</CardTitle>
-              <CardDescription>Daily generation usage resets at the end of the UTC day.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-1">
-              <UsageRow
-                label="Projects"
-                limit={billingStatus?.limits.projects ?? 1}
-                used={billingStatus?.usage.projects ?? 0}
+            <CardContent className="space-y-5">
+              <SectionHeader
+                description="Daily document and chat usage resets at the end of the UTC day."
+                title="Usage"
               />
-              <UsageRow
-                label="Daily generations"
-                limit={billingStatus?.limits.generations ?? 3}
-                used={billingStatus?.usage.generations ?? 0}
-              />
+              <div className="grid gap-4">
+                <UsageRow
+                  label="Projects"
+                  limit={billingStatus?.limits.projects ?? 1}
+                  used={billingStatus?.usage.projects ?? 0}
+                />
+                <UsageRow
+                  label="Daily documents"
+                  limit={billingStatus?.limits.generations ?? 3}
+                  used={billingStatus?.usage.generations ?? 0}
+                />
+              </div>
             </CardContent>
           </Card>
         </div>
