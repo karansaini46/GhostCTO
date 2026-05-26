@@ -14,7 +14,12 @@ export type AccordionProps = {
 };
 
 export const Accordion = ({ className, items }: AccordionProps) => (
-  <div className={cn('divide-y divide-subtle rounded-panel border border-subtle bg-surface-card', className)}>
+  <div
+    className={cn(
+      'divide-y divide-subtle rounded-panel border border-subtle bg-surface-card',
+      className,
+    )}
+  >
     {items.map((item) => (
       <details className="group" key={item.title}>
         <summary className="flex cursor-pointer list-none items-center justify-between gap-4 px-4 py-3 text-sm font-semibold text-text">

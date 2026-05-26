@@ -45,7 +45,10 @@ export const Select = forwardRef<HTMLSelectElement, SelectProps>(
           {children}
         </select>
         {description ? (
-          <p className={cn('text-sm leading-5', error ? 'text-danger' : 'text-muted')} id={helpTextId}>
+          <p
+            className={cn('text-sm leading-5', error ? 'text-danger' : 'text-muted')}
+            id={helpTextId}
+          >
             {description}
           </p>
         ) : null}

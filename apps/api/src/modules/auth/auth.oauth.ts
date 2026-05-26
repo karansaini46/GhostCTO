@@ -17,8 +17,7 @@ const frontendErrorCodes = {
   unverified: 'google_unverified',
 } as const;
 
-export type GoogleOAuthFrontendError =
-  (typeof frontendErrorCodes)[keyof typeof frontendErrorCodes];
+export type GoogleOAuthFrontendError = (typeof frontendErrorCodes)[keyof typeof frontendErrorCodes];
 
 const tokenResponseSchema = z.object({
   access_token: z.string().min(1),
@@ -50,11 +49,9 @@ const getGoogleOAuthConfig = () => ({
   clientSecret: getRequiredOAuthValue(config.googleClientSecret),
 });
 
-const getGoogleFrontendRedirectUrl = () =>
-  getRequiredOAuthValue(config.googleFrontendRedirectUrl);
+const getGoogleFrontendRedirectUrl = () => getRequiredOAuthValue(config.googleFrontendRedirectUrl);
 
-export const createGoogleOAuthState = (): string =>
-  crypto.randomBytes(32).toString('base64url');
+export const createGoogleOAuthState = (): string => crypto.randomBytes(32).toString('base64url');
 
 export const buildGoogleAuthorizationUrl = (state: string): string => {
   const googleConfig = getGoogleOAuthConfig();
@@ -70,9 +67,7 @@ export const buildGoogleAuthorizationUrl = (state: string): string => {
   return url.toString();
 };
 
-export const buildGoogleFrontendRedirectUrl = (
-  errorCode?: GoogleOAuthFrontendError,
-): string => {
+export const buildGoogleFrontendRedirectUrl = (errorCode?: GoogleOAuthFrontendError): string => {
   const url = new URL(getGoogleFrontendRedirectUrl());
 
   if (errorCode) {

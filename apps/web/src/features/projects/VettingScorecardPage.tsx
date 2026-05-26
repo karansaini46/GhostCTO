@@ -557,7 +557,8 @@ export const VettingScorecardPage = () => {
           <Card className="border-danger/35 bg-danger/5">
             <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
+                The workspace may be unavailable, or your account may not have access to the
+                project.
               </p>
               <Button onClick={loadWorkspace} variant="secondary">
                 Try again

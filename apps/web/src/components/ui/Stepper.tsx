@@ -47,7 +47,9 @@ export const Stepper = ({ activeIndex, className, items }: StepperProps) => (
             <span>
               <span className="block text-sm font-semibold text-text">{item.title}</span>
               {item.description ? (
-                <span className="mt-1 block text-xs leading-5 text-secondary">{item.description}</span>
+                <span className="mt-1 block text-xs leading-5 text-secondary">
+                  {item.description}
+                </span>
               ) : null}
             </span>
           </div>

@@ -97,9 +97,7 @@ const UserResult = ({ user }: UserResultProps) => (
       </div>
       <div className="rounded-md border border-border bg-surface p-3">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Audits</p>
-        <p className="mt-1 text-lg font-semibold tracking-normal text-text">
-          {user.counts.audits}
-        </p>
+        <p className="mt-1 text-lg font-semibold tracking-normal text-text">{user.counts.audits}</p>
       </div>
       <div className="rounded-md border border-border bg-surface p-3">
         <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Quotes</p>

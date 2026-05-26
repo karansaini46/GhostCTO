@@ -112,7 +112,9 @@ export const AccountSettingsPage = () => {
             />
             <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
               <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Email</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Email
+                </p>
                 <p className="mt-2 break-all text-sm font-medium text-text">
                   {user?.email ?? 'Not available'}
                 </p>
@@ -149,7 +151,9 @@ export const AccountSettingsPage = () => {
               </div>
             </div>
             <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Created</p>
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                Created
+              </p>
               <p className="mt-2 text-sm font-medium text-text">
                 {user ? formatDate(user.createdAt) : 'Unknown'}
               </p>

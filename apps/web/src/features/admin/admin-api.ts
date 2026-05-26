@@ -11,9 +11,6 @@ export const getAdminStatsRequest = (accessToken: string) =>
   });
 
 export const lookupAdminUsersRequest = (accessToken: string, email: string) =>
-  apiRequest<{ users: AdminUserLookup[] }>(
-    `/admin/users?email=${encodeURIComponent(email)}`,
-    {
-      headers: authHeaders(accessToken),
-    },
-  );
+  apiRequest<{ users: AdminUserLookup[] }>(`/admin/users?email=${encodeURIComponent(email)}`, {
+    headers: authHeaders(accessToken),
+  });

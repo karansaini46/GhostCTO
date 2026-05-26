@@ -80,27 +80,26 @@ export const getAdminStats = async (): Promise<AdminStats> => {
     quoteAnalyses,
     payments,
     documentFeedbackAverages,
-  ] =
-    await prisma.$transaction([
-      prisma.user.count(),
-      prisma.project.count(),
-      prisma.generatedDocument.count(),
-      prisma.auditReport.count(),
-      prisma.quoteAnalysis.count(),
-      prisma.payment.count(),
-      prisma.generatedDocumentFeedback.groupBy({
-        _avg: {
-          rating: true,
-        },
-        _count: {
-          rating: true,
-        },
-        by: ['documentType'],
-        orderBy: {
-          documentType: 'asc',
-        },
-      }),
-    ]);
+  ] = await prisma.$transaction([
+    prisma.user.count(),
+    prisma.project.count(),
+    prisma.generatedDocument.count(),
+    prisma.auditReport.count(),
+    prisma.quoteAnalysis.count(),
+    prisma.payment.count(),
+    prisma.generatedDocumentFeedback.groupBy({
+      _avg: {
+        rating: true,
+      },
+      _count: {
+        rating: true,
+      },
+      by: ['documentType'],
+      orderBy: {
+        documentType: 'asc',
+      },
+    }),
+  ]);
 
   return {
     audits,

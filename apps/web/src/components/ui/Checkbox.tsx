@@ -30,7 +30,9 @@ export const Checkbox = forwardRef<HTMLInputElement, CheckboxProps>(
         />
         <span>
           <span className="block text-sm font-semibold text-text">{label}</span>
-          {description ? <span className="mt-1 block text-sm leading-5 text-secondary">{description}</span> : null}
+          {description ? (
+            <span className="mt-1 block text-sm leading-5 text-secondary">{description}</span>
+          ) : null}
         </span>
       </label>
     );

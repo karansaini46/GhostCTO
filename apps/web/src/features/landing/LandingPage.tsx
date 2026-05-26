@@ -218,8 +218,8 @@ export const LandingPage = () => {
                 Know what to build before you hire someone to build it.
               </h1>
               <p className="mt-6 max-w-2xl text-xl leading-8 text-secondary">
-                GhostCTO helps non-technical founders understand scope, stack, cost signals, and
-                red flags before money moves to a developer or agency.
+                GhostCTO helps non-technical founders understand scope, stack, cost signals, and red
+                flags before money moves to a developer or agency.
               </p>
               <div className="mt-8 flex flex-col gap-3 sm:flex-row">
                 <Link className={primaryLink} to={primaryCtaPath}>
@@ -232,7 +232,10 @@ export const LandingPage = () => {
               </div>
               <div className="mt-8 grid gap-3 sm:grid-cols-3">
                 {['Plain English', 'Developer-ready', 'Built for pre-hire clarity'].map((item) => (
-                  <div className="flex items-center gap-2 text-sm font-semibold text-secondary" key={item}>
+                  <div
+                    className="flex items-center gap-2 text-sm font-semibold text-secondary"
+                    key={item}
+                  >
                     <CheckCircle2 className="h-4 w-4 text-accent" />
                     {item}
                   </div>
@@ -257,7 +260,10 @@ export const LandingPage = () => {
             </div>
             <div className="mt-10 grid gap-5 md:grid-cols-3">
               {painPoints.map((point) => (
-                <div className="rounded-panel border border-subtle bg-surface-card p-5 shadow-soft" key={point.title}>
+                <div
+                  className="rounded-panel border border-subtle bg-surface-card p-5 shadow-soft"
+                  key={point.title}
+                >
                   <AlertTriangle className="h-5 w-5 text-clay" />
                   <h3 className="mt-4 text-lg font-semibold text-text">{point.title}</h3>
                   <p className="mt-3 text-sm leading-6 text-secondary">{point.description}</p>
@@ -283,7 +289,10 @@ export const LandingPage = () => {
             </div>
             <div className="grid gap-3 sm:grid-cols-2">
               {outputs.map((output) => (
-                <div className="flex items-center gap-3 rounded-panel border border-subtle bg-surface-card p-4 shadow-sm" key={output}>
+                <div
+                  className="flex items-center gap-3 rounded-panel border border-subtle bg-surface-card p-4 shadow-sm"
+                  key={output}
+                >
                   <FileText className="h-5 w-5 text-accent" />
                   <p className="text-sm font-semibold text-text">{output}</p>
                 </div>
@@ -304,7 +313,10 @@ export const LandingPage = () => {
             </div>
             <div className="mt-10 grid gap-5 lg:grid-cols-3">
               {workflow.map((item, index) => (
-                <div className="rounded-panel border border-subtle bg-surface-card p-5 shadow-soft" key={item.title}>
+                <div
+                  className="rounded-panel border border-subtle bg-surface-card p-5 shadow-soft"
+                  key={item.title}
+                >
                   <span className="flex h-10 w-10 items-center justify-center rounded-full border border-accent/25 bg-accent-soft text-sm font-semibold text-accent">
                     {index + 1}
                   </span>
@@ -326,8 +338,8 @@ export const LandingPage = () => {
                 Designed to be sent to a developer.
               </h2>
               <p className="mt-4 text-base leading-7 text-secondary">
-                Outputs read like structured planning documents, not chat transcripts. They help
-                you brief vendors, compare quotes, and keep the first build focused.
+                Outputs read like structured planning documents, not chat transcripts. They help you
+                brief vendors, compare quotes, and keep the first build focused.
               </p>
             </div>
             <div className="rounded-[1.25rem] border border-subtle bg-background p-5 shadow-panel">
@@ -382,7 +394,10 @@ export const LandingPage = () => {
             </div>
             <div className="mt-10 grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
               {useCases.map((item) => (
-                <div className="flex gap-3 rounded-panel border border-subtle bg-surface-card p-4 shadow-sm" key={item}>
+                <div
+                  className="flex gap-3 rounded-panel border border-subtle bg-surface-card p-4 shadow-sm"
+                  key={item}
+                >
                   <ShieldCheck className="mt-0.5 h-5 w-5 shrink-0 text-accent" />
                   <p className="text-sm font-semibold leading-6 text-text">{item}</p>
                 </div>
@@ -391,7 +406,10 @@ export const LandingPage = () => {
           </div>
         </section>
 
-        <section className="border-y border-subtle bg-text py-16 text-surface-card sm:py-20" id="pricing">
+        <section
+          className="border-y border-subtle bg-text py-16 text-surface-card sm:py-20"
+          id="pricing"
+        >
           <div className="mx-auto grid max-w-7xl gap-8 px-4 sm:px-6 lg:grid-cols-[1fr_28rem] lg:items-center lg:px-8">
             <div>
               <p className="text-xs font-semibold uppercase tracking-[0.16em] text-accent-soft">
@@ -412,7 +430,12 @@ export const LandingPage = () => {
                 <p className="pb-2 text-sm text-surface-card/60">one-time</p>
               </div>
               <ul className="mt-6 space-y-3 text-sm leading-6 text-surface-card/75">
-                {['Projects and planning workspace', 'Reports for developer handoff', 'Quote, code, and vendor review tools', 'PDF and markdown export where supported'].map((item) => (
+                {[
+                  'Projects and planning workspace',
+                  'Reports for developer handoff',
+                  'Quote, code, and vendor review tools',
+                  'PDF and markdown export where supported',
+                ].map((item) => (
                   <li className="flex gap-3" key={item}>
                     <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-accent-soft" />
                     <span>{item}</span>

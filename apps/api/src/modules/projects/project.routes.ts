@@ -109,7 +109,10 @@ projectRouter.post(
 );
 projectRouter.get('/:id/documents', asyncHandler(listProjectDocuments));
 projectRouter.get('/:id/documents/:documentId', asyncHandler(getProjectDocument));
-projectRouter.post('/:id/documents/:documentId/feedback', asyncHandler(submitProjectDocumentFeedback));
+projectRouter.post(
+  '/:id/documents/:documentId/feedback',
+  asyncHandler(submitProjectDocumentFeedback),
+);
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));
 projectRouter.patch('/:id', asyncHandler(updateProject));

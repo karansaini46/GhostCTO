@@ -186,7 +186,9 @@ export const DocumentDetailPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate(`/projects/${id ?? ''}/documents`)}>Back</Button>}
+          actions={
+            <Button onClick={() => navigate(`/projects/${id ?? ''}/documents`)}>Back</Button>
+          }
           description={error ?? 'The requested document could not be loaded.'}
           eyebrow="Project documents"
           title="Document"
@@ -216,7 +218,10 @@ export const DocumentDetailPage = () => {
       <PageHeader
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => navigate(`/projects/${project.id}/documents`)} variant="secondary">
+            <Button
+              onClick={() => navigate(`/projects/${project.id}/documents`)}
+              variant="secondary"
+            >
               Back to documents
             </Button>
             <Button disabled={!documentRecord.content} onClick={handleCopy} variant="secondary">

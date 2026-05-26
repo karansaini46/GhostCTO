@@ -120,7 +120,9 @@ export const DashboardPage = () => {
       const response = await listProjectsRequest(accessToken);
       setProjects(response.projects);
     } catch {
-      setError('We could not load your workspace. Your account is safe, but this page needs a refresh.');
+      setError(
+        'We could not load your workspace. Your account is safe, but this page needs a refresh.',
+      );
     } finally {
       setIsLoading(false);
     }
@@ -169,7 +171,10 @@ export const DashboardPage = () => {
       />
 
       {projectLimitReached ? (
-        <Surface className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between" tone="warning">
+        <Surface
+          className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"
+          tone="warning"
+        >
           <div>
             <p className="text-sm font-semibold text-text">Free project limit reached</p>
             <p className="mt-1 text-sm leading-6 text-secondary">
@@ -186,7 +191,11 @@ export const DashboardPage = () => {
 
       {error ? (
         <ErrorState
-          action={<Button onClick={loadProjects} variant="secondary">Try again</Button>}
+          action={
+            <Button onClick={loadProjects} variant="secondary">
+              Try again
+            </Button>
+          }
           description="Refresh the workspace or try again after checking your connection."
           title={error}
         />
@@ -195,7 +204,11 @@ export const DashboardPage = () => {
       {!isLoading && !error && projects.length === 0 ? (
         <div className="grid gap-6 lg:grid-cols-[1.05fr_0.95fr]">
           <EmptyState
-            action={<Button leftIcon={<PlusCircle />} onClick={() => navigate('/projects/new')}>Start guided intake</Button>}
+            action={
+              <Button leftIcon={<PlusCircle />} onClick={() => navigate('/projects/new')}>
+                Start guided intake
+              </Button>
+            }
             className="min-h-[22rem]"
             description="Create your first project so GhostCTO can understand the customer, launch scope, budget, and risks before recommending the next technical step."
             title="No project room yet"
@@ -213,12 +226,17 @@ export const DashboardPage = () => {
                 roadmap, stack, spec, quote, hiring, and review tools use the same saved context.
               </p>
               <div className="grid gap-3">
-                {['Customer and problem', 'Budget and timeline', 'Must-have launch scope'].map((item) => (
-                  <div className="flex items-center gap-3 rounded-md border border-subtle bg-surface-raised p-3" key={item}>
-                    <Sparkles className="h-4 w-4 text-accent" />
-                    <p className="text-sm font-semibold text-text">{item}</p>
-                  </div>
-                ))}
+                {['Customer and problem', 'Budget and timeline', 'Must-have launch scope'].map(
+                  (item) => (
+                    <div
+                      className="flex items-center gap-3 rounded-md border border-subtle bg-surface-raised p-3"
+                      key={item}
+                    >
+                      <Sparkles className="h-4 w-4 text-accent" />
+                      <p className="text-sm font-semibold text-text">{item}</p>
+                    </div>
+                  ),
+                )}
               </div>
             </CardContent>
           </Card>
@@ -246,7 +264,10 @@ export const DashboardPage = () => {
                 >
                   Continue
                 </Button>
-                <Button onClick={() => navigate(`/projects/${primaryProject?.id}`)} variant="secondary">
+                <Button
+                  onClick={() => navigate(`/projects/${primaryProject?.id}`)}
+                  variant="secondary"
+                >
                   Open project room
                 </Button>
               </div>
@@ -256,7 +277,9 @@ export const DashboardPage = () => {
               <p className="text-sm font-semibold text-text">Account</p>
               <div className="mt-4 space-y-3">
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Founder</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                    Founder
+                  </p>
                   <p className="mt-1 break-all text-sm font-semibold text-text">
                     {user?.name ?? user?.email ?? 'Not set'}
                   </p>
@@ -265,7 +288,9 @@ export const DashboardPage = () => {
                   ) : null}
                 </div>
                 <div>
-                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Plan</p>
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                    Plan
+                  </p>
                   <div className="mt-1">
                     <Badge variant={isLifetimePlan ? 'success' : 'warning'}>
                       {getPlanLabel(user?.plan)}
@@ -282,7 +307,11 @@ export const DashboardPage = () => {
           <Card>
             <CardContent className="space-y-5">
               <SectionHeader
-                action={<Button onClick={() => navigate('/projects/new')} size="sm" variant="secondary">New project</Button>}
+                action={
+                  <Button onClick={() => navigate('/projects/new')} size="sm" variant="secondary">
+                    New project
+                  </Button>
+                }
                 description="Each project room keeps the context and documents for one business idea."
                 title="Active projects"
               />
@@ -313,19 +342,27 @@ export const DashboardPage = () => {
                           </p>
                           <div className="mt-3 flex flex-wrap gap-2">
                             <Badge>{project.industry ?? 'Industry not set'}</Badge>
-                            <Badge>{getProjectOptionLabel.currentStage(project.currentStage)}</Badge>
-                            <Badge>{getProjectOptionLabel.launchTimeline(project.launchTimeline)}</Badge>
+                            <Badge>
+                              {getProjectOptionLabel.currentStage(project.currentStage)}
+                            </Badge>
+                            <Badge>
+                              {getProjectOptionLabel.launchTimeline(project.launchTimeline)}
+                            </Badge>
                           </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2 lg:w-[24rem]">
                           <div className="rounded-md border border-subtle bg-surface-raised p-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Created</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                              Created
+                            </p>
                             <p className="mt-1 text-sm font-semibold text-text">
                               {formatDate(project.createdAt)}
                             </p>
                           </div>
                           <div className="rounded-md border border-accent/20 bg-accent-soft p-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">Next</p>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+                              Next
+                            </p>
                             <p className="mt-1 text-sm font-semibold leading-5 text-text">
                               {nextAction.label}
                             </p>
@@ -367,7 +404,8 @@ export const DashboardPage = () => {
                             aria-hidden="true"
                             className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted"
                           >
-                            {document.projectName} · {formatDate(document.completedAt ?? document.updatedAt)}
+                            {document.projectName} ·{' '}
+                            {formatDate(document.completedAt ?? document.updatedAt)}
                           </p>
                         </div>
                       </div>

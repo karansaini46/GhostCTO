@@ -19,7 +19,12 @@ const getTone = (percent: number) => {
   return 'bg-success';
 };
 
-export const RiskScore = ({ className, label = 'Risk score', max = 100, score }: RiskScoreProps) => {
+export const RiskScore = ({
+  className,
+  label = 'Risk score',
+  max = 100,
+  score,
+}: RiskScoreProps) => {
   const percent = Math.max(0, Math.min(100, Math.round((score / max) * 100)));
 
   return (
@@ -32,7 +37,10 @@ export const RiskScore = ({ className, label = 'Risk score', max = 100, score }:
         </p>
       </div>
       <div className="mt-4 h-2.5 overflow-hidden rounded-full bg-surface-soft">
-        <div className={cn('h-full rounded-full', getTone(percent))} style={{ width: `${percent}%` }} />
+        <div
+          className={cn('h-full rounded-full', getTone(percent))}
+          style={{ width: `${percent}%` }}
+        />
       </div>
     </div>
   );

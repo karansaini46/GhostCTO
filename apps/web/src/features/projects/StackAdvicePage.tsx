@@ -18,7 +18,11 @@ import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
-import { budgetRangeOptions, getProjectOptionLabel, technicalLevelOptions } from './project-options';
+import {
+  budgetRangeOptions,
+  getProjectOptionLabel,
+  technicalLevelOptions,
+} from './project-options';
 import {
   generateStackAdviceRequest,
   getProjectRequest,
@@ -83,7 +87,8 @@ const formatLabel = (value: string | null | undefined) => {
 };
 
 const formatBudgetLabel = (value: string | null) => getProjectOptionLabel.budgetRange(value);
-const formatTechnicalLabel = (value: string | null) => getProjectOptionLabel.founderTechnicalLevel(value);
+const formatTechnicalLabel = (value: string | null) =>
+  getProjectOptionLabel.founderTechnicalLevel(value);
 
 const getOptionLabel = (options: ConstraintOption[], value: string) =>
   options.find((option) => option.value === value)?.label ?? value;
@@ -156,7 +161,15 @@ const deriveTargetScale = (project: Project | null) => {
 
 const deriveComplianceSensitivity = (project: Project | null) => {
   const text = `${project?.industry ?? ''} ${project?.targetCustomer ?? ''}`.toLowerCase();
-  const sensitiveSignals = ['health', 'medical', 'finance', 'financial', 'payments', 'insurance', 'legal'];
+  const sensitiveSignals = [
+    'health',
+    'medical',
+    'finance',
+    'financial',
+    'payments',
+    'insurance',
+    'legal',
+  ];
 
   if (sensitiveSignals.some((signal) => text.includes(signal))) {
     return 'high';
@@ -218,7 +231,10 @@ const isStackAdviceMetadata = (value: unknown): value is StackAdviceDocumentMeta
 };
 
 const getDocumentStackAdvice = (document: ProjectDocument): StackAdviceOutput | null => {
-  if (!isStackAdviceMetadata(document.metadata) || !isStackAdviceOutput(document.metadata.stackAdvice)) {
+  if (
+    !isStackAdviceMetadata(document.metadata) ||
+    !isStackAdviceOutput(document.metadata.stackAdvice)
+  ) {
     return null;
   }
 
@@ -492,7 +508,9 @@ export const StackAdvicePage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>}
+          actions={
+            <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
+          }
           description={error ?? 'The stack advisor workspace could not be loaded.'}
           eyebrow="Project workspace"
           title="Stack Advisor"
@@ -503,7 +521,8 @@ export const StackAdvicePage = () => {
           <Card className="border-danger/35 bg-danger/5">
             <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
+                The workspace may be unavailable, or your account may not have access to the
+                project.
               </p>
               <Button onClick={loadWorkspace} variant="secondary">
                 Try again
@@ -542,7 +561,9 @@ export const StackAdvicePage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Project constraints</CardTitle>
-              <CardDescription>Update the inputs that shape the stack recommendation.</CardDescription>
+              <CardDescription>
+                Update the inputs that shape the stack recommendation.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <DetailBlock
@@ -561,21 +582,17 @@ export const StackAdvicePage = () => {
                 label="Launch timeline"
                 value={getProjectOptionLabel.launchTimeline(project.launchTimeline)}
               />
-              <DetailBlock
-                label="Industry"
-                value={project.industry ?? 'Not set'}
-              />
-              <DetailBlock
-                label="Target customer"
-                value={project.targetCustomer ?? 'Not set'}
-              />
+              <DetailBlock label="Industry" value={project.industry ?? 'Not set'} />
+              <DetailBlock label="Target customer" value={project.targetCustomer ?? 'Not set'} />
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle>Generation controls</CardTitle>
-              <CardDescription>These settings only affect the next generated recommendation.</CardDescription>
+              <CardDescription>
+                These settings only affect the next generated recommendation.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <Select
@@ -718,7 +735,9 @@ export const StackAdvicePage = () => {
                         {overrides ? (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {overrides.budgetRange ? (
-                              <Badge>{getProjectOptionLabel.budgetRange(overrides.budgetRange)}</Badge>
+                              <Badge>
+                                {getProjectOptionLabel.budgetRange(overrides.budgetRange)}
+                              </Badge>
                             ) : null}
                             {overrides.founderTechnicalLevel ? (
                               <Badge>
@@ -727,19 +746,23 @@ export const StackAdvicePage = () => {
                                 )}
                               </Badge>
                             ) : null}
-                            {overrides.targetScale ? <Badge>{formatLabel(overrides.targetScale)}</Badge> : null}
+                            {overrides.targetScale ? (
+                              <Badge>{formatLabel(overrides.targetScale)}</Badge>
+                            ) : null}
                             {overrides.complianceSensitivity ? (
                               <Badge>{formatLabel(overrides.complianceSensitivity)}</Badge>
                             ) : null}
-                            {overrides.speedPriority ? <Badge>{formatLabel(overrides.speedPriority)}</Badge> : null}
+                            {overrides.speedPriority ? (
+                              <Badge>{formatLabel(overrides.speedPriority)}</Badge>
+                            ) : null}
                           </div>
                         ) : null}
                         {document.content ? (
                           <div className="mt-3">
                             <Button
                               onClick={async () => {
-                              await copyText(document.content ?? '');
-                              saveCopiedLabel('Saved report');
+                                await copyText(document.content ?? '');
+                                saveCopiedLabel('Saved report');
                               }}
                               size="sm"
                               variant="ghost"
@@ -805,7 +828,9 @@ export const StackAdvicePage = () => {
             <CardHeader>
               <CardTitle>Recommendation summary</CardTitle>
               <CardDescription>
-                {currentOutput ? 'A clear recommendation you can hand to a developer.' : 'Generate a recommendation to see the stack choices.'}
+                {currentOutput
+                  ? 'A clear recommendation you can hand to a developer.'
+                  : 'Generate a recommendation to see the stack choices.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -819,16 +844,25 @@ export const StackAdvicePage = () => {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-xs uppercase tracking-normal opacity-70">{card.title}</p>
-                            <p className="mt-2 text-lg font-semibold tracking-normal">{card.value}</p>
+                            <p className="text-xs uppercase tracking-normal opacity-70">
+                              {card.title}
+                            </p>
+                            <p className="mt-2 text-lg font-semibold tracking-normal">
+                              {card.value}
+                            </p>
                           </div>
                           <CopyButton
                             label={card.title}
                             onCopied={saveCopiedLabel}
-                            value={buildCopyText(card.title, `${card.value}\n${card.detail ?? ''}`.trim())}
+                            value={buildCopyText(
+                              card.title,
+                              `${card.value}\n${card.detail ?? ''}`.trim(),
+                            )}
                           />
                         </div>
-                        {card.detail ? <p className="mt-3 text-sm leading-6 opacity-90">{card.detail}</p> : null}
+                        {card.detail ? (
+                          <p className="mt-3 text-sm leading-6 opacity-90">{card.detail}</p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -837,7 +871,10 @@ export const StackAdvicePage = () => {
                     <DetailBlock label="Executive summary" value={currentOutput.executiveSummary} />
                     <DetailBlock label="Team assumption" value={currentOutput.teamAssumption} />
                     <DetailBlock label="Scale view" value={currentOutput.scaleView} />
-                    <DetailBlock label="Overall recommendation" value={currentOutput.recommendation} />
+                    <DetailBlock
+                      label="Overall recommendation"
+                      value={currentOutput.recommendation}
+                    />
                   </div>
                 </>
               ) : (
@@ -874,7 +911,10 @@ export const StackAdvicePage = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   {currentOutput.categories.map((category) => (
-                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={category.category}>
+                    <div
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                      key={category.category}
+                    >
                       <div className="flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
                           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
@@ -919,9 +959,15 @@ export const StackAdvicePage = () => {
                           value={category.whyNotCommonAlternative}
                         />
                         <DetailBlock label="Cost risk" value={category.costRisk} />
-                        <DetailBlock label="Operational complexity" value={category.operationalComplexity} />
+                        <DetailBlock
+                          label="Operational complexity"
+                          value={category.operationalComplexity}
+                        />
                         <div className="lg:col-span-2">
-                          <DetailBlock label="Founder explanation" value={category.founderExplanation} />
+                          <DetailBlock
+                            label="Founder explanation"
+                            value={category.founderExplanation}
+                          />
                         </div>
                       </div>
                     </div>
@@ -934,26 +980,28 @@ export const StackAdvicePage = () => {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <CardTitle>Tradeoff table</CardTitle>
-                      <CardDescription>A compact view of the main layer decisions and tradeoffs.</CardDescription>
+                      <CardDescription>
+                        A compact view of the main layer decisions and tradeoffs.
+                      </CardDescription>
                     </div>
                     <Button
                       onClick={async () => {
                         const rows = currentOutput.categories
-                          .map(
-                            (category) =>
-                              [
-                                getStackLayerLabel(category.category),
-                                category.recommendation,
-                                category.commonAlternative,
-                                category.costRisk,
-                                category.operationalComplexity,
-                              ].join('\t'),
+                          .map((category) =>
+                            [
+                              getStackLayerLabel(category.category),
+                              category.recommendation,
+                              category.commonAlternative,
+                              category.costRisk,
+                              category.operationalComplexity,
+                            ].join('\t'),
                           )
                           .join('\n');
                         await copyText(
-                          ['Layer\tRecommendation\tAlternative\tCost risk\tOperational complexity', rows].join(
-                            '\n',
-                          ),
+                          [
+                            'Layer\tRecommendation\tAlternative\tCost risk\tOperational complexity',
+                            rows,
+                          ].join('\n'),
                         );
                         saveCopiedLabel('Tradeoff table');
                       }}
@@ -969,10 +1017,16 @@ export const StackAdvicePage = () => {
                     <thead>
                       <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                         <th className="border-b border-border px-3 py-3 font-medium">Layer</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Recommendation</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Alternative</th>
+                        <th className="border-b border-border px-3 py-3 font-medium">
+                          Recommendation
+                        </th>
+                        <th className="border-b border-border px-3 py-3 font-medium">
+                          Alternative
+                        </th>
                         <th className="border-b border-border px-3 py-3 font-medium">Cost risk</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Operational complexity</th>
+                        <th className="border-b border-border px-3 py-3 font-medium">
+                          Operational complexity
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
@@ -1070,7 +1124,9 @@ export const StackAdvicePage = () => {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <CardTitle>Assumptions</CardTitle>
-                        <CardDescription>What the recommendation is assuming about the project.</CardDescription>
+                        <CardDescription>
+                          What the recommendation is assuming about the project.
+                        </CardDescription>
                       </div>
                       <Button
                         onClick={async () => {
@@ -1093,7 +1149,10 @@ export const StackAdvicePage = () => {
                   </CardHeader>
                   <CardContent className="grid gap-3">
                     {currentOutput.assumptions.map((assumption) => (
-                      <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={assumption.text}>
+                      <div
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                        key={assumption.text}
+                      >
                         <p className="text-sm leading-6 text-text">{assumption.text}</p>
                         {assumption.reason ? (
                           <p className="mt-2 text-sm leading-6 text-muted">{assumption.reason}</p>
@@ -1108,7 +1167,9 @@ export const StackAdvicePage = () => {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <CardTitle>Risks and next steps</CardTitle>
-                        <CardDescription>What can go wrong and what should happen next.</CardDescription>
+                        <CardDescription>
+                          What can go wrong and what should happen next.
+                        </CardDescription>
                       </div>
                       <Button
                         onClick={async () => {
@@ -1120,7 +1181,9 @@ export const StackAdvicePage = () => {
                             '',
                             'Next steps:',
                             ...currentOutput.nextSteps.map((step) =>
-                              step.reason ? `- ${step.action} (${step.reason})` : `- ${step.action}`,
+                              step.reason
+                                ? `- ${step.action} (${step.reason})`
+                                : `- ${step.action}`,
                             ),
                           ].join('\n');
                           await copyText(text);
@@ -1136,8 +1199,13 @@ export const StackAdvicePage = () => {
                   <CardContent className="grid gap-4">
                     <div className="grid gap-3">
                       {currentOutput.risks.map((risk) => (
-                        <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={risk.risk}>
-                          <p className="text-sm font-medium tracking-normal text-text">{risk.risk}</p>
+                        <div
+                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                          key={risk.risk}
+                        >
+                          <p className="text-sm font-medium tracking-normal text-text">
+                            {risk.risk}
+                          </p>
                           <p className="mt-2 text-sm leading-6 text-muted">{risk.impact}</p>
                           <p className="mt-2 text-sm leading-6 text-muted">{risk.mitigation}</p>
                         </div>
@@ -1145,9 +1213,16 @@ export const StackAdvicePage = () => {
                     </div>
                     <div className="grid gap-3">
                       {currentOutput.nextSteps.map((step) => (
-                        <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={step.action}>
-                          <p className="text-sm font-medium tracking-normal text-text">{step.action}</p>
-                          {step.reason ? <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p> : null}
+                        <div
+                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                          key={step.action}
+                        >
+                          <p className="text-sm font-medium tracking-normal text-text">
+                            {step.action}
+                          </p>
+                          {step.reason ? (
+                            <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p>
+                          ) : null}
                         </div>
                       ))}
                     </div>
@@ -1155,7 +1230,7 @@ export const StackAdvicePage = () => {
                 </Card>
               </div>
 
-                      {selectedDocument ? (
+              {selectedDocument ? (
                 <Card>
                   <CardHeader>
                     <CardTitle>Selected document details</CardTitle>
@@ -1176,7 +1251,10 @@ export const StackAdvicePage = () => {
                         value={
                           selectedOverrideSummary
                             ? Object.entries(selectedOverrideSummary)
-                                .map(([key, value]) => `${formatConstraintKey(key)}: ${formatConstraintValue(key, String(value))}`)
+                                .map(
+                                  ([key, value]) =>
+                                    `${formatConstraintKey(key)}: ${formatConstraintValue(key, String(value))}`,
+                                )
                                 .join('\n')
                             : 'No constraint overrides were saved with this document.'
                         }
@@ -1190,7 +1268,10 @@ export const StackAdvicePage = () => {
         </div>
       </div>
 
-      <Link className="text-sm font-medium text-accent hover:text-accent/80" to={`/projects/${project.id}`}>
+      <Link
+        className="text-sm font-medium text-accent hover:text-accent/80"
+        to={`/projects/${project.id}`}
+      >
         Back to project
       </Link>
     </div>

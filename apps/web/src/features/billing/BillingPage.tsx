@@ -139,7 +139,11 @@ export const BillingPage = () => {
               <div className="rounded-panel border border-accent/20 bg-accent-soft p-4 lg:w-72">
                 <p className="text-sm font-semibold text-text">Included</p>
                 <ul className="mt-3 space-y-2 text-sm leading-6 text-secondary">
-                  {['Project planning tools', 'Founder-readable reports', 'Export where supported'].map((item) => (
+                  {[
+                    'Project planning tools',
+                    'Founder-readable reports',
+                    'Export where supported',
+                  ].map((item) => (
                     <li className="flex gap-2" key={item}>
                       <CheckCircle2 className="mt-1 h-4 w-4 shrink-0 text-accent" />
                       <span>{item}</span>
@@ -162,7 +166,10 @@ export const BillingPage = () => {
             ) : null}
 
             {!hasLifetimeAccess ? (
-              <form className="mt-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-end" onSubmit={handleSubmit}>
+              <form
+                className="mt-6 grid gap-4 md:grid-cols-[1fr_auto] md:items-end"
+                onSubmit={handleSubmit}
+              >
                 <Input
                   autoComplete="off"
                   label="License key"
