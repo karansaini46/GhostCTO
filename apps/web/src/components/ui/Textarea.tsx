@@ -19,7 +19,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
     return (
       <div className="space-y-2">
         {label ? (
-          <label className="block text-sm font-medium text-text" htmlFor={textareaId}>
+          <label className="block text-sm font-semibold text-text" htmlFor={textareaId}>
             {label}
           </label>
         ) : null}
@@ -28,8 +28,8 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           aria-describedby={description ? helpTextId : undefined}
           aria-invalid={error ? true : undefined}
           className={cn(
-            'min-h-28 w-full resize-y rounded-md border bg-surface px-3 py-2 text-sm leading-6 text-text shadow-sm transition-colors',
-            'placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25',
+            'min-h-32 w-full resize-y rounded-md border bg-surface-card px-3.5 py-3 text-sm leading-6 text-text shadow-sm transition-all duration-200 ease-soft',
+            'placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-focus/20',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error ? 'border-danger focus:border-danger focus:ring-danger/20' : 'border-border',
             className,
@@ -38,7 +38,7 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
           {...props}
         />
         {description ? (
-          <p className={cn('text-sm', error ? 'text-danger' : 'text-muted')} id={helpTextId}>
+          <p className={cn('text-sm leading-5', error ? 'text-danger' : 'text-muted')} id={helpTextId}>
             {description}
           </p>
         ) : null}

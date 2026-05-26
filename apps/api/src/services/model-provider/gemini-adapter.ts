@@ -1,4 +1,5 @@
 import { GoogleGenerativeAI as GoogleProviderClient } from '@google/generative-ai';
+import { logger } from '../../lib/logger.js';
 import { buildStructuredRetryPrompt } from '../prompts/index.js';
 import { ModelProviderError } from './errors.js';
 import { parseStructuredOutput } from './json.js';
@@ -136,7 +137,7 @@ export class GeminiModelProvider implements ModelProvider {
       };
     }
 
-    console.warn('Structured model output failed validation. Retrying once.', {
+    logger.warn('Structured model output failed validation. Retrying once.', {
       issues: firstParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
@@ -170,7 +171,7 @@ export class GeminiModelProvider implements ModelProvider {
       };
     }
 
-    console.warn('Structured model output failed validation after retry.', {
+    logger.warn('Structured model output failed validation after retry.', {
       issues: retryParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
@@ -217,7 +218,7 @@ export class GeminiModelProvider implements ModelProvider {
 
     const usage = toUsage(response.usageMetadata);
 
-    console.info('Model token usage.', {
+    logger.info('Model token usage.', {
       inputTokens: usage?.inputTokens,
       outputTokens: usage?.outputTokens,
       provider: 'gemini',
@@ -246,7 +247,7 @@ export class GeminiModelProvider implements ModelProvider {
     const statusCode = toStatusCode(error);
 
     if (statusCode === 429) {
-      console.warn('Model provider rate limit reached.', {
+      logger.warn('Model provider rate limit reached.', {
         provider: 'gemini',
         requestName,
         statusCode,
@@ -262,7 +263,7 @@ export class GeminiModelProvider implements ModelProvider {
     }
 
     if (statusCode) {
-      console.error('Model provider request returned an error.', {
+      logger.error('Model provider request returned an error.', {
         provider: 'gemini',
         requestName,
         statusCode,
@@ -277,7 +278,7 @@ export class GeminiModelProvider implements ModelProvider {
       });
     }
 
-    console.error('Model provider request failed before receiving a response.', {
+    logger.error('Model provider request failed before receiving a response.', {
       provider: 'gemini',
       requestName,
     });

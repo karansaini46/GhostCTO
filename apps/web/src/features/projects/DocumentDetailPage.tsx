@@ -6,9 +6,8 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  MarkdownReport,
+  ReportCard,
   LoadingState,
   PageHeader,
 } from '../../components/ui';
@@ -210,6 +209,7 @@ export const DocumentDetailPage = () => {
     documentRecord.status === 'COMPLETED' &&
     Boolean(documentRecord.content?.trim()) &&
     exportablePdfTypes.has(documentRecord.type);
+  const reportContent = documentRecord.content?.replace(/^#\s+.+\n+/, '');
 
   return (
     <div className="space-y-8">
@@ -238,7 +238,7 @@ export const DocumentDetailPage = () => {
         }
         description={documentRecord.summary ?? 'Saved generated document.'}
         eyebrow="Project documents"
-        title={documentRecord.title}
+        title="Document"
       />
 
       {exportError ? (
@@ -256,33 +256,28 @@ export const DocumentDetailPage = () => {
         projectId={project.id}
       />
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center gap-2">
+      <ReportCard
+        meta={
+          <>
             <Badge>{getDocumentTypeLabel(documentRecord.type)}</Badge>
             <Badge variant="accent">v{documentRecord.version}</Badge>
             <Badge>{formatLabel(documentRecord.status)}</Badge>
-          </div>
-          <CardTitle>Document details</CardTitle>
-          <CardDescription>
-            Created {formatDateTime(documentRecord.createdAt)}
-            {documentRecord.completedAt
-              ? ` and completed ${formatDateTime(documentRecord.completedAt)}`
-              : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-border bg-surface-raised p-4">
-            {documentRecord.content ? (
-              <pre className="whitespace-pre-wrap text-sm leading-6 text-text">
-                {documentRecord.content}
-              </pre>
-            ) : (
-              <p className="text-sm leading-6 text-muted">No content saved for this document.</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            <Badge>{formatDateTime(documentRecord.createdAt)}</Badge>
+          </>
+        }
+        subtitle={
+          documentRecord.completedAt
+            ? `Completed ${formatDateTime(documentRecord.completedAt)}`
+            : 'Saved project document.'
+        }
+        title={documentRecord.title}
+      >
+        {reportContent ? (
+          <MarkdownReport content={reportContent} />
+        ) : (
+          <p className="text-sm leading-6 text-secondary">No content saved for this document.</p>
+        )}
+      </ReportCard>
     </div>
   );
 };

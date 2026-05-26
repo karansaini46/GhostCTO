@@ -12,6 +12,7 @@ import {
   Input,
   PageHeader,
   Select,
+  Surface,
   Textarea,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
@@ -54,27 +55,27 @@ const initialDraft: ProjectDraft = {
 
 const steps: { description: string; fields: FieldKey[]; title: string }[] = [
   {
-    description: 'Clarify the venture, buyer, and problem before scope decisions.',
+    description: 'Name the idea, customer, and problem in plain English.',
     fields: ['name', 'ideaSummary', 'targetCustomer'],
     title: 'Foundation',
   },
   {
-    description: 'Define the market shape and revenue model.',
+    description: 'Set the category and first business model.',
     fields: ['industry', 'productType', 'monetization'],
     title: 'Market',
   },
   {
-    description: 'Set delivery constraints for budget, stage, timeline, and technical comfort.',
+    description: 'Share budget, stage, timeline, and technical comfort.',
     fields: ['currentStage', 'budgetRange', 'launchTimeline', 'founderTechnicalLevel'],
     title: 'Execution',
   },
   {
-    description: 'Capture the assets, launch scope, and risk that should guide the first build.',
+    description: 'Choose what exists, what must launch, and what worries you.',
     fields: ['existingAssets', 'mustHaveFeatures', 'biggestConcern'],
-    title: 'Context',
+    title: 'Scope',
   },
   {
-    description: 'Review the project context before creating the workspace record.',
+    description: 'Review the context before the project room is created.',
     fields: [],
     title: 'Review',
   },
@@ -234,25 +235,27 @@ type StepButtonProps = {
 const StepButton = ({ index, isActive, isComplete, title }: StepButtonProps) => (
   <div
     className={cn(
-      'flex min-w-0 items-center gap-3 rounded-md border px-3 py-2',
+      'flex min-w-0 items-center gap-3 rounded-panel border px-3 py-3 transition-all duration-200 ease-soft',
       isActive
-        ? 'border-accent/50 bg-accent/10 text-text'
-        : 'border-border bg-surface-raised text-muted',
+        ? 'border-accent bg-accent-soft text-text shadow-sm'
+        : isComplete
+          ? 'border-success/25 bg-success/10 text-text'
+          : 'border-subtle bg-surface-card text-secondary',
     )}
   >
     <span
       className={cn(
         'flex h-7 w-7 shrink-0 items-center justify-center rounded-full border text-sm font-semibold',
         isComplete
-          ? 'border-success bg-success/15 text-success'
+          ? 'border-success bg-success text-surface-card'
           : isActive
-            ? 'border-accent bg-accent/15 text-accent'
+            ? 'border-accent bg-accent text-surface-card'
             : 'border-border text-muted',
       )}
     >
       {index + 1}
     </span>
-    <span className="truncate text-sm font-medium">{title}</span>
+    <span className="truncate text-sm font-semibold">{title}</span>
   </div>
 );
 
@@ -262,8 +265,8 @@ type ReviewRowProps = {
 };
 
 const ReviewRow = ({ label, value }: ReviewRowProps) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -523,8 +526,8 @@ export const ProjectOnboardingPage = () => {
         <div className="space-y-5">
           <div className="space-y-3">
             <div>
-              <p className="text-sm font-medium text-text">Existing assets</p>
-              <p className="mt-1 text-sm leading-6 text-muted">
+              <p className="text-sm font-semibold text-text">Existing assets</p>
+              <p className="mt-1 text-sm leading-6 text-secondary">
                 Select what already exists so recommendations can reuse the strongest work.
               </p>
             </div>
@@ -532,10 +535,10 @@ export const ProjectOnboardingPage = () => {
               {existingAssetOptions.map((option) => (
                 <label
                   className={cn(
-                    'flex cursor-pointer items-center gap-3 rounded-md border bg-surface-raised p-3 text-sm transition-colors',
+                    'flex cursor-pointer items-center gap-3 rounded-panel border bg-surface-card p-3 text-sm transition-all duration-200 ease-soft',
                     draft.existingAssets.includes(option.value)
-                      ? 'border-accent/50 text-text'
-                      : 'border-border text-muted hover:border-accent/30 hover:text-text',
+                      ? 'border-accent bg-accent-soft text-text shadow-sm'
+                      : 'border-subtle text-secondary hover:border-accent/30 hover:text-text',
                   )}
                   key={option.value}
                 >
@@ -627,21 +630,21 @@ export const ProjectOnboardingPage = () => {
   return (
     <form className="space-y-8" onSubmit={submit}>
       <PageHeader
-        description="Capture the facts future planning and execution work depends on."
+        description="Answer one focused group at a time so the project room starts with useful context."
         eyebrow="Project onboarding"
         title="Create project context"
       />
 
       <div className="grid gap-6 xl:grid-cols-[18rem_1fr]">
         <div className="space-y-4">
-          <div className="rounded-lg border border-border bg-surface p-4">
+          <Surface tone="elevated">
             <div className="flex items-center justify-between gap-3">
-              <p className="text-sm font-medium text-text">Progress</p>
+              <p className="text-sm font-semibold text-text">Intake progress</p>
               <p className="text-sm text-muted">{progress}%</p>
             </div>
-            <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-raised">
+            <div className="mt-3 h-2 overflow-hidden rounded-full bg-surface-soft">
               <div
-                className="h-full rounded-full bg-accent transition-all"
+                className="h-full rounded-full bg-accent transition-all duration-500 ease-soft"
                 style={{ width: `${progress}%` }}
               />
             </div>
@@ -653,7 +656,7 @@ export const ProjectOnboardingPage = () => {
                   })}`
                 : 'Draft autosaves in this browser'}
             </p>
-          </div>
+          </Surface>
           <div className="space-y-2">
             {steps.map((step, index) => (
               <StepButton
@@ -667,9 +670,9 @@ export const ProjectOnboardingPage = () => {
           </div>
         </div>
 
-        <Card>
+        <Card className="animate-enter">
           <CardHeader>
-            <CardTitle>{currentStep.title}</CardTitle>
+            <CardTitle className="font-editorial text-3xl">{currentStep.title}</CardTitle>
             <CardDescription>{currentStep.description}</CardDescription>
           </CardHeader>
           <CardContent>{renderCurrentStep()}</CardContent>
@@ -679,7 +682,7 @@ export const ProjectOnboardingPage = () => {
                 <p className="text-sm leading-6 text-danger">{submitError}</p>
               ) : (
                 <p className="text-sm leading-6 text-muted">
-                  Step {stepIndex + 1} of {steps.length}
+                  Step {stepIndex + 1} of {steps.length}. You can adjust details later.
                 </p>
               )}
             </div>

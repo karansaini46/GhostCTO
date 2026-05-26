@@ -1,8 +1,18 @@
 import bcrypt from 'bcryptjs';
 
+const writeLine = (message: string) => {
+  process.stdout.write(`${message}\n`);
+};
+
+const writeError = (error: unknown) => {
+  const message = error instanceof Error ? error.stack ?? error.message : String(error);
+
+  process.stderr.write(`${message}\n`);
+};
+
 const seed = async () => {
   if (process.env.NODE_ENV !== 'development') {
-    console.info('Seed skipped outside development.');
+    writeLine('Seed skipped outside development.');
     return;
   }
 
@@ -57,6 +67,6 @@ const seed = async () => {
 };
 
 seed().catch((error: unknown) => {
-  console.error(error);
+  writeError(error);
   process.exit(1);
 });

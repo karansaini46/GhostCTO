@@ -13,14 +13,15 @@ import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
 import { LandingPage } from './features/landing/LandingPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
+import { DeveloperJdPage } from './features/projects/DeveloperJdPage';
 import { DocumentDetailPage } from './features/projects/DocumentDetailPage';
 import { DocumentsPage } from './features/projects/DocumentsPage';
 import { ProjectChatPage } from './features/projects/ProjectChatPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { RateValidatorPage } from './features/projects/RateValidatorPage';
+import { RoadmapPage } from './features/projects/RoadmapPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
-import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
 import { VettingScorecardPage } from './features/projects/VettingScorecardPage';
 import { AccountSettingsPage } from './features/settings/AccountSettingsPage';
@@ -36,7 +37,6 @@ export const App = () => (
           <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/logout" element={<LogoutPage />} />
-        <Route element={<ShareDocumentPage />} path="/share/:documentId" />
         <Route element={<ProtectedRoute />}>
           <Route
             element={
@@ -121,10 +121,26 @@ export const App = () => (
           <Route
             element={
               <AppShell>
+                <RoadmapPage />
+              </AppShell>
+            }
+            path="/projects/:id/roadmap"
+          />
+          <Route
+            element={
+              <AppShell>
+                <DeveloperJdPage />
+              </AppShell>
+            }
+            path="/projects/:id/developer-jd"
+          />
+          <Route
+            element={
+              <AppShell>
                 <StackAdvicePage />
               </AppShell>
             }
-            path="/projects/:id/stack-advice"
+            path="/projects/:id/stack-advisor"
           />
           <Route
             element={
@@ -132,7 +148,7 @@ export const App = () => (
                 <TechnicalSpecPage />
               </AppShell>
             }
-            path="/projects/:id/specs"
+            path="/projects/:id/technical-spec"
           />
           <Route
             element={

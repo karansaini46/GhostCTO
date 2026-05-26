@@ -13,6 +13,8 @@ import {
   EmptyState,
   LoadingState,
   PageHeader,
+  SectionHeader,
+  Surface,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { getBillingStatusRequest } from '../billing/billing-api';
@@ -99,6 +101,7 @@ const downloadBlob = (blob: Blob, filename: string) => {
 type WorkspaceModule = {
   description: string;
   documentTypes: string[];
+  group: 'Ask your CTO' | 'Hire safely' | 'Plan the product' | 'Review the work';
   title: string;
   whenReady: string;
 };
@@ -109,51 +112,73 @@ const workspaceModules: WorkspaceModule[] = [
   {
     description: 'Milestones, release order, and founder decisions needed before execution.',
     documentTypes: ['roadmap'],
-    title: 'Roadmap',
+    group: 'Plan the product',
+    title: 'Technical Roadmap',
     whenReady: 'Prepare the first execution plan',
   },
   {
     description: 'Recommended stack choices tied to budget, timeline, and product complexity.',
     documentTypes: ['stack_advisor'],
+    group: 'Plan the product',
     title: 'Stack Advisor',
     whenReady: 'Review stack options for the build',
   },
   {
     description: 'Implementation-ready scope for vendors, contractors, and internal review.',
     documentTypes: ['technical_spec'],
+    group: 'Plan the product',
     title: 'Technical Spec',
     whenReady: 'Turn scope into implementation detail',
   },
   {
     description: 'Role scope, required skills, interview focus, and delivery expectations.',
     documentTypes: ['developer_jd'],
-    title: 'Developer JD',
+    group: 'Hire safely',
+    title: 'Developer Brief',
     whenReady: 'Define the first technical hire or contractor role',
   },
   {
     description: 'Budget and quote review against expected delivery effort and complexity.',
     documentTypes: ['rate_validator'],
-    title: 'Rate Validator',
+    group: 'Hire safely',
+    title: 'Quote Validator',
     whenReady: 'Validate the next vendor quote',
-  },
-  {
-    description: 'Repository, architecture, security, and maintainability review for shipped work.',
-    documentTypes: ['code_audit'],
-    title: 'Code Audit',
-    whenReady: 'Review a codebase when one is available',
   },
   {
     description: 'Structured review criteria for evaluating technical candidates and vendors.',
     documentTypes: ['vetting_scorecard'],
+    group: 'Hire safely',
     title: 'Vetting Scorecard',
     whenReady: 'Prepare evaluation criteria',
   },
   {
+    description: 'Repository, architecture, security, and maintainability review for shipped work.',
+    documentTypes: ['code_audit'],
+    group: 'Review the work',
+    title: 'Code Audit',
+    whenReady: 'Review a codebase when one is available',
+  },
+  {
     description: 'Project-specific technical guidance using the saved workspace context.',
     documentTypes: [],
-    title: 'CTO Chat',
+    group: 'Ask your CTO',
+    title: 'Project Advisor',
     whenReady: 'Ask project-specific follow-up questions',
   },
+];
+
+const moduleGroupDescriptions: Record<WorkspaceModule['group'], string> = {
+  'Ask your CTO': 'Use the saved project context to talk through the decision in front of you.',
+  'Hire safely': 'Prepare hiring materials, validate quotes, and evaluate vendors before committing budget.',
+  'Plan the product': 'Turn the idea into a practical build path and developer-ready instructions.',
+  'Review the work': 'Check technical risk in code or repositories without needing to read everything yourself.',
+};
+
+const moduleGroups: WorkspaceModule['group'][] = [
+  'Plan the product',
+  'Hire safely',
+  'Review the work',
+  'Ask your CTO',
 ];
 
 const formatAnswer = (answer: ProjectAnswer) => {
@@ -180,8 +205,8 @@ type DetailBlockProps = {
 };
 
 const DetailBlock = ({ label, value }: DetailBlockProps) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value || 'Not set'}</p>
   </div>
 );
@@ -208,26 +233,31 @@ const ModuleCard = ({
   projectId,
 }: ModuleCardProps) => {
   const moduleLink =
-    module.title === 'CTO Chat'
+    module.title === 'Project Advisor'
       ? {
-          label: 'Open chat',
+          label: 'Open advisor',
           path: `/projects/${projectId}/chat`,
         }
+      : module.documentTypes.includes('roadmap')
+        ? {
+            label: 'Open roadmap',
+            path: `/projects/${projectId}/roadmap`,
+          }
       : module.documentTypes.includes('stack_advisor')
         ? {
             label: 'Open advisor',
-            path: `/projects/${projectId}/stack-advice`,
+            path: `/projects/${projectId}/stack-advisor`,
           }
         : module.documentTypes.includes('technical_spec')
           ? {
               label: 'Open writer',
-              path: `/projects/${projectId}/specs`,
+              path: `/projects/${projectId}/technical-spec`,
             }
           : module.documentTypes.includes('rate_validator')
             ? {
-                label: 'Open validator',
-                path: `/projects/${projectId}/rate-validator`,
-              }
+              label: 'Open quote review',
+              path: `/projects/${projectId}/rate-validator`,
+            }
             : module.documentTypes.includes('code_audit')
               ? {
                   label: 'Open auditor',
@@ -238,6 +268,11 @@ const ModuleCard = ({
                     label: 'Open vetting',
                     path: `/projects/${projectId}/vetting`,
                   }
+                : module.documentTypes.includes('developer_jd')
+                  ? {
+                      label: 'Open brief',
+                      path: `/projects/${projectId}/developer-jd`,
+                    }
                 : document
                   ? {
                       label: 'Open document',
@@ -269,22 +304,22 @@ const ModuleCard = ({
         : module.whenReady;
 
   return (
-    <div className="rounded-lg border border-border bg-surface p-4">
+    <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/30 hover:shadow-soft">
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-sm font-semibold tracking-normal text-text">{module.title}</h3>
-          <p className="mt-2 text-sm leading-6 text-muted">{module.description}</p>
+          <h3 className="text-base font-semibold tracking-normal text-text">{module.title}</h3>
+          <p className="mt-2 text-sm leading-6 text-secondary">{module.description}</p>
         </div>
         <Badge variant={variant}>{status}</Badge>
       </div>
-      <div className="mt-4 rounded-md border border-border bg-surface-raised p-3">
-        <p className="text-xs uppercase tracking-normal text-muted">Next action</p>
+      <div className="mt-4 rounded-md border border-subtle bg-surface-raised p-3">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Next action</p>
         <p className="mt-1 text-sm font-medium leading-5 text-text">{nextAction}</p>
       </div>
       {moduleLink ? (
         <div className="mt-4">
           <Link
-            className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium tracking-normal text-text transition-colors hover:border-accent/35 hover:bg-surface-raised/80"
+            className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-surface-card px-4 text-sm font-semibold tracking-normal text-text shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:bg-surface-raised"
             to={isLocked && !document ? '/billing' : moduleLink.path}
           >
             {isLocked && !document ? 'Unlock access' : moduleLink.label}
@@ -295,7 +330,7 @@ const ModuleCard = ({
         <div className="mt-4">
           {isLocked ? (
             <Link
-              className="inline-flex h-10 items-center justify-center rounded-md border border-border bg-surface-raised px-4 text-sm font-medium tracking-normal text-text transition-colors hover:border-accent/35 hover:bg-surface-raised/80"
+              className="inline-flex min-h-10 items-center justify-center rounded-md border border-border bg-surface-card px-4 text-sm font-semibold tracking-normal text-text shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:bg-surface-raised"
               to="/billing"
             >
               Unlock access
@@ -558,6 +593,50 @@ export const ProjectDetailPage = () => {
         </Badge>
       </div>
 
+      <Surface className="grid gap-5 lg:grid-cols-[1fr_20rem]" tone="elevated">
+        <div>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
+            Project room
+          </p>
+          <h2 className="mt-2 font-editorial text-4xl font-semibold text-text">
+            {contextReady ? 'Ready for focused planning.' : 'Finish the context before planning.'}
+          </h2>
+          <p className="mt-3 max-w-3xl text-sm leading-7 text-secondary">
+            {project.ideaSummary ??
+              'Add the project summary, target customer, and launch scope so each tool can give practical guidance.'}
+          </p>
+        </div>
+        <div className="rounded-panel border border-accent/20 bg-accent-soft p-4">
+          <p className="text-sm font-semibold text-text">Next best action</p>
+          <p className="mt-2 text-sm leading-6 text-secondary">
+            {!contextReady
+              ? 'Complete the project context before asking for build plans or vendor reviews.'
+              : !moduleDocuments.get('roadmap')
+                ? 'Generate the roadmap first so every later decision has a source of truth.'
+                : !moduleDocuments.get('technical_spec')
+                  ? 'Turn the roadmap into a developer-ready technical spec.'
+                  : 'Review the latest documents before the next vendor conversation.'}
+          </p>
+          <Button
+            className="mt-4"
+            onClick={() =>
+              navigate(
+                !contextReady
+                  ? `/projects/${project.id}/settings`
+                  : !moduleDocuments.get('roadmap')
+                    ? `/projects/${project.id}/roadmap`
+                    : !moduleDocuments.get('technical_spec')
+                      ? `/projects/${project.id}/technical-spec`
+                      : `/projects/${project.id}/documents`,
+              )
+            }
+            size="sm"
+          >
+            Continue
+          </Button>
+        </div>
+      </Surface>
+
       {generationLimitReached ? (
         <Card className="border-warning/35 bg-warning/5">
           <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
@@ -616,42 +695,57 @@ export const ProjectDetailPage = () => {
       </Card>
 
       <Card>
-        <CardHeader>
-          <CardTitle>Modules</CardTitle>
-          <CardDescription>Focused work areas connected to this project context.</CardDescription>
-        </CardHeader>
-        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
-          {workspaceModules.map((module) => {
-            const document =
-              module.documentTypes
-                .map((type) => moduleDocuments.get(type) ?? null)
-                .find((item): item is ProjectDocument => item !== null) ?? null;
-
-            return (
-              <ModuleCard
-                contextReady={contextReady}
-                document={document}
-                generationType={
-                  module.documentTypes.includes('roadmap')
-                    ? 'roadmap'
-                    : module.documentTypes.includes('developer_jd')
-                      ? 'developer_jd'
-                      : null
-                }
-                isGenerating={
-                  generatingModule !== null &&
-                  (module.documentTypes.includes(generatingModule) ||
-                    (generatingModule === 'developer_jd' &&
-                      module.documentTypes.includes('developer_jd')))
-                }
-                isLocked={generationLimitReached && module.documentTypes.length > 0 && !document}
-                key={module.title}
-                module={module}
-                onGenerate={handleGenerateBodylessDocument}
-                projectId={project.id}
+        <CardContent className="space-y-8">
+          <SectionHeader
+            description="The tools are grouped by the founder journey so the most useful action is easier to find."
+            title="Project path"
+          />
+          {moduleGroups.map((group) => (
+            <section className="space-y-4" key={group}>
+              <SectionHeader
+                className="border-t border-subtle pt-6 first:border-t-0 first:pt-0"
+                description={moduleGroupDescriptions[group]}
+                title={group}
               />
-            );
-          })}
+              <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                {workspaceModules
+                  .filter((module) => module.group === group)
+                  .map((module) => {
+                    const document =
+                      module.documentTypes
+                        .map((type) => moduleDocuments.get(type) ?? null)
+                        .find((item): item is ProjectDocument => item !== null) ?? null;
+
+                    return (
+                      <ModuleCard
+                        contextReady={contextReady}
+                        document={document}
+                        generationType={
+                          module.documentTypes.includes('roadmap')
+                            ? 'roadmap'
+                            : module.documentTypes.includes('developer_jd')
+                              ? 'developer_jd'
+                              : null
+                        }
+                        isGenerating={
+                          generatingModule !== null &&
+                          (module.documentTypes.includes(generatingModule) ||
+                            (generatingModule === 'developer_jd' &&
+                              module.documentTypes.includes('developer_jd')))
+                        }
+                        isLocked={
+                          generationLimitReached && module.documentTypes.length > 0 && !document
+                        }
+                        key={module.title}
+                        module={module}
+                        onGenerate={handleGenerateBodylessDocument}
+                        projectId={project.id}
+                      />
+                    );
+                  })}
+              </div>
+            </section>
+          ))}
         </CardContent>
       </Card>
 
@@ -666,7 +760,7 @@ export const ProjectDetailPage = () => {
               <div className="grid gap-3">
                 {project.mustHaveFeatures.map((feature) => (
                   <div
-                    className="rounded-md border border-border bg-surface-raised p-4 text-sm leading-6 text-text"
+                    className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4 text-sm leading-6 text-text"
                     key={feature}
                   >
                     {feature}
@@ -745,7 +839,7 @@ export const ProjectDetailPage = () => {
             <div className="grid gap-3">
               {project.documents.map((document) => (
                 <div
-                  className="rounded-md border border-border bg-surface-raised p-4"
+                  className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                   key={document.id}
                 >
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">

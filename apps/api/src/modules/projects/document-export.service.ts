@@ -140,7 +140,7 @@ const getDocumentTypeLabel = (type: string) => {
   }
 
   if (type === 'STACK_ADVICE' || type === 'stack_advisor') {
-    return 'Stack Advice';
+    return 'Stack Advisor';
   }
 
   if (type === 'TECH_SPEC' || type === 'technical_spec') {

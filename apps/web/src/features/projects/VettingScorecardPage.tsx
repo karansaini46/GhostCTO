@@ -262,8 +262,8 @@ const buildNextStepsText = (items: VettingNextStep[]) =>
     .join('\n\n');
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -302,7 +302,7 @@ const ScoreBlock = ({
   const tone = scoreTone(resolvedScore);
 
   return (
-    <div className="rounded-md border border-border bg-surface-raised p-4">
+    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold leading-6 text-text">{label}</p>
@@ -355,7 +355,7 @@ const FlagList = ({
         </div>
         <p className="mt-3 text-sm leading-6 text-text">{item.whyItMatters}</p>
         <div className="mt-3 rounded-md border border-current/20 bg-background/20 p-3">
-          <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Evidence</p>
           <p className="mt-2 text-sm leading-6 text-text">{item.evidence}</p>
         </div>
       </div>
@@ -734,7 +734,7 @@ export const VettingScorecardPage = () => {
                                 </Badge>
                               )}
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -967,7 +967,7 @@ export const VettingScorecardPage = () => {
                 <CardContent className="grid gap-3">
                   {currentOutput.interviewQuestions.map((item, index) => (
                     <div
-                      className="rounded-md border border-border bg-surface-raised p-4"
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                       key={item.question}
                     >
                       <div className="flex flex-wrap items-start gap-3">
@@ -978,7 +978,7 @@ export const VettingScorecardPage = () => {
                           </p>
                           <p className="mt-2 text-sm leading-6 text-muted">{item.reason}</p>
                           <div className="mt-3 rounded-md border border-border bg-surface p-3">
-                            <p className="text-xs uppercase tracking-normal text-muted">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               Strong answer signals
                             </p>
                             <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-text">
@@ -1040,7 +1040,7 @@ export const VettingScorecardPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[720px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
                   {selectedDocument.content}
                 </div>
               </CardContent>

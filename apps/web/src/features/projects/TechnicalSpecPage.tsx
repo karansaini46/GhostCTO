@@ -286,10 +286,10 @@ const isTechnicalSpecOutput = (value: unknown): value is TechnicalSpecOutput => 
     return false;
   }
 
-  const output = value as Partial<TechnicalSpecOutput>;
+  const output = value as Partial<TechnicalSpecOutput> & { moduleType?: unknown };
 
   return (
-    output.moduleType === 'TECH_SPEC' &&
+    (output.moduleType === 'technical_spec' || output.moduleType === 'TECH_SPEC') &&
     typeof output.reportMarkdown === 'string' &&
     Boolean(output.featureOverview) &&
     Array.isArray(output.userStories) &&
@@ -333,8 +333,8 @@ const CopyButton = ({ label, onCopied, value, variant = 'secondary' }: CopyButto
 );
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -343,7 +343,7 @@ const ListBlock = ({ items }: { items: string[] }) => (
   <div className="grid gap-2">
     {items.map((item) => (
       <div
-        className="rounded-md border border-border bg-surface-raised px-3 py-2 text-sm leading-6 text-text"
+        className="rounded-panel border border-subtle bg-surface-card shadow-sm px-3 py-2 text-sm leading-6 text-text"
         key={item}
       >
         {item}
@@ -554,7 +554,7 @@ const buildSpecTabs = (
         <div className="grid gap-4">
           {output.userStories.map((story) => (
             <div
-              className="rounded-md border border-border bg-surface-raised p-4"
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={story.story}
             >
               <p className="text-sm font-semibold text-text">{story.story}</p>
@@ -568,7 +568,7 @@ const buildSpecTabs = (
         </div>
         <div className="grid gap-4">
           {output.userFlows.map((flow) => (
-            <div className="rounded-md border border-border bg-surface-raised p-4" key={flow.title}>
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={flow.title}>
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-text">{flow.title}</h3>
                 <Badge>{flow.actor}</Badge>
@@ -603,7 +603,7 @@ const buildSpecTabs = (
         <div className="grid gap-4">
           {output.apiEndpoints.map((endpoint) => (
             <div
-              className="rounded-md border border-border bg-surface-raised p-4"
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={`${endpoint.method}-${endpoint.path}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -618,13 +618,13 @@ const buildSpecTabs = (
                 <DetailBlock label="Request fields" value={formatBullets(endpoint.requestBody)} />
                 <DetailBlock label="Response fields" value={formatBullets(endpoint.responseBody)} />
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-normal text-muted">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                     Request example
                   </p>
                   <CodeBlock value={endpoint.requestExample} />
                 </div>
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-normal text-muted">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                     Response example
                   </p>
                   <CodeBlock value={endpoint.responseExample} />
@@ -659,7 +659,7 @@ const buildSpecTabs = (
         <div className="grid gap-4">
           {output.databaseChanges.map((change) => (
             <div
-              className="rounded-md border border-border bg-surface-raised p-4"
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={`${change.changeType}-${change.entity}`}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -824,7 +824,7 @@ const buildSpecTabs = (
             .sort((first, second) => first.order - second.order)
             .map((step) => (
               <div
-                className="rounded-md border border-border bg-surface-raised p-4"
+                className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                 key={`${step.order}-${step.title}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -858,7 +858,7 @@ const buildSpecTabs = (
               variant="ghost"
             />
           </div>
-          <div className="max-h-[520px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+          <div className="max-h-[520px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
             {output.reportMarkdown}
           </div>
         </div>
@@ -1252,7 +1252,7 @@ export const TechnicalSpecPage = () => {
                                 {isSelected ? 'Active' : 'Saved'}
                               </Badge>
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -1340,7 +1340,7 @@ export const TechnicalSpecPage = () => {
               <div className="rounded-lg border border-border bg-surface p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-normal text-muted">Generated spec</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Generated spec</p>
                     <h2 className="mt-1 text-lg font-semibold text-text">
                       {selectedDocument?.title ?? (formState.featureName || 'Technical Spec')}
                     </h2>
@@ -1413,7 +1413,7 @@ export const TechnicalSpecPage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[720px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
                   {selectedDocument.content}
                 </div>
               </CardContent>

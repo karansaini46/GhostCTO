@@ -24,7 +24,7 @@ export const Tabs = ({ className, items, onValueChange, value }: TabsProps) => {
   return (
     <div className={cn('space-y-4', className)}>
       <div
-        className="inline-flex rounded-lg border border-border bg-surface-raised p-1"
+        className="inline-flex max-w-full overflow-x-auto rounded-lg border border-subtle bg-surface-raised p-1 shadow-sm"
         role="tablist"
       >
         {items.map((item) => {
@@ -35,9 +35,9 @@ export const Tabs = ({ className, items, onValueChange, value }: TabsProps) => {
               aria-controls={`${generatedId}-${item.value}-panel`}
               aria-selected={active}
               className={cn(
-                'h-9 rounded-md px-3 text-sm font-medium tracking-normal transition-colors',
-                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent/35',
-                active ? 'bg-accent text-background' : 'text-muted hover:text-text',
+                'h-9 whitespace-nowrap rounded-md px-3 text-sm font-semibold tracking-normal transition-all duration-200 ease-soft',
+                'focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-focus/30',
+                active ? 'bg-surface-card text-text shadow-sm' : 'text-muted hover:text-text',
                 item.disabled ? 'cursor-not-allowed opacity-50' : '',
               )}
               disabled={item.disabled}
@@ -54,7 +54,7 @@ export const Tabs = ({ className, items, onValueChange, value }: TabsProps) => {
       </div>
       <div
         aria-labelledby={`${generatedId}-${activeItem.value}-tab`}
-        className="rounded-lg border border-border bg-surface p-4 text-sm leading-6 text-muted"
+        className="rounded-panel border border-subtle bg-surface-card p-4 text-sm leading-6 text-secondary shadow-sm sm:p-5"
         id={`${generatedId}-${activeItem.value}-panel`}
         role="tabpanel"
       >

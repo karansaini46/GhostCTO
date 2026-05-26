@@ -15,7 +15,7 @@ import {
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { QuoteAnalysisRequestInput } from './project.schemas.js';
 
-const quoteAnalysisType = 'QUOTE_ANALYSIS';
+const quoteAnalysisType = 'rate_validator';
 const quoteAnalysisDocumentTitle = 'Rate Validator';
 
 const projectWorkspaceInclude = {

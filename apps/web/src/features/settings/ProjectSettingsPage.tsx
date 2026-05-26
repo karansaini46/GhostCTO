@@ -166,7 +166,7 @@ export const ProjectSettingsPage = () => {
 
     try {
       await deleteProjectRequest(accessToken, project.id, deleteConfirmation);
-      navigate('/dashboard', { replace: true });
+      navigate('/workspace', { replace: true });
     } catch (requestError) {
       setDeleteError(getErrorMessage(requestError, 'Unable to delete this project.'));
       setIsDeleting(false);
@@ -181,7 +181,7 @@ export const ProjectSettingsPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate('/dashboard')}>Back to workspace</Button>}
+          actions={<Button onClick={() => navigate('/workspace')}>Back to workspace</Button>}
           description={error}
           eyebrow="Project settings"
           title="Unable to load project"
@@ -272,12 +272,12 @@ export const ProjectSettingsPage = () => {
                   </option>
                 ))}
               </Select>
-              <div className="rounded-md border border-border bg-surface-raised p-4">
-                <p className="text-xs uppercase tracking-normal text-muted">Current stage</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Current stage</p>
                 <p className="mt-2 text-sm font-medium text-text">
                   {getProjectOptionLabel.currentStage(project.currentStage)}
                 </p>
-                <p className="mt-3 text-xs uppercase tracking-normal text-muted">Current budget</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">Current budget</p>
                 <p className="mt-2 text-sm font-medium text-text">
                   {getProjectOptionLabel.budgetRange(project.budgetRange)}
                 </p>
@@ -320,7 +320,7 @@ export const ProjectSettingsPage = () => {
         </CardContent>
       </Card>
 
-      <Link className="text-sm font-medium text-accent hover:text-accent/80" to="/dashboard">
+      <Link className="text-sm font-semibold text-accent hover:text-accent/80" to="/workspace">
         Back to workspace
       </Link>
 

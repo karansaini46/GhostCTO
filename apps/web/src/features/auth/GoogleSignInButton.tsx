@@ -20,7 +20,7 @@ export const GoogleSignInButton = ({ disabled = false }: GoogleSignInButtonProps
     >
       <span
         aria-hidden="true"
-        className="flex h-5 w-5 items-center justify-center rounded-full border border-border bg-background text-xs font-semibold text-text"
+        className="flex h-5 w-5 items-center justify-center rounded-full border border-subtle bg-background text-xs font-semibold text-text"
       >
         G
       </span>

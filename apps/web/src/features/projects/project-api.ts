@@ -83,7 +83,7 @@ export const generateStackAdviceRequest = (
   payload: StackAdviceGenerationOverrides,
 ) =>
   apiRequest<{ document: Project['documents'][number]; stackAdvice: unknown }>(
-    `/projects/${projectId}/stack-advice`,
+    `/projects/${projectId}/stack-advisor`,
     {
       body: JSON.stringify(payload),
       headers: authHeaders(accessToken),
@@ -97,7 +97,7 @@ export const generateTechnicalSpecRequest = (
   payload: TechnicalSpecGenerationInput,
 ) =>
   apiRequest<{ document: Project['documents'][number]; technicalSpec: TechnicalSpecOutput }>(
-    `/projects/${projectId}/specs`,
+    `/projects/${projectId}/technical-spec`,
     {
       body: JSON.stringify(payload),
       headers: authHeaders(accessToken),
@@ -114,7 +114,7 @@ export const generateRateValidationRequest = (
     document: Project['documents'][number];
     quoteAnalysis: unknown;
     rateValidation: RateValidatorOutput;
-  }>(`/projects/${projectId}/quote-analysis`, {
+  }>(`/projects/${projectId}/rate-validator`, {
     body: JSON.stringify(payload),
     headers: authHeaders(accessToken),
     method: 'POST',

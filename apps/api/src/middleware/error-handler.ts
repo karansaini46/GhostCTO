@@ -4,6 +4,7 @@ import { ZodError } from 'zod';
 
 import { config } from '../core/config.js';
 import { ApiError } from '../lib/api-error.js';
+import { logger } from '../lib/logger.js';
 import { sendError } from '../lib/responses.js';
 import { ModelProviderError } from '../services/model-provider/errors.js';
 
@@ -86,6 +87,20 @@ const normalizeModelProviderError = (error: ModelProviderError) => {
   };
 };
 
+const getErrorLogContext = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      errorMessage: error.message,
+      errorName: error.name,
+    };
+  }
+
+  return {
+    errorMessage: String(error),
+    errorName: typeof error,
+  };
+};
+
 export const errorHandler: ErrorRequestHandler = (error, request, response, next) => {
   if (response.headersSent) {
     next(error);
@@ -117,8 +132,9 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, next
             : fallbackError;
 
   if (normalized.statusCode >= 500) {
-    console.error('Request failed.', {
+    logger.error('Request failed.', {
       code: normalized.code,
+      ...getErrorLogContext(error),
       method: request.method,
       path: request.path,
       statusCode: normalized.statusCode,
