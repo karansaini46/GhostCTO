@@ -36,6 +36,36 @@ const seed = async () => {
       },
     });
 
+    await prisma.user.upsert({
+      where: { email: 'admin12@gmail.com' },
+      update: {
+        name: 'Admin User 12',
+        role: 'ADMIN',
+        passwordHash,
+      },
+      create: {
+        email: 'admin12@gmail.com',
+        name: 'Admin User 12',
+        passwordHash,
+        role: 'ADMIN',
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: 'admin@gmail.com' },
+      update: {
+        name: 'Admin User',
+        role: 'ADMIN',
+        passwordHash,
+      },
+      create: {
+        email: 'admin@gmail.com',
+        name: 'Admin User',
+        passwordHash,
+        role: 'ADMIN',
+      },
+    });
+
     await prisma.project.upsert({
       where: {
         userId_slug: {
