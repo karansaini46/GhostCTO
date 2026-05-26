@@ -22,7 +22,9 @@ export const ErrorState = ({ action, className, description, title }: ErrorState
         <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0" />
         <div>
           <p className="text-sm font-semibold">{title}</p>
-          {description ? <p className="mt-1 text-sm leading-6 text-secondary">{description}</p> : null}
+          {description ? (
+            <p className="mt-1 text-sm leading-6 text-secondary">{description}</p>
+          ) : null}
         </div>
       </div>
       {action ? <div className="shrink-0">{action}</div> : null}

@@ -5,7 +5,7 @@ const writeLine = (message: string) => {
 };
 
 const writeError = (error: unknown) => {
-  const message = error instanceof Error ? error.stack ?? error.message : String(error);
+  const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
 
   process.stderr.write(`${message}\n`);
 };

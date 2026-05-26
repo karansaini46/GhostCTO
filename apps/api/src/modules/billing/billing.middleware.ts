@@ -33,11 +33,7 @@ export const requireProjectCapacity: RequestHandler = async (request, _response,
     });
 
     if (projectCount >= freePlanLimits.projects) {
-      throw new ApiError(
-        403,
-        'PLAN_LIMIT_REACHED',
-        'Upgrade to Lifetime to create more projects.',
-      );
+      throw new ApiError(403, 'PLAN_LIMIT_REACHED', 'Upgrade to Lifetime to create more projects.');
     }
 
     next();

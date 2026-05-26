@@ -44,13 +44,38 @@ const adminNavigationItem: NavigationItem = { icon: Shield, label: 'Admin', to: 
 const getProjectNavigation = (projectId: string): Array<NavigationItem & { group: string }> => [
   { group: 'Overview', icon: FolderKanban, label: 'Project room', to: `/projects/${projectId}` },
   { group: 'Plan', icon: ScrollText, label: 'Roadmap', to: `/projects/${projectId}/roadmap` },
-  { group: 'Plan', icon: Sparkles, label: 'Stack advisor', to: `/projects/${projectId}/stack-advisor` },
-  { group: 'Plan', icon: FileText, label: 'Spec writer', to: `/projects/${projectId}/technical-spec` },
-  { group: 'Hire', icon: UserRoundSearch, label: 'Developer brief', to: `/projects/${projectId}/developer-jd` },
-  { group: 'Hire', icon: Shield, label: 'Quote validator', to: `/projects/${projectId}/rate-validator` },
+  {
+    group: 'Plan',
+    icon: Sparkles,
+    label: 'Stack advisor',
+    to: `/projects/${projectId}/stack-advisor`,
+  },
+  {
+    group: 'Plan',
+    icon: FileText,
+    label: 'Spec writer',
+    to: `/projects/${projectId}/technical-spec`,
+  },
+  {
+    group: 'Hire',
+    icon: UserRoundSearch,
+    label: 'Developer brief',
+    to: `/projects/${projectId}/developer-jd`,
+  },
+  {
+    group: 'Hire',
+    icon: Shield,
+    label: 'Quote validator',
+    to: `/projects/${projectId}/rate-validator`,
+  },
   { group: 'Hire', icon: UserRoundSearch, label: 'Vetting', to: `/projects/${projectId}/vetting` },
   { group: 'Review', icon: Shield, label: 'Code audit', to: `/projects/${projectId}/code-audit` },
-  { group: 'Ask', icon: MessageCircle, label: 'Project advisor', to: `/projects/${projectId}/chat` },
+  {
+    group: 'Ask',
+    icon: MessageCircle,
+    label: 'Project advisor',
+    to: `/projects/${projectId}/chat`,
+  },
   { group: 'Documents', icon: FileText, label: 'History', to: `/projects/${projectId}/documents` },
 ];
 

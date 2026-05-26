@@ -568,7 +568,10 @@ const buildSpecTabs = (
         </div>
         <div className="grid gap-4">
           {output.userFlows.map((flow) => (
-            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4" key={flow.title}>
+            <div
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+              key={flow.title}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-text">{flow.title}</h3>
                 <Badge>{flow.actor}</Badge>
@@ -1062,7 +1065,8 @@ export const TechnicalSpecPage = () => {
           <Card className="border-danger/35 bg-danger/5">
             <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
+                The workspace may be unavailable, or your account may not have access to the
+                project.
               </p>
               <Button onClick={loadWorkspace} variant="secondary">
                 Try again
@@ -1340,7 +1344,9 @@ export const TechnicalSpecPage = () => {
               <div className="rounded-lg border border-border bg-surface p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Generated spec</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                      Generated spec
+                    </p>
                     <h2 className="mt-1 text-lg font-semibold text-text">
                       {selectedDocument?.title ?? (formState.featureName || 'Technical Spec')}
                     </h2>

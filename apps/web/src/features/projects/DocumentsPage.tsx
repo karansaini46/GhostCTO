@@ -140,7 +140,9 @@ export const DocumentsPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>}
+          actions={
+            <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
+          }
           description={error ?? 'Document history could not be loaded.'}
           eyebrow="Project documents"
           title="Documents"
@@ -203,47 +205,47 @@ export const DocumentsPage = () => {
                 </Select>
               </div>
               {filteredDocuments.length > 0 ? (
-              <div className="space-y-6">
-              {Object.entries(groupedDocuments).map(([type, typeDocuments]) => (
-                <section className="space-y-3" key={type}>
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-lg font-semibold tracking-normal text-text">
-                      {getDocumentTypeLabel(type)}
-                    </h2>
-                    <Badge>{typeDocuments.length} saved</Badge>
-                  </div>
-                  <div className="grid gap-3">
-                    {typeDocuments.map((document) => (
-                      <Link
-                        className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:shadow-soft"
-                        key={document.id}
-                        to={`/projects/${project.id}/documents/${document.id}`}
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-sm font-semibold tracking-normal text-text">
-                                {document.title}
-                              </h3>
-                              <Badge variant="accent">v{document.version}</Badge>
-                              <Badge variant={getStatusVariant(document.status)}>
-                                {formatLabel(document.status)}
-                              </Badge>
+                <div className="space-y-6">
+                  {Object.entries(groupedDocuments).map(([type, typeDocuments]) => (
+                    <section className="space-y-3" key={type}>
+                      <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-lg font-semibold tracking-normal text-text">
+                          {getDocumentTypeLabel(type)}
+                        </h2>
+                        <Badge>{typeDocuments.length} saved</Badge>
+                      </div>
+                      <div className="grid gap-3">
+                        {typeDocuments.map((document) => (
+                          <Link
+                            className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:shadow-soft"
+                            key={document.id}
+                            to={`/projects/${project.id}/documents/${document.id}`}
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="text-sm font-semibold tracking-normal text-text">
+                                    {document.title}
+                                  </h3>
+                                  <Badge variant="accent">v{document.version}</Badge>
+                                  <Badge variant={getStatusVariant(document.status)}>
+                                    {formatLabel(document.status)}
+                                  </Badge>
+                                </div>
+                                <p className="mt-2 text-sm leading-6 text-secondary">
+                                  {document.summary ?? 'No summary saved for this document.'}
+                                </p>
+                              </div>
+                              <p className="shrink-0 text-sm text-muted">
+                                {formatDateTime(document.createdAt)}
+                              </p>
                             </div>
-                            <p className="mt-2 text-sm leading-6 text-secondary">
-                              {document.summary ?? 'No summary saved for this document.'}
-                            </p>
-                          </div>
-                          <p className="shrink-0 text-sm text-muted">
-                            {formatDateTime(document.createdAt)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              ))}
-              </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
               ) : (
                 <EmptyState
                   description="Try a different search term or clear the type filter."

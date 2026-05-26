@@ -607,7 +607,9 @@ export const ProjectChatPage = () => {
                 value={getDocumentExcerpt(latestDocuments.quoteOrAudit)}
               />
               <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Workspace facts</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Workspace facts
+                </p>
                 <div className="mt-3 flex flex-wrap gap-2">
                   <Badge>{getProjectOptionLabel.budgetRange(project.budgetRange)}</Badge>
                   <Badge>

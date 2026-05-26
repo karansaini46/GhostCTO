@@ -227,7 +227,9 @@ export const generateCodeAuditForUser = async (
 ) => {
   const project = await getProjectForUser(userId, projectId);
   await enforceDailyGenerationLimitForUser(userId);
-  const repositorySnapshot = input.repoUrl ? await fetchPublicGithubRepository(input.repoUrl) : null;
+  const repositorySnapshot = input.repoUrl
+    ? await fetchPublicGithubRepository(input.repoUrl)
+    : null;
   const promptContext = toProjectPromptContext(project);
   const prompt = buildCodeAuditPrompt(promptContext, input, repositorySnapshot);
   const provider = getModelProvider();

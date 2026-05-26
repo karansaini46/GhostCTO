@@ -472,7 +472,8 @@ export const RateValidatorPage = () => {
           <Card className="border-danger/35 bg-danger/5">
             <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
+                The workspace may be unavailable, or your account may not have access to the
+                project.
               </p>
               <Button onClick={loadWorkspace} variant="secondary">
                 Try again
@@ -564,7 +565,10 @@ export const RateValidatorPage = () => {
                   <Select
                     label="Developer type"
                     onChange={(event) =>
-                      updateFormField('developerType', event.target.value as RateValidatorDeveloperType)
+                      updateFormField(
+                        'developerType',
+                        event.target.value as RateValidatorDeveloperType,
+                      )
                     }
                     value={formState.developerType}
                   >
@@ -603,7 +607,9 @@ export const RateValidatorPage = () => {
           <Card>
             <CardHeader>
               <CardTitle>Project context</CardTitle>
-              <CardDescription>Saved project details used as the comparison baseline.</CardDescription>
+              <CardDescription>
+                Saved project details used as the comparison baseline.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <DetailBlock label="Project" value={project.name} />
@@ -678,9 +684,7 @@ export const RateValidatorPage = () => {
                           <div className="mt-3 flex flex-wrap gap-2">
                             {request.currency ? <Badge>{request.currency}</Badge> : null}
                             {request.countryMarket ? <Badge>{request.countryMarket}</Badge> : null}
-                            <Badge>
-                              {getOptionLabel(urgencyOptions, request.projectUrgency)}
-                            </Badge>
+                            <Badge>{getOptionLabel(urgencyOptions, request.projectUrgency)}</Badge>
                             <Badge>
                               {getOptionLabel(developerTypeOptions, request.developerType)}
                             </Badge>
@@ -933,7 +937,9 @@ export const RateValidatorPage = () => {
                 <Card>
                   <CardHeader>
                     <CardTitle>Contract gaps</CardTitle>
-                    <CardDescription>Terms that can create disputes or surprise cost.</CardDescription>
+                    <CardDescription>
+                      Terms that can create disputes or surprise cost.
+                    </CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-3">
                     {currentOutput.dangerousContractGaps.map((gap) => (

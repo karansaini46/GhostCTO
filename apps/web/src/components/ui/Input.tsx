@@ -38,7 +38,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {description ? (
-          <p className={cn('text-sm leading-5', error ? 'text-danger' : 'text-muted')} id={helpTextId}>
+          <p
+            className={cn('text-sm leading-5', error ? 'text-danger' : 'text-muted')}
+            id={helpTextId}
+          >
             {description}
           </p>
         ) : null}

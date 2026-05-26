@@ -197,7 +197,11 @@ export const RoadmapPage = () => {
   if (!project) {
     return (
       <ErrorState
-        action={<Button onClick={() => navigate('/workspace')} variant="secondary">Back to home</Button>}
+        action={
+          <Button onClick={() => navigate('/workspace')} variant="secondary">
+            Back to home
+          </Button>
+        }
         description={error ?? 'This project may be unavailable or outside your account.'}
         title="Roadmap unavailable"
       />
@@ -206,9 +210,9 @@ export const RoadmapPage = () => {
 
   const contextReady = Boolean(
     project.ideaSummary &&
-      project.targetCustomer &&
-      project.currentStage &&
-      project.mustHaveFeatures.length > 0,
+    project.targetCustomer &&
+    project.currentStage &&
+    project.mustHaveFeatures.length > 0,
   );
   const canExportPdf =
     selectedDocument?.status === 'COMPLETED' && Boolean(selectedDocument.content?.trim());
@@ -261,7 +265,11 @@ export const RoadmapPage = () => {
 
       {error && !limitMessage ? (
         <ErrorState
-          action={<Button onClick={handleGenerate} variant="secondary">Try again</Button>}
+          action={
+            <Button onClick={handleGenerate} variant="secondary">
+              Try again
+            </Button>
+          }
           description="Your project is still saved. Try again in a moment."
           title={error}
         />
@@ -274,7 +282,9 @@ export const RoadmapPage = () => {
           </span>
           <div>
             <p className="text-sm font-semibold text-text">Preparing the roadmap</p>
-            <p className="mt-1 text-sm leading-6 text-secondary">{progressMessages[progressIndex]}</p>
+            <p className="mt-1 text-sm leading-6 text-secondary">
+              {progressMessages[progressIndex]}
+            </p>
           </div>
         </Surface>
       ) : null}
@@ -285,7 +295,11 @@ export const RoadmapPage = () => {
             <ReportCard
               actions={
                 <>
-                  <CopyButton disabled={!selectedDocument.content} size="sm" value={selectedDocument.content} />
+                  <CopyButton
+                    disabled={!selectedDocument.content}
+                    size="sm"
+                    value={selectedDocument.content}
+                  />
                   <ExportButton
                     disabled={!canExportPdf}
                     isLoading={isExporting}
@@ -299,15 +313,15 @@ export const RoadmapPage = () => {
                 <>
                   <Badge>v{selectedDocument.version}</Badge>
                   <Badge>{selectedDocument.status.toLowerCase()}</Badge>
-                  <Badge>{formatDateTime(selectedDocument.completedAt ?? selectedDocument.updatedAt)}</Badge>
+                  <Badge>
+                    {formatDateTime(selectedDocument.completedAt ?? selectedDocument.updatedAt)}
+                  </Badge>
                 </>
               }
               subtitle={selectedDocument.summary ?? 'A saved planning document for this project.'}
               title={selectedDocument.title}
             >
-              {exportError ? (
-                <ErrorState className="mb-6" title={exportError} />
-              ) : null}
+              {exportError ? <ErrorState className="mb-6" title={exportError} /> : null}
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
           ) : (

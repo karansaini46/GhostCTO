@@ -328,9 +328,7 @@ export const ProjectOnboardingPage = () => {
 
       return {
         ...current,
-        existingAssets: selected
-          ? assets.filter((asset) => asset !== value)
-          : [...assets, value],
+        existingAssets: selected ? assets.filter((asset) => asset !== value) : [...assets, value],
       };
     });
     setFieldErrors((current) => ({ ...current, existingAssets: undefined }));
@@ -391,9 +389,7 @@ export const ProjectOnboardingPage = () => {
 
       navigate(`/projects/${response.project.id}`, { replace: true });
     } catch (error) {
-      setSubmitError(
-        error instanceof ApiError ? error.message : 'Unable to create the project.',
-      );
+      setSubmitError(error instanceof ApiError ? error.message : 'Unable to create the project.');
     } finally {
       setIsSubmitting(false);
     }
@@ -448,7 +444,11 @@ export const ProjectOnboardingPage = () => {
             placeholder="Example: Healthtech, fintech, B2B operations"
             value={draft.industry}
           />
-          <Select label="Product type" placeholder="Select product type" {...selectProps('productType')}>
+          <Select
+            label="Product type"
+            placeholder="Select product type"
+            {...selectProps('productType')}
+          >
             {productTypeOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -561,7 +561,9 @@ export const ProjectOnboardingPage = () => {
             hint="Add one feature per line. Include what the user does and the business reason it belongs in the first launch."
             label="Must-have features"
             onChange={(event) => updateField('mustHaveFeatures', event.target.value)}
-            placeholder={'Example: Founder uploads a vendor quote and gets a risk summary\nExample: Team compares quote line items against market norms\nExample: Founder exports a negotiation checklist'}
+            placeholder={
+              'Example: Founder uploads a vendor quote and gets a risk summary\nExample: Team compares quote line items against market norms\nExample: Founder exports a negotiation checklist'
+            }
             value={draft.mustHaveFeatures}
           />
           <Textarea

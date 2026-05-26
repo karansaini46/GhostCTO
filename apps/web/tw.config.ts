@@ -33,20 +33,11 @@ export default {
       },
       boxShadow: {
         hairline: '0 0 0 1px hsl(var(--color-subtle-border) / 0.76)',
-        panel:
-          '0 22px 70px hsl(36 24% 34% / 0.12), 0 2px 10px hsl(36 20% 34% / 0.06)',
-        soft:
-          '0 14px 40px hsl(36 24% 34% / 0.1), 0 1px 4px hsl(36 24% 34% / 0.08)',
+        panel: '0 22px 70px hsl(36 24% 34% / 0.12), 0 2px 10px hsl(36 20% 34% / 0.06)',
+        soft: '0 14px 40px hsl(36 24% 34% / 0.1), 0 1px 4px hsl(36 24% 34% / 0.08)',
       },
       fontFamily: {
-        editorial: [
-          'Newsreader',
-          'ui-serif',
-          'Georgia',
-          'Cambria',
-          'Times New Roman',
-          'serif',
-        ],
+        editorial: ['Newsreader', 'ui-serif', 'Georgia', 'Cambria', 'Times New Roman', 'serif'],
         sans: [
           'Instrument Sans',
           'ui-sans-serif',

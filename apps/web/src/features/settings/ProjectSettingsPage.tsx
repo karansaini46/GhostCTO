@@ -273,11 +273,15 @@ export const ProjectSettingsPage = () => {
                 ))}
               </Select>
               <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
-                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Current stage</p>
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Current stage
+                </p>
                 <p className="mt-2 text-sm font-medium text-text">
                   {getProjectOptionLabel.currentStage(project.currentStage)}
                 </p>
-                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">Current budget</p>
+                <p className="mt-3 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Current budget
+                </p>
                 <p className="mt-2 text-sm font-medium text-text">
                   {getProjectOptionLabel.budgetRange(project.budgetRange)}
                 </p>

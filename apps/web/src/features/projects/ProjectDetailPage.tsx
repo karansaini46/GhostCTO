@@ -169,9 +169,11 @@ const workspaceModules: WorkspaceModule[] = [
 
 const moduleGroupDescriptions: Record<WorkspaceModule['group'], string> = {
   'Ask your CTO': 'Use the saved project context to talk through the decision in front of you.',
-  'Hire safely': 'Prepare hiring materials, validate quotes, and evaluate vendors before committing budget.',
+  'Hire safely':
+    'Prepare hiring materials, validate quotes, and evaluate vendors before committing budget.',
   'Plan the product': 'Turn the idea into a practical build path and developer-ready instructions.',
-  'Review the work': 'Check technical risk in code or repositories without needing to read everything yourself.',
+  'Review the work':
+    'Check technical risk in code or repositories without needing to read everything yourself.',
 };
 
 const moduleGroups: WorkspaceModule['group'][] = [
@@ -243,42 +245,42 @@ const ModuleCard = ({
             label: 'Open roadmap',
             path: `/projects/${projectId}/roadmap`,
           }
-      : module.documentTypes.includes('stack_advisor')
-        ? {
-            label: 'Open advisor',
-            path: `/projects/${projectId}/stack-advisor`,
-          }
-        : module.documentTypes.includes('technical_spec')
+        : module.documentTypes.includes('stack_advisor')
           ? {
-              label: 'Open writer',
-              path: `/projects/${projectId}/technical-spec`,
+              label: 'Open advisor',
+              path: `/projects/${projectId}/stack-advisor`,
             }
-          : module.documentTypes.includes('rate_validator')
+          : module.documentTypes.includes('technical_spec')
             ? {
-              label: 'Open quote review',
-              path: `/projects/${projectId}/rate-validator`,
-            }
-            : module.documentTypes.includes('code_audit')
+                label: 'Open writer',
+                path: `/projects/${projectId}/technical-spec`,
+              }
+            : module.documentTypes.includes('rate_validator')
               ? {
-                  label: 'Open auditor',
-                  path: `/projects/${projectId}/code-audit`,
+                  label: 'Open quote review',
+                  path: `/projects/${projectId}/rate-validator`,
                 }
-              : module.documentTypes.includes('vetting_scorecard')
+              : module.documentTypes.includes('code_audit')
                 ? {
-                    label: 'Open vetting',
-                    path: `/projects/${projectId}/vetting`,
+                    label: 'Open auditor',
+                    path: `/projects/${projectId}/code-audit`,
                   }
-                : module.documentTypes.includes('developer_jd')
+                : module.documentTypes.includes('vetting_scorecard')
                   ? {
-                      label: 'Open brief',
-                      path: `/projects/${projectId}/developer-jd`,
+                      label: 'Open vetting',
+                      path: `/projects/${projectId}/vetting`,
                     }
-                : document
-                  ? {
-                      label: 'Open document',
-                      path: `/projects/${projectId}/documents/${document.id}`,
-                    }
-                  : null;
+                  : module.documentTypes.includes('developer_jd')
+                    ? {
+                        label: 'Open brief',
+                        path: `/projects/${projectId}/developer-jd`,
+                      }
+                    : document
+                      ? {
+                          label: 'Open document',
+                          path: `/projects/${projectId}/documents/${document.id}`,
+                        }
+                      : null;
   const status = document
     ? formatStatus(document.status)
     : isLocked

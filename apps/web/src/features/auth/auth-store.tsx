@@ -78,23 +78,29 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     setState((current) => ({ ...current, user }));
   }, []);
 
-  const login = useCallback(async (payload: { email: string; password: string }) => {
-    try {
-      updateSession(await loginRequest(payload));
-    } catch (error) {
-      setState((current) => ({ ...current, error: getFriendlyError(error) }));
-      throw error;
-    }
-  }, [updateSession]);
+  const login = useCallback(
+    async (payload: { email: string; password: string }) => {
+      try {
+        updateSession(await loginRequest(payload));
+      } catch (error) {
+        setState((current) => ({ ...current, error: getFriendlyError(error) }));
+        throw error;
+      }
+    },
+    [updateSession],
+  );
 
-  const register = useCallback(async (payload: { email: string; name?: string; password: string }) => {
-    try {
-      updateSession(await registerRequest(payload));
-    } catch (error) {
-      setState((current) => ({ ...current, error: getFriendlyError(error) }));
-      throw error;
-    }
-  }, [updateSession]);
+  const register = useCallback(
+    async (payload: { email: string; name?: string; password: string }) => {
+      try {
+        updateSession(await registerRequest(payload));
+      } catch (error) {
+        setState((current) => ({ ...current, error: getFriendlyError(error) }));
+        throw error;
+      }
+    },
+    [updateSession],
+  );
 
   const refreshSession = useCallback(async () => {
     try {
@@ -137,9 +143,5 @@ export const AuthProvider = ({ children }: AuthProviderProps) => {
     [login, logout, refreshSession, register, state, updateUser],
   );
 
-  return (
-    <AuthContext.Provider value={contextValue}>
-      {children}
-    </AuthContext.Provider>
-  );
+  return <AuthContext.Provider value={contextValue}>{children}</AuthContext.Provider>;
 };

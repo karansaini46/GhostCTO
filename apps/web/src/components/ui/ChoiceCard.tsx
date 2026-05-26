@@ -30,7 +30,9 @@ export const ChoiceCard = ({
     {icon ? <span className="mt-0.5 text-accent [&_svg]:h-5 [&_svg]:w-5">{icon}</span> : null}
     <span className="min-w-0">
       <span className="block text-sm font-semibold text-text">{label}</span>
-      {description ? <span className="mt-1 block text-sm leading-6 text-secondary">{description}</span> : null}
+      {description ? (
+        <span className="mt-1 block text-sm leading-6 text-secondary">{description}</span>
+      ) : null}
     </span>
   </label>
 );

@@ -66,7 +66,10 @@ export const MarkdownReport = ({ className, content }: MarkdownReportProps) => {
 
     if (trimmed.startsWith('## ')) {
       elements.push(
-        <h2 className="mt-8 border-t border-subtle pt-6 font-editorial text-3xl font-semibold text-text" key={index}>
+        <h2
+          className="mt-8 border-t border-subtle pt-6 font-editorial text-3xl font-semibold text-text"
+          key={index}
+        >
           {trimmed.slice(3)}
         </h2>,
       );
@@ -114,7 +117,10 @@ export const MarkdownReport = ({ className, content }: MarkdownReportProps) => {
       }
 
       elements.push(
-        <ol className="my-4 list-decimal space-y-2 pl-5 text-sm leading-7 text-secondary" key={`ol-${index}`}>
+        <ol
+          className="my-4 list-decimal space-y-2 pl-5 text-sm leading-7 text-secondary"
+          key={`ol-${index}`}
+        >
           {items.map((item) => (
             <li key={item}>{renderInline(item)}</li>
           ))}
@@ -141,15 +147,28 @@ export const MarkdownReport = ({ className, content }: MarkdownReportProps) => {
       const [head, ...body] = rows;
 
       elements.push(
-        <div className="my-5 overflow-x-auto rounded-panel border border-subtle" key={`table-${index}`}>
+        <div
+          className="my-5 overflow-x-auto rounded-panel border border-subtle"
+          key={`table-${index}`}
+        >
           <table className="min-w-full divide-y divide-subtle text-sm">
             <thead className="bg-surface-raised text-left text-text">
-              <tr>{head?.map((cell) => <th className="px-3 py-2 font-semibold" key={cell}>{cell}</th>)}</tr>
+              <tr>
+                {head?.map((cell) => (
+                  <th className="px-3 py-2 font-semibold" key={cell}>
+                    {cell}
+                  </th>
+                ))}
+              </tr>
             </thead>
             <tbody className="divide-y divide-subtle bg-surface-card text-secondary">
               {body.map((row, rowIndex) => (
                 <tr key={`${row.join('-')}-${rowIndex}`}>
-                  {row.map((cell) => <td className="px-3 py-2 align-top" key={cell}>{renderInline(cell)}</td>)}
+                  {row.map((cell) => (
+                    <td className="px-3 py-2 align-top" key={cell}>
+                      {renderInline(cell)}
+                    </td>
+                  ))}
                 </tr>
               ))}
             </tbody>

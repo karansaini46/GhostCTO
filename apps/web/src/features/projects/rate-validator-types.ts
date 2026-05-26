@@ -1,12 +1,7 @@
 export type RateValidatorDeveloperType = 'freelancer' | 'agency' | 'unknown';
 export type RateValidatorUrgency = 'urgent' | 'within_30_days' | 'within_60_days' | 'flexible';
 export type RateValidatorConfidence = 'low' | 'medium' | 'high';
-export type RateValidatorVerdict =
-  | 'fair'
-  | 'risky'
-  | 'overpriced'
-  | 'under_scoped'
-  | 'unrealistic';
+export type RateValidatorVerdict = 'fair' | 'risky' | 'overpriced' | 'under_scoped' | 'unrealistic';
 
 export type RateValidatorGenerationInput = {
   countryMarket: string | null;

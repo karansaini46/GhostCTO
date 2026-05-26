@@ -223,13 +223,7 @@ const priceTimelineGuidanceSchema = z
 
 const confidenceLevelSchema = z.enum(['low', 'medium', 'high']);
 
-const quoteVerdictSchema = z.enum([
-  'fair',
-  'risky',
-  'overpriced',
-  'under_scoped',
-  'unrealistic',
-]);
+const quoteVerdictSchema = z.enum(['fair', 'risky', 'overpriced', 'under_scoped', 'unrealistic']);
 
 const parsedScopeItemSchema = z
   .object({
@@ -522,7 +516,9 @@ export const codeAuditSchema = baseModuleOutputSchema.extend({
         }
 
         const currentIndex = priorityOrder.indexOf(item.priority as (typeof priorityOrder)[number]);
-        const nextIndex = priorityOrder.indexOf(nextItem.priority as (typeof priorityOrder)[number]);
+        const nextIndex = priorityOrder.indexOf(
+          nextItem.priority as (typeof priorityOrder)[number],
+        );
 
         if (currentIndex > nextIndex) {
           ctx.addIssue({
