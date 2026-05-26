@@ -113,7 +113,7 @@ describe('generation routes', () => {
     setModelProviderForTesting(provider);
 
     const response = await request(app)
-      .post(`/projects/${project.id}/stack-advice`)
+      .post(`/projects/${project.id}/stack-advisor`)
       .set(session.authHeader)
       .send({
         complianceSensitivity: 'medium',
@@ -127,7 +127,7 @@ describe('generation routes', () => {
       content: '# Stack Advice\n\nUse a focused managed stack for the first launch.',
       projectId: project.id,
       status: 'COMPLETED',
-      title: 'Tech Stack Advisor',
+      title: 'Stack Advisor',
       type: 'stack_advisor',
       version: 1,
     });
@@ -143,7 +143,7 @@ describe('generation routes', () => {
     setModelProviderForTesting(provider);
 
     await request(app)
-      .post(`/projects/${project.id}/stack-advice`)
+      .post(`/projects/${project.id}/stack-advisor`)
       .set(other.authHeader)
       .send({})
       .expect(404);

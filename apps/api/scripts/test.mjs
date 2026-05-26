@@ -13,9 +13,9 @@ dotenv.config({
 const testDatabaseUrl = process.env.TEST_DATABASE_URL?.trim();
 
 if (!testDatabaseUrl) {
-  console.error('TEST_DATABASE_URL is required for API tests.');
-  console.error(
-    'Create a disposable PostgreSQL database and set TEST_DATABASE_URL before running.',
+  process.stderr.write('TEST_DATABASE_URL is required for API tests.\n');
+  process.stderr.write(
+    'Create a disposable PostgreSQL database and set TEST_DATABASE_URL before running.\n',
   );
   process.exit(1);
 }
@@ -44,7 +44,7 @@ const run = (command, args) => {
   });
 
   if (result.error) {
-    console.error(result.error.message);
+    process.stderr.write(`${result.error.message}\n`);
     process.exit(1);
   }
 
@@ -54,4 +54,7 @@ const run = (command, args) => {
 };
 
 run('pnpm', ['exec', 'prisma', 'migrate', 'deploy']);
-run('pnpm', ['exec', 'vitest', 'run', ...process.argv.slice(2)]);
+const testArgs = process.argv.slice(2);
+const forwardedArgs = testArgs[0] === '--' ? testArgs.slice(1) : testArgs;
+
+run('pnpm', ['exec', 'vitest', 'run', '--no-file-parallelism', ...forwardedArgs]);

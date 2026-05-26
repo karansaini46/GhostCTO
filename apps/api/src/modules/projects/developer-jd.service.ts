@@ -14,7 +14,7 @@ import {
 } from './document-history.service.js';
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 
-const developerJdDocumentType = 'DEVELOPER_JD';
+const developerJdDocumentType = 'developer_jd';
 
 const projectWorkspaceInclude = {
   answers: {

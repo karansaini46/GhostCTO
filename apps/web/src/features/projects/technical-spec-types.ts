@@ -112,7 +112,7 @@ export type TechnicalSpecOutput = {
   errorStates: TechnicalSpecErrorState[];
   featureOverview: TechnicalSpecFeatureOverview;
   implementationSequence: TechnicalSpecImplementationStep[];
-  moduleType: 'TECH_SPEC';
+  moduleType: 'technical_spec';
   outOfScope: string[];
   permissions: TechnicalSpecPermission[];
   reportMarkdown: string;

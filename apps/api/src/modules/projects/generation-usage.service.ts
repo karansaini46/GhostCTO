@@ -20,71 +20,67 @@ const getUsageWindow = (date = new Date()) => {
 };
 
 export const hasLifetimeAccess = async (userId: string) => {
-  const [user, payment] = await prisma.$transaction([
-    prisma.user.findUnique({
-      select: {
-        plan: true,
+  const user = await prisma.user.findUnique({
+    select: {
+      plan: true,
+    },
+    where: { id: userId },
+  });
+  const payment = await prisma.payment.findFirst({
+    select: {
+      id: true,
+    },
+    where: {
+      status: 'PAID',
+      type: {
+        in: lifetimePaymentTypes,
       },
-      where: { id: userId },
-    }),
-    prisma.payment.findFirst({
-      select: {
-        id: true,
-      },
-      where: {
-        status: 'PAID',
-        type: {
-          in: lifetimePaymentTypes,
-        },
-        userId,
-      },
-    }),
-  ]);
+      userId,
+    },
+  });
 
   return user?.plan === 'LIFETIME' || Boolean(payment);
 };
 
 export const getDailyGenerationUsageForUser = async (userId: string, date = new Date()) => {
   const window = getUsageWindow(date);
-  const [user, lifetime, documentCount, advisorMessageCount] = await prisma.$transaction([
-    prisma.user.findUnique({
-      select: {
-        plan: true,
+  const user = await prisma.user.findUnique({
+    select: {
+      plan: true,
+    },
+    where: { id: userId },
+  });
+  const lifetime = await prisma.payment.findFirst({
+    select: {
+      id: true,
+    },
+    where: {
+      status: 'PAID',
+      type: {
+        in: lifetimePaymentTypes,
       },
-      where: { id: userId },
-    }),
-    prisma.payment.findFirst({
-      select: {
-        id: true,
+      userId,
+    },
+  });
+  const documentCount = await prisma.generatedDocument.count({
+    where: {
+      createdAt: {
+        gte: window.start,
+        lt: window.end,
       },
-      where: {
-        status: 'PAID',
-        type: {
-          in: lifetimePaymentTypes,
-        },
-        userId,
+      userId,
+    },
+  });
+  const advisorMessageCount = await prisma.chatMessage.count({
+    where: {
+      createdAt: {
+        gte: window.start,
+        lt: window.end,
       },
-    }),
-    prisma.generatedDocument.count({
-      where: {
-        createdAt: {
-          gte: window.start,
-          lt: window.end,
-        },
-        userId,
-      },
-    }),
-    prisma.chatMessage.count({
-      where: {
-        createdAt: {
-          gte: window.start,
-          lt: window.end,
-        },
-        role: 'ADVISOR',
-        userId,
-      },
-    }),
-  ]);
+      role: 'ADVISOR',
+      userId,
+    },
+  });
   const hasLifetime = user?.plan === 'LIFETIME' || Boolean(lifetime);
   const limit = hasLifetime
     ? config.lifetimeDailyGenerationLimit

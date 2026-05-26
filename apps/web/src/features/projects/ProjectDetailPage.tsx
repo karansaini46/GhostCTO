@@ -216,12 +216,12 @@ const ModuleCard = ({
       : module.documentTypes.includes('stack_advisor')
         ? {
             label: 'Open advisor',
-            path: `/projects/${projectId}/stack-advice`,
+            path: `/projects/${projectId}/stack-advisor`,
           }
         : module.documentTypes.includes('technical_spec')
           ? {
               label: 'Open writer',
-              path: `/projects/${projectId}/specs`,
+              path: `/projects/${projectId}/technical-spec`,
             }
           : module.documentTypes.includes('rate_validator')
             ? {

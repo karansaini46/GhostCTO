@@ -62,11 +62,11 @@ const formatDate = (value: string) =>
 const documentTypeLabels: Record<string, string> = {
   code_audit: 'Code audit',
   developer_jd: 'Developer JD',
-  rate_validator: 'Quote review',
+  rate_validator: 'Rate Validator',
   roadmap: 'Roadmap',
-  stack_advisor: 'Stack advice',
-  technical_spec: 'Technical spec',
-  vetting_scorecard: 'Vetting scorecard',
+  stack_advisor: 'Stack Advisor',
+  technical_spec: 'Technical Spec',
+  vetting_scorecard: 'Vetting Scorecard',
 };
 
 const getDocumentTypeLabel = (type: string) => documentTypeLabels[type] ?? type;
@@ -572,7 +572,7 @@ export const ProjectChatPage = () => {
                 emptyText="The project summary has not been saved yet."
               />
               <ContextCard
-                action={{ label: 'Open', to: `/projects/${project.id}/stack-advice` }}
+                action={{ label: 'Open', to: `/projects/${project.id}/stack-advisor` }}
                 emptyText="No stack advice has been generated yet."
                 label="Current stack advice"
                 title={latestDocuments.stackAdvice?.title ?? 'Stack guidance'}

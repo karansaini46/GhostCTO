@@ -10,19 +10,11 @@ import {
 } from '../../services/prompts/index.js';
 import {
   createVersionedGeneratedDocument,
-  generatedDocumentSelect,
   serializeGeneratedDocument,
 } from './document-history.service.js';
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 
 const roadmapDocumentType = 'roadmap';
-const roadmapDocumentTypes = ['roadmap', 'ROADMAP'];
-const stackAdviceDocumentType = 'STACK_ADVICE';
-const technicalSpecDocumentType = 'TECH_SPEC';
-const quoteAnalysisDocumentType = 'QUOTE_ANALYSIS';
-const codeAuditDocumentType = 'CODE_AUDIT';
-const vettingScorecardDocumentType = 'VETTING_SCORECARD';
-const developerJdDocumentTypes = ['DEVELOPER_JD', 'developer_jd', 'developer_job_description'];
 const roadmapDocumentTitle = 'Technical Roadmap';
 
 const projectWorkspaceInclude = {
@@ -127,52 +119,4 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
     document: serializeGeneratedDocument(document),
     roadmap: generation.data,
   };
-};
-
-export const listRoadmapDocumentsForUser = async (
-  userId: string,
-  projectId: string,
-  documentType:
-    | 'code_audit'
-    | 'developer_jd'
-    | 'rate_validator'
-    | 'roadmap'
-    | 'stack_advisor'
-    | 'technical_spec'
-    | 'vetting_scorecard' = 'roadmap',
-) => {
-  await getProjectForUser(userId, projectId);
-  let normalizedDocumentType: string | string[] = roadmapDocumentTypes;
-
-  if (documentType === 'stack_advisor') {
-    normalizedDocumentType = stackAdviceDocumentType;
-  } else if (documentType === 'technical_spec') {
-    normalizedDocumentType = technicalSpecDocumentType;
-  } else if (documentType === 'rate_validator') {
-    normalizedDocumentType = quoteAnalysisDocumentType;
-  } else if (documentType === 'code_audit') {
-    normalizedDocumentType = codeAuditDocumentType;
-  } else if (documentType === 'vetting_scorecard') {
-    normalizedDocumentType = vettingScorecardDocumentType;
-  } else if (documentType === 'developer_jd') {
-    normalizedDocumentType = developerJdDocumentTypes;
-  }
-
-  const documents = await prisma.generatedDocument.findMany({
-    orderBy: {
-      createdAt: 'desc',
-    },
-    select: generatedDocumentSelect,
-    where: {
-      projectId,
-      type: Array.isArray(normalizedDocumentType)
-        ? {
-            in: normalizedDocumentType,
-          }
-        : normalizedDocumentType,
-      userId,
-    },
-  });
-
-  return documents.map(serializeGeneratedDocument);
 };
