@@ -125,7 +125,7 @@ export const config = {
   clientOrigins: parseOrigins(process.env.CLIENT_ORIGIN),
   databaseUrl: process.env.DATABASE_URL?.trim(),
   accessTokenAudience: process.env.JWT_AUDIENCE?.trim() || 'ghostcto-web',
-  accessTokenExpiresIn: process.env.JWT_EXPIRES_IN?.trim() || '15m',
+  accessTokenExpiresIn: process.env.JWT_EXPIRES_IN?.trim() || '10d',
   accessTokenIssuer: process.env.JWT_ISSUER?.trim() || 'ghostcto-api',
   accessTokenSecret: process.env.JWT_SECRET?.trim(),
   authCookieName: process.env.AUTH_COOKIE_NAME?.trim() || 'ghostcto_refresh_token',
