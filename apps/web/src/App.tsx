@@ -20,7 +20,6 @@ import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { RateValidatorPage } from './features/projects/RateValidatorPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
-import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
 import { VettingScorecardPage } from './features/projects/VettingScorecardPage';
 import { AccountSettingsPage } from './features/settings/AccountSettingsPage';
@@ -36,7 +35,6 @@ export const App = () => (
           <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/logout" element={<LogoutPage />} />
-        <Route element={<ShareDocumentPage />} path="/share/:documentId" />
         <Route element={<ProtectedRoute />}>
           <Route
             element={
@@ -124,7 +122,7 @@ export const App = () => (
                 <StackAdvicePage />
               </AppShell>
             }
-            path="/projects/:id/stack-advice"
+            path="/projects/:id/stack-advisor"
           />
           <Route
             element={
@@ -132,7 +130,7 @@ export const App = () => (
                 <TechnicalSpecPage />
               </AppShell>
             }
-            path="/projects/:id/specs"
+            path="/projects/:id/technical-spec"
           />
           <Route
             element={

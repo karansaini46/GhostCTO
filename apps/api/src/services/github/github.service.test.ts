@@ -43,7 +43,7 @@ describe('github service helpers', () => {
       repoUrl: 'https://github.com/acme/ghostcto',
       selectedFiles: [
         {
-          content: 'console.log("hello");',
+          content: 'process.stdout.write("hello\\n");',
           language: 'typescript',
           path: 'src/index.ts',
           reason: 'Implementation source code',

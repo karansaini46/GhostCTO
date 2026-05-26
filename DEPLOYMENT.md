@@ -79,8 +79,6 @@ GOOGLE_CLIENT_ID=<google-oauth-client-id>
 GOOGLE_CLIENT_SECRET=<google-oauth-client-secret>
 GOOGLE_CALLBACK_URL=https://<your-render-api>.onrender.com/auth/google/callback
 GOOGLE_FRONTEND_REDIRECT_URL=https://<your-vercel-app>.vercel.app/login
-GUMROAD_ACCESS_TOKEN=<gumroad-access-token>
-GUMROAD_WEBHOOK_SECRET=<gumroad-webhook-secret>
 GUMROAD_PRODUCT_ID=<gumroad-product-id>
 MODEL_PROVIDER_API_KEY=<gemini-api-key>
 MODEL_PROVIDER_MODEL=<gemini-model-name>
@@ -93,8 +91,6 @@ Optional Render environment variables:
 ```env
 PORT=<render-managed-port>
 PUPPETEER_EXECUTABLE_PATH=<browser-executable-path-if-required>
-SUPABASE_URL=<supabase-project-url>
-SUPABASE_SERVICE_ROLE_KEY=<supabase-service-role-key>
 ```
 
 Render sets `PORT` automatically. Set it manually only if the service needs a custom port.
@@ -122,7 +118,6 @@ Required Vercel environment variables:
 
 ```env
 VITE_API_URL=https://<your-render-api>.onrender.com
-VITE_UPGRADE_URL=<production-upgrade-or-checkout-url>
 ```
 
 `VITE_API_URL` must point to the Render API origin. Do not include a path after the origin.
@@ -146,7 +141,11 @@ In the Google OAuth client:
 
 The Render `GOOGLE_CALLBACK_URL` must exactly match the authorized redirect URI.
 
-## 5. Final Verification
+## 5. Configure Gumroad License Verification
+
+Set `GUMROAD_PRODUCT_ID` on the API service to the Gumroad product ID for the lifetime access product. The current billing flow verifies founder-entered license keys through `POST /billing/verify`; there is no webhook endpoint in this codebase.
+
+## 6. Final Verification
 
 Run these checks after both services are live:
 

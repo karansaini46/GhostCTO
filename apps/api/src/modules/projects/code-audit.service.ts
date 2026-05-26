@@ -20,7 +20,7 @@ import {
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { CodeAuditRequestInput } from './project.schemas.js';
 
-const codeAuditDocumentType = 'CODE_AUDIT';
+const codeAuditDocumentType = 'code_audit';
 const codeAuditDocumentTitle = 'Code Audit';
 const sourceSnippetLimit = 18_000;
 

@@ -138,17 +138,15 @@ export const getBillingStatusForUser = async (userId: string) => {
     throw new ApiError(401, 'UNAUTHORIZED', 'Authentication required.');
   }
 
-  const [projects, dailyUsage] = await Promise.all([
-    prisma.project.count({
-      where: {
-        status: {
-          not: 'ARCHIVED',
-        },
-        userId,
+  const projects = await prisma.project.count({
+    where: {
+      status: {
+        not: 'ARCHIVED',
       },
-    }),
-    getDailyGenerationUsageForUser(userId),
-  ]);
+      userId,
+    },
+  });
+  const dailyUsage = await getDailyGenerationUsageForUser(userId);
 
   const hasLifetimeAccess = dailyUsage.tier === 'lifetime';
   const plan = hasLifetimeAccess ? 'LIFETIME' : user.plan;

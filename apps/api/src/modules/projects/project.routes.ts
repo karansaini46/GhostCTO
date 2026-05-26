@@ -69,19 +69,19 @@ projectRouter.post(
   asyncHandler(generateRoadmap),
 );
 projectRouter.post(
-  '/:id/stack-advice',
+  '/:id/stack-advisor',
   generationEndpointLimiter,
   requireGenerationCapacity,
   asyncHandler(generateStackAdvice),
 );
 projectRouter.post(
-  '/:id/specs',
+  '/:id/technical-spec',
   generationEndpointLimiter,
   requireGenerationCapacity,
   asyncHandler(generateTechnicalSpec),
 );
 projectRouter.post(
-  '/:id/quote-analysis',
+  '/:id/rate-validator',
   generationEndpointLimiter,
   requireGenerationCapacity,
   asyncHandler(analyzeQuote),

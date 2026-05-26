@@ -285,10 +285,10 @@ const isTechnicalSpecOutput = (value: unknown): value is TechnicalSpecOutput => 
     return false;
   }
 
-  const output = value as Partial<TechnicalSpecOutput>;
+  const output = value as Partial<TechnicalSpecOutput> & { moduleType?: unknown };
 
   return (
-    output.moduleType === 'TECH_SPEC' &&
+    (output.moduleType === 'technical_spec' || output.moduleType === 'TECH_SPEC') &&
     typeof output.reportMarkdown === 'string' &&
     Boolean(output.featureOverview) &&
     Array.isArray(output.userStories) &&
