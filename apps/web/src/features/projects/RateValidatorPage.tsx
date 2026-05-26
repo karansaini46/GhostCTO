@@ -18,6 +18,7 @@ import {
   Textarea,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import {
@@ -26,7 +27,7 @@ import {
   listProjectDocumentsRequest,
 } from './project-api';
 import { getProjectOptionLabel } from './project-options';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 import type {
   RateValidatorConfidence,
   RateValidatorDeveloperType,
@@ -437,6 +438,14 @@ export const RateValidatorPage = () => {
     setActiveOutput(getDocumentRateValidation(document));
   }, []);
 
+  const handleFeedbackSaved = useCallback((feedback: ProjectDocumentFeedback) => {
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === feedback.documentId ? { ...document, feedback } : document,
+      ),
+    );
+  }, []);
+
   const resetForm = useCallback(() => {
     setFormState(defaultFormState(project));
     setFormErrors({});
@@ -759,6 +768,15 @@ export const RateValidatorPage = () => {
                   </div>
                 </div>
               </div>
+
+              {selectedDocument ? (
+                <DocumentFeedbackPanel
+                  accessToken={accessToken}
+                  document={selectedDocument}
+                  onFeedbackSaved={handleFeedbackSaved}
+                  projectId={project.id}
+                />
+              ) : null}
 
               <Card>
                 <CardHeader>

@@ -13,12 +13,13 @@ import {
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import {
   exportProjectDocumentPdfRequest,
   getProjectDocumentRequest,
   getProjectRequest,
 } from './project-api';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 
 const exportablePdfTypes = new Set(['developer_jd', 'roadmap', 'stack_advisor', 'technical_spec']);
 
@@ -171,6 +172,12 @@ export const DocumentDetailPage = () => {
     }
   };
 
+  const handleFeedbackSaved = (feedback: ProjectDocumentFeedback) => {
+    setDocumentRecord((current) =>
+      current?.id === feedback.documentId ? { ...current, feedback } : current,
+    );
+  };
+
   if (isLoading) {
     return <LoadingState label="Loading document" />;
   }
@@ -241,6 +248,13 @@ export const DocumentDetailPage = () => {
           </CardContent>
         </Card>
       ) : null}
+
+      <DocumentFeedbackPanel
+        accessToken={accessToken}
+        document={documentRecord}
+        onFeedbackSaved={handleFeedbackSaved}
+        projectId={project.id}
+      />
 
       <ReportCard
         meta={

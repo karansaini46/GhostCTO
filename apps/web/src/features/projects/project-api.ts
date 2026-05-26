@@ -7,6 +7,8 @@ import type {
   Project,
   ProjectChatMessage,
   ProjectChatPagination,
+  ProjectDocumentFeedback,
+  ProjectDocumentFeedbackPayload,
   ProjectDocumentType,
   ProjectPayload,
   StackAdviceGenerationOverrides,
@@ -172,6 +174,21 @@ export const getProjectDocumentRequest = (
     `/projects/${projectId}/documents/${documentId}`,
     {
       headers: authHeaders(accessToken),
+    },
+  );
+
+export const submitProjectDocumentFeedbackRequest = (
+  accessToken: string,
+  projectId: string,
+  documentId: string,
+  payload: ProjectDocumentFeedbackPayload,
+) =>
+  apiRequest<{ feedback: ProjectDocumentFeedback }>(
+    `/projects/${projectId}/documents/${documentId}/feedback`,
+    {
+      body: JSON.stringify(payload),
+      headers: authHeaders(accessToken),
+      method: 'POST',
     },
   );
 

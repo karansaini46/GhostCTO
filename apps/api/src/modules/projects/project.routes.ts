@@ -12,7 +12,11 @@ import {
 } from '../billing/billing.middleware.js';
 import { createProjectChatMessage, listProjectChatMessages } from './chat.controller.js';
 import { generateCodeAudit } from './code-audit.controller.js';
-import { getProjectDocument, listProjectDocuments } from './document-history.controller.js';
+import {
+  getProjectDocument,
+  listProjectDocuments,
+  submitProjectDocumentFeedback,
+} from './document-history.controller.js';
 import { exportProjectDocumentPdf } from './document-export.controller.js';
 import { createDeveloperJd } from './developer-jd.controller.js';
 import {
@@ -105,6 +109,7 @@ projectRouter.post(
 );
 projectRouter.get('/:id/documents', asyncHandler(listProjectDocuments));
 projectRouter.get('/:id/documents/:documentId', asyncHandler(getProjectDocument));
+projectRouter.post('/:id/documents/:documentId/feedback', asyncHandler(submitProjectDocumentFeedback));
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));
 projectRouter.patch('/:id', asyncHandler(updateProject));

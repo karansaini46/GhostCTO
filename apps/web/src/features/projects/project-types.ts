@@ -29,6 +29,7 @@ export type ProjectDocument = {
   completedAt: string | null;
   createdAt: string;
   content: string | null;
+  feedback: ProjectDocumentFeedback | null;
   id: string;
   metadata: unknown;
   projectId: string | null;
@@ -38,6 +39,35 @@ export type ProjectDocument = {
   type: string;
   updatedAt: string;
   version: number;
+};
+
+export type ProjectDocumentFeedbackUsefulness = 'USEFUL' | 'NEEDS_WORK' | 'WRONG';
+
+export type ProjectDocumentFeedbackIssueType =
+  | 'MISSING_CONTEXT'
+  | 'INCORRECT_CONTENT'
+  | 'TOO_GENERIC'
+  | 'MISSING_DETAIL'
+  | 'HARD_TO_ACT_ON'
+  | 'OTHER';
+
+export type ProjectDocumentFeedback = {
+  comment: string | null;
+  createdAt: string;
+  documentId: string;
+  documentType: string;
+  id: string;
+  issueType: ProjectDocumentFeedbackIssueType | null;
+  projectId: string;
+  rating: number;
+  updatedAt: string;
+  usefulness: ProjectDocumentFeedbackUsefulness;
+};
+
+export type ProjectDocumentFeedbackPayload = {
+  comment?: string | null;
+  issueType?: ProjectDocumentFeedbackIssueType | null;
+  usefulness: ProjectDocumentFeedbackUsefulness;
 };
 
 export type ProjectChatMessageRole = 'founder' | 'advisor' | 'system';

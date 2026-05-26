@@ -1,5 +1,10 @@
 export type AdminStats = {
   audits: number;
+  documentFeedbackAverages: Array<{
+    averageRating: number;
+    documentType: string;
+    feedbackCount: number;
+  }>;
   generatedDocuments: number;
   payments: number;
   projects: number;

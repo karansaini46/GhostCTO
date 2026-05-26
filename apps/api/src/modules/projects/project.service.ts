@@ -185,6 +185,7 @@ const toProjectResponse = (project: ProjectWithWorkspace) => ({
     completedAt: document.completedAt?.toISOString() ?? null,
     createdAt: document.createdAt.toISOString(),
     content: document.content,
+    feedback: null,
     id: document.id,
     metadata: document.metadata,
     projectId: document.projectId,

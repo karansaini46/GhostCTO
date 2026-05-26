@@ -37,6 +37,7 @@ const resetDatabase = async () => {
       "QuoteAnalysis",
       "AuditReport",
       "ChatMessage",
+      "GeneratedDocumentFeedback",
       "GeneratedDocument",
       "ProjectAnswer",
       "Project",
