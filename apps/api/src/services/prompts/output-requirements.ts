@@ -20,6 +20,7 @@ const structuredOutputRequirements = [
   'Do not include commentary before or after the JSON value.',
   'Use null for unknown optional values.',
   'Use arrays for list fields, even when the list has one item.',
+  'Use single quotes (\') for any nested quotes, code blocks, or HTML/markdown attributes inside JSON string values.',
 ];
 
 type BuildPromptInput = {

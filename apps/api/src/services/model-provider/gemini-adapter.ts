@@ -195,7 +195,17 @@ export class GeminiModelProvider implements ModelProvider {
     let response: GeminiResponse;
 
     try {
-      const model = this.createModel(this.modelName ?? resolveModelName(modelTier));
+      const modelNameResolved = this.modelName ?? resolveModelName(modelTier);
+      const model = this.createModel(modelNameResolved);
+      
+      const generationConfig: Record<string, any> = {
+        maxOutputTokens: maxOutputTokens ?? this.defaultMaxOutputTokens,
+        responseMimeType,
+        temperature: temperature ?? this.defaultTemperature,
+      };
+
+
+
       const request: GenerateContentRequest = {
         contents: [
           {
@@ -203,13 +213,33 @@ export class GeminiModelProvider implements ModelProvider {
             role: 'user',
           },
         ],
-        generationConfig: {
-          maxOutputTokens: maxOutputTokens ?? this.defaultMaxOutputTokens,
-          responseMimeType,
-          temperature: temperature ?? this.defaultTemperature,
-        },
+        generationConfig,
       };
-      const result = await model.generateContent(request);
+
+      let result;
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (true) {
+        try {
+          result = await model.generateContent(request);
+          break;
+        } catch (error) {
+          attempts += 1;
+          const statusCode = toStatusCode(error);
+          const isTransient = statusCode === 429 || (statusCode && statusCode >= 500);
+          if (isTransient && attempts < maxAttempts) {
+            const delay = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
+            logger.warn(`Model request failed with transient error ${statusCode}. Retrying in ${delay.toFixed(0)}ms...`, {
+              provider: 'gemini',
+              requestName,
+              attempt: attempts,
+            });
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+      }
 
       response = result.response;
     } catch (error) {
@@ -227,7 +257,6 @@ export class GeminiModelProvider implements ModelProvider {
     });
 
     const text = toText(response);
-
     if (!text) {
       throw new ModelProviderError({
         code: 'PROVIDER_RESPONSE_EMPTY',

@@ -118,7 +118,29 @@ export const parseStructuredOutput = <Schema extends ZodType>(
   }
 
   try {
-    const parsed = JSON.parse(candidate) as unknown;
+    const parsed = JSON.parse(candidate) as any;
+
+    if (parsed && typeof parsed === 'object' && typeof parsed.moduleType === 'string') {
+      const typeLower = parsed.moduleType.toLowerCase().replace(/[^a-z0-9_]/g, '');
+      if (typeLower.includes('roadmap')) {
+        parsed.moduleType = 'roadmap';
+      } else if (typeLower.includes('stack_advice') || typeLower.includes('stackadvice')) {
+        parsed.moduleType = 'STACK_ADVICE';
+      } else if (
+        typeLower.includes('developer_job_description') ||
+        typeLower.includes('developerjobdescription') ||
+        typeLower.includes('developer_jd')
+      ) {
+        parsed.moduleType = 'developer_job_description';
+      } else if (typeLower.includes('quote_analysis') || typeLower.includes('quoteanalysis')) {
+        parsed.moduleType = 'quote_analysis';
+      } else if (typeLower.includes('code_audit') || typeLower.includes('codeaudit')) {
+        parsed.moduleType = 'code_audit';
+      } else if (typeLower.includes('vetting_scorecard') || typeLower.includes('vettingscorecard')) {
+        parsed.moduleType = 'vetting_scorecard';
+      }
+    }
+
     const result = schema.safeParse(parsed);
 
     if (result.success) {
