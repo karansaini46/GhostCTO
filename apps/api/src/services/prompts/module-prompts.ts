@@ -36,6 +36,8 @@ const sharedPromptRequirements = [
   'Never leave a recommendation at "it depends"; if tradeoffs exist, state them and still choose the best option.',
   'Review the draft for vagueness before finishing. Replace generic advice with specific guidance, then return the improved version.',
   'Return a JSON object that includes a markdown report string plus structured sections for UI cards and module-specific data.',
+  'Use single quotes (\') for any nested quotes, code blocks, or HTML/markdown attributes inside JSON string values to avoid JSON escape errors.',
+  'Keep all JSON string descriptions and list items brief and punchy. Keep structured fields concise (1-2 sentences max per item) to prevent output truncation.',
 ];
 
 const joinRequirements = (...requirements: string[]) => [

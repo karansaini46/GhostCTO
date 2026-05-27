@@ -1,4 +1,5 @@
 import { describe, expect, it, vi } from 'vitest';
+import { z } from 'zod';
 
 import { GeminiModelProvider } from './gemini-adapter.js';
 import { MODELS } from './models.js';
@@ -97,5 +98,91 @@ describe('GeminiModelProvider', () => {
     });
 
     expect(models).toEqual(['gemini-custom']);
+  });
+
+  it('sends a JSON response schema and system instruction for structured output', async () => {
+    const requests: unknown[] = [];
+    const provider = new GeminiModelProvider({
+      apiKey: 'local-provider',
+      createModel: () =>
+        ({
+          generateContent: vi.fn(async (request) => {
+            requests.push(request);
+
+            return {
+              response: {
+                candidates: [
+                  {
+                    content: {
+                      parts: [
+                        {
+                          text: JSON.stringify({
+                            items: ['First milestone'],
+                            moduleType: 'roadmap',
+                            reportMarkdown: '# Roadmap',
+                          }),
+                        },
+                      ],
+                      role: 'model',
+                    },
+                    finishReason: 'STOP',
+                    index: 0,
+                  },
+                ],
+                functionCall: () => undefined,
+                functionCalls: () => undefined,
+                text: () => 'Generated response.',
+              },
+            };
+          }),
+        }) as Pick<GenerativeModel, 'generateContent'>,
+    });
+
+    await provider.generateStructured({
+      prompt: 'Create a roadmap.',
+      requestName: 'test.structured',
+      schema: z
+        .object({
+          items: z.array(z.string()).min(1),
+          moduleType: z.literal('roadmap'),
+          reportMarkdown: z.string(),
+        })
+        .strict(),
+    });
+
+    expect(requests).toHaveLength(1);
+    expect(requests[0]).toMatchObject({
+      contents: [
+        {
+          parts: [{ text: 'Create a roadmap.' }],
+          role: 'user',
+        },
+      ],
+      generationConfig: {
+        responseMimeType: 'application/json',
+        responseSchema: {
+          properties: {
+            items: {
+              items: {
+                type: 'string',
+              },
+              minItems: 1,
+              type: 'array',
+            },
+            moduleType: {
+              enum: ['roadmap'],
+              format: 'enum',
+              type: 'string',
+            },
+            reportMarkdown: {
+              type: 'string',
+            },
+          },
+          required: ['items', 'moduleType', 'reportMarkdown'],
+          type: 'object',
+        },
+      },
+      systemInstruction: expect.stringContaining('Return exactly one JSON object'),
+    });
   });
 });

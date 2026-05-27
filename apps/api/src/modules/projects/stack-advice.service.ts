@@ -106,7 +106,7 @@ export const generateStackAdviceForUser = async (
   const prompt = buildGhostctoModulePrompt('stack_advice', promptContext);
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
     prompt,
     requestName: 'projects.stackAdvice.generate',
     schema,
