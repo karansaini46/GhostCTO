@@ -64,4 +64,44 @@ describe('toGeminiResponseSchema', () => {
       type: 'object',
     });
   });
+
+  it('propagates validation constraints like min/max strings, array item limits, etc. into descriptions', () => {
+    const schema = toGeminiResponseSchema(
+      z
+        .object({
+          shortString: z.string().max(10).describe('A short name'),
+          boundString: z.string().min(3).max(20),
+          longString: z.string().min(5),
+          boundedArray: z.array(z.string()).min(2).max(5).describe('Items list'),
+          boundedNumber: z.number().min(0.5).max(100.5),
+        })
+        .strict(),
+    );
+
+    expect(schema).toMatchObject({
+      properties: {
+        shortString: {
+          description: 'A short name Maximum length is 10 characters.',
+          type: 'string',
+        },
+        boundString: {
+          description: 'Length must be between 3 and 20 characters.',
+          type: 'string',
+        },
+        longString: {
+          description: 'Minimum length is 5 characters.',
+          type: 'string',
+        },
+        boundedArray: {
+          description: 'Items list Must contain between 2 and 5 items.',
+          type: 'array',
+        },
+        boundedNumber: {
+          description: 'Must be between 0.5 and 100.5.',
+          type: 'number',
+        },
+      },
+      type: 'object',
+    });
+  });
 });

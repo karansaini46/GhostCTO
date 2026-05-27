@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   Input,
   LoadingState,
   PageHeader,
@@ -370,7 +371,8 @@ export const VettingScorecardPage = () => {
   const [activeOutput, setActiveOutput] = useState<VettingOutput | null>(null);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [formState, setFormState] = useState<FormState | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -386,7 +388,8 @@ export const VettingScorecardPage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -399,7 +402,7 @@ export const VettingScorecardPage = () => {
       setDocuments(documentsResponse.documents);
       setFormState(defaultFormState(projectResponse.project));
     } catch {
-      setError('Unable to load the vetting workspace.');
+      setLoadError('Unable to load the vetting workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -487,7 +490,7 @@ export const VettingScorecardPage = () => {
       }
 
       setIsGenerating(true);
-      setError(null);
+      setGenerationError(null);
       setLimitMessage(null);
 
       try {
@@ -509,7 +512,7 @@ export const VettingScorecardPage = () => {
           'Unable to generate this vetting scorecard right now.',
         );
 
-        setError(message);
+        setGenerationError(message);
         setLimitMessage(isGenerationLimitError(requestError) ? message : null);
       } finally {
         setIsGenerating(false);
@@ -540,32 +543,28 @@ export const VettingScorecardPage = () => {
     return <LoadingState label="Loading vetting workspace" />;
   }
 
-  if (error || !project || !formState) {
+  if (loadError || !project || !formState) {
     return (
       <div className="space-y-6">
         <PageHeader
           actions={
             <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
           }
-          description={error ?? 'The vetting workspace could not be loaded.'}
+          description={loadError ?? 'The vetting workspace could not be loaded.'}
           eyebrow="Project workspace"
           title="Agency and Developer Vetting"
         />
-        {limitMessage ? (
-          <GenerationLimitCallout message={limitMessage} />
-        ) : (
-          <Card className="border-danger/35 bg-danger/5">
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the
-                project.
-              </p>
-              <Button onClick={loadWorkspace} variant="secondary">
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              The workspace may be unavailable, or your account may not have access to the
+              project.
+            </p>
+            <Button onClick={loadWorkspace} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -606,6 +605,19 @@ export const VettingScorecardPage = () => {
         eyebrow="Project workspace"
         title="Agency and Developer Vetting"
       />
+
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your candidate inputs have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[430px_minmax(0,1fr)]">
         <div className="space-y-6">

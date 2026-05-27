@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   Input,
   LoadingState,
   PageHeader,
@@ -18,6 +19,7 @@ import {
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
+import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import {
   generateCodeAuditRequest,
@@ -353,7 +355,8 @@ const CodeAuditPage = () => {
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const { id } = useParams();
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -371,7 +374,8 @@ const CodeAuditPage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -383,7 +387,7 @@ const CodeAuditPage = () => {
       setProject(projectResponse.project);
       setDocuments(documentsResponse.documents);
     } catch {
-      setError('Unable to load the code audit workspace.');
+      setLoadError('Unable to load the code audit workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -442,7 +446,7 @@ const CodeAuditPage = () => {
     }
 
     setIsGenerating(true);
-    setError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -459,7 +463,7 @@ const CodeAuditPage = () => {
         'Unable to generate the code audit right now.',
       );
 
-      setError(message);
+      setGenerationError(message);
       setLimitMessage(isGenerationLimitError(requestError) ? message : null);
     } finally {
       setIsGenerating(false);
@@ -509,16 +513,16 @@ const CodeAuditPage = () => {
     return <LoadingState label="Loading code audit workspace..." />;
   }
 
-  if (error || !project) {
+  if (loadError || !project) {
     return (
       <EmptyState
         action={
-          <Button onClick={() => navigate(limitMessage ? '/billing' : '/')} variant="secondary">
-            {limitMessage ? 'Review access' : 'Back to projects'}
+          <Button onClick={() => navigate('/')} variant="secondary">
+            Back to projects
           </Button>
         }
-        description={error ?? 'This workspace is unavailable.'}
-        title={limitMessage ? 'Generation limit reached' : 'Code audit unavailable'}
+        description={loadError ?? 'This workspace is unavailable.'}
+        title="Code audit unavailable"
       />
     );
   }
@@ -529,6 +533,19 @@ const CodeAuditPage = () => {
         description="Review a codebase before you put more money or trust into the project."
         title="Code Audit"
       />
+
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your audit inputs have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <Card>
         <CardHeader>
