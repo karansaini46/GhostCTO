@@ -166,12 +166,10 @@ describe('GeminiModelProvider', () => {
               items: {
                 type: 'string',
               },
-              minItems: 1,
               type: 'array',
             },
             moduleType: {
               enum: ['roadmap'],
-              format: 'enum',
               type: 'string',
             },
             reportMarkdown: {
