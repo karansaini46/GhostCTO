@@ -1,4 +1,7 @@
 import crypto from 'node:crypto';
+import fs from 'node:fs';
+import path from 'node:path';
+import dotenv from 'dotenv';
 
 import { afterAll, afterEach, beforeEach, vi } from 'vitest';
 
@@ -27,6 +30,24 @@ const getPrisma = async () => {
 };
 
 const resetDatabase = async () => {
+  // Safeguard: Prevent wiping the development database by checking it against development .env config
+  const devEnvPath = path.resolve(process.cwd(), '.env');
+  let devDatabaseUrl = '';
+  if (fs.existsSync(devEnvPath)) {
+    try {
+      const devEnv = dotenv.parse(fs.readFileSync(devEnvPath));
+      devDatabaseUrl = devEnv.DATABASE_URL?.trim() || '';
+    } catch {}
+  }
+
+  const currentDatabaseUrl = process.env.DATABASE_URL?.trim();
+
+  if (devDatabaseUrl && currentDatabaseUrl === devDatabaseUrl) {
+    throw new Error(
+      `CRITICAL SAFETY STOP: Database wipe aborted! The test runner is configured to use your DEVELOPMENT database (${currentDatabaseUrl}). Please check your environment variables or config.`
+    );
+  }
+
   const prisma = await getPrisma();
 
   await prisma.$executeRawUnsafe(`
