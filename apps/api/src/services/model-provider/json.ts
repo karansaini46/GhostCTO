@@ -102,6 +102,51 @@ const toIssueMessages = (error: ZodError) =>
 const toValidationSummary = (issues: string[]) =>
   issues.length > 0 ? issues.join('; ') : 'The response did not match the expected structure.';
 
+const normalizeModuleType = (value: unknown) => {
+  if (!value || typeof value !== 'object' || Array.isArray(value)) {
+    return;
+  }
+
+  const parsed = value as { moduleType?: unknown };
+
+  if (typeof parsed.moduleType !== 'string') {
+    return;
+  }
+
+  const typeLower = parsed.moduleType.toLowerCase().replace(/[^a-z0-9_]/g, '');
+  if (typeLower.includes('roadmap')) {
+    parsed.moduleType = 'roadmap';
+  } else if (typeLower.includes('stack_advice') || typeLower.includes('stackadvice')) {
+    parsed.moduleType = 'STACK_ADVICE';
+  } else if (
+    typeLower.includes('developer_job_description') ||
+    typeLower.includes('developerjobdescription') ||
+    typeLower.includes('developer_jd')
+  ) {
+    parsed.moduleType = 'developer_job_description';
+  } else if (typeLower.includes('quote_analysis') || typeLower.includes('quoteanalysis')) {
+    parsed.moduleType = 'quote_analysis';
+  } else if (typeLower.includes('code_audit') || typeLower.includes('codeaudit')) {
+    parsed.moduleType = 'code_audit';
+  } else if (typeLower.includes('vetting_scorecard') || typeLower.includes('vettingscorecard')) {
+    parsed.moduleType = 'vetting_scorecard';
+  }
+};
+
+const getSingleObjectFromArray = (value: unknown) => {
+  if (!Array.isArray(value) || value.length !== 1) {
+    return undefined;
+  }
+
+  const [item] = value;
+
+  if (!item || typeof item !== 'object' || Array.isArray(item)) {
+    return undefined;
+  }
+
+  return item;
+};
+
 export const parseStructuredOutput = <Schema extends ZodType>(
   text: string,
   schema: Schema,
@@ -118,28 +163,9 @@ export const parseStructuredOutput = <Schema extends ZodType>(
   }
 
   try {
-    const parsed = JSON.parse(candidate) as any;
+    const parsed = JSON.parse(candidate) as unknown;
 
-    if (parsed && typeof parsed === 'object' && typeof parsed.moduleType === 'string') {
-      const typeLower = parsed.moduleType.toLowerCase().replace(/[^a-z0-9_]/g, '');
-      if (typeLower.includes('roadmap')) {
-        parsed.moduleType = 'roadmap';
-      } else if (typeLower.includes('stack_advice') || typeLower.includes('stackadvice')) {
-        parsed.moduleType = 'STACK_ADVICE';
-      } else if (
-        typeLower.includes('developer_job_description') ||
-        typeLower.includes('developerjobdescription') ||
-        typeLower.includes('developer_jd')
-      ) {
-        parsed.moduleType = 'developer_job_description';
-      } else if (typeLower.includes('quote_analysis') || typeLower.includes('quoteanalysis')) {
-        parsed.moduleType = 'quote_analysis';
-      } else if (typeLower.includes('code_audit') || typeLower.includes('codeaudit')) {
-        parsed.moduleType = 'code_audit';
-      } else if (typeLower.includes('vetting_scorecard') || typeLower.includes('vettingscorecard')) {
-        parsed.moduleType = 'vetting_scorecard';
-      }
-    }
+    normalizeModuleType(parsed);
 
     const result = schema.safeParse(parsed);
 
@@ -148,6 +174,20 @@ export const parseStructuredOutput = <Schema extends ZodType>(
         data: result.data,
         success: true,
       };
+    }
+
+    const singleObject = getSingleObjectFromArray(parsed);
+    if (singleObject) {
+      normalizeModuleType(singleObject);
+
+      const unwrappedResult = schema.safeParse(singleObject);
+
+      if (unwrappedResult.success) {
+        return {
+          data: unwrappedResult.data,
+          success: true,
+        };
+      }
     }
 
     const issues = toIssueMessages(result.error);

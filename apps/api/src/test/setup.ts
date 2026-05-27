@@ -37,14 +37,16 @@ const resetDatabase = async () => {
     try {
       const devEnv = dotenv.parse(fs.readFileSync(devEnvPath));
       devDatabaseUrl = devEnv.DATABASE_URL?.trim() || '';
-    } catch {}
+    } catch {
+      // Ignore unreadable local env files; the safety check still runs when parsing succeeds.
+    }
   }
 
   const currentDatabaseUrl = process.env.DATABASE_URL?.trim();
 
   if (devDatabaseUrl && currentDatabaseUrl === devDatabaseUrl) {
     throw new Error(
-      `CRITICAL SAFETY STOP: Database wipe aborted! The test runner is configured to use your DEVELOPMENT database (${currentDatabaseUrl}). Please check your environment variables or config.`
+      `CRITICAL SAFETY STOP: Database wipe aborted! The test runner is configured to use your DEVELOPMENT database (${currentDatabaseUrl}). Please check your environment variables or config.`,
     );
   }
 

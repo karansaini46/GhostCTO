@@ -16,11 +16,12 @@ const textOutputRequirements = [
 
 const structuredOutputRequirements = [
   'Return valid JSON only.',
+  'Return exactly one JSON object at the top level, not an array.',
   'Do not wrap JSON in Markdown fences.',
   'Do not include commentary before or after the JSON value.',
   'Use null for unknown optional values.',
   'Use arrays for list fields, even when the list has one item.',
-  'Use single quotes (\') for any nested quotes, code blocks, or HTML/markdown attributes inside JSON string values.',
+  "Use single quotes (') for any nested quotes, code blocks, or HTML/markdown attributes inside JSON string values.",
 ];
 
 type BuildPromptInput = {

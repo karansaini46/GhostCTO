@@ -2,6 +2,7 @@ import { GoogleGenerativeAI as GoogleProviderClient } from '@google/generative-a
 import { logger } from '../../lib/logger.js';
 import { buildStructuredRetryPrompt } from '../prompts/index.js';
 import { ModelProviderError } from './errors.js';
+import { toGeminiResponseSchema } from './gemini-response-schema.js';
 import { parseStructuredOutput } from './json.js';
 import { resolveModelName } from './models.js';
 import type {
@@ -17,6 +18,7 @@ import type {
   GenerateContentRequest,
   GenerativeModel,
   RequestOptions,
+  ResponseSchema,
 } from '@google/generative-ai';
 import type { z, ZodType } from 'zod';
 
@@ -39,7 +41,20 @@ type GeminiResponse = EnhancedGenerateContentResponse;
 
 type GeminiRequestOptions = GenerateTextInput & {
   responseMimeType?: 'application/json' | 'text/plain';
+  responseSchema?: ResponseSchema;
 };
+
+type GeminiGenerationConfig = NonNullable<GenerateContentRequest['generationConfig']> & {
+  thinkingConfig?: {
+    thinkingBudget: number;
+  };
+};
+
+const jsonSystemInstruction = [
+  'You must respond with valid JSON only.',
+  'Return exactly one JSON object at the top level, not an array.',
+  'Do not include markdown formatting, code fences, or explanatory text.',
+].join(' ');
 
 const toUsage = (usage?: GeminiUsageMetadata): ModelProviderUsage | undefined => {
   if (!usage) {
@@ -80,7 +95,7 @@ const toText = (response: GeminiResponse) => {
   }
 
   const parts = candidates.flatMap((candidate) => candidate.content?.parts ?? []);
-  
+
   // First try to get non-thinking text parts
   const textParts = parts
     .filter((part) => !('thought' in part && part.thought === true))
@@ -142,9 +157,25 @@ export class GeminiModelProvider implements ModelProvider {
   async generateStructured<Schema extends ZodType>(
     input: GenerateStructuredInput<Schema>,
   ): Promise<GenerateStructuredResult<z.infer<Schema>>> {
+    let responseSchema: ResponseSchema | undefined;
+
+    try {
+      responseSchema = toGeminiResponseSchema(input.schema);
+    } catch (error) {
+      logger.warn(
+        'Could not build Gemini response schema. Falling back to prompt-only JSON mode.',
+        {
+          errorMessage: error instanceof Error ? error.message : 'Unknown schema conversion error.',
+          provider: 'gemini',
+          requestName: input.requestName,
+        },
+      );
+    }
+
     const firstResult = await this.request({
       ...input,
       responseMimeType: 'application/json',
+      responseSchema,
     });
     const firstParseResult = parseStructuredOutput(firstResult.text, input.schema);
 
@@ -182,6 +213,7 @@ export class GeminiModelProvider implements ModelProvider {
       ...input,
       prompt: retryPrompt,
       responseMimeType: 'application/json',
+      responseSchema,
     });
     const retryParseResult = parseStructuredOutput(retryResult.text, input.schema);
 
@@ -215,6 +247,7 @@ export class GeminiModelProvider implements ModelProvider {
     prompt,
     requestName,
     responseMimeType,
+    responseSchema,
     temperature,
   }: GeminiRequestOptions): Promise<GenerateTextResult> {
     let response: GeminiResponse;
@@ -223,7 +256,7 @@ export class GeminiModelProvider implements ModelProvider {
       const modelNameResolved = this.modelName ?? resolveModelName(modelTier);
       const model = this.createModel(modelNameResolved);
 
-      const generationConfig: Record<string, any> = {
+      const generationConfig: GeminiGenerationConfig = {
         maxOutputTokens: maxOutputTokens ?? this.defaultMaxOutputTokens,
         responseMimeType,
         temperature: temperature ?? this.defaultTemperature,
@@ -231,6 +264,9 @@ export class GeminiModelProvider implements ModelProvider {
 
       if (responseMimeType === 'application/json') {
         generationConfig.thinkingConfig = { thinkingBudget: 0 };
+        if (responseSchema) {
+          generationConfig.responseSchema = responseSchema;
+        }
       }
 
       const contents: GenerateContentRequest['contents'] = [
@@ -240,18 +276,14 @@ export class GeminiModelProvider implements ModelProvider {
         },
       ];
 
-      // Add system instruction for JSON mode to enforce valid JSON output
-      if (responseMimeType === 'application/json') {
-        contents.unshift({
-          parts: [{ text: 'You must respond with valid JSON only. Do not include any markdown formatting, code fences, or explanatory text. Return only the JSON object.' }],
-          role: 'system',
-        });
-      }
-
       const request: GenerateContentRequest = {
         contents,
         generationConfig,
       };
+
+      if (responseMimeType === 'application/json') {
+        request.systemInstruction = jsonSystemInstruction;
+      }
 
       let result;
       let attempts = 0;
@@ -266,11 +298,14 @@ export class GeminiModelProvider implements ModelProvider {
           const isTransient = statusCode === 429 || (statusCode && statusCode >= 500);
           if (isTransient && attempts < maxAttempts) {
             const delay = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
-            logger.warn(`Model request failed with transient error ${statusCode}. Retrying in ${delay.toFixed(0)}ms...`, {
-              provider: 'gemini',
-              requestName,
-              attempt: attempts,
-            });
+            logger.warn(
+              `Model request failed with transient error ${statusCode}. Retrying in ${delay.toFixed(0)}ms...`,
+              {
+                provider: 'gemini',
+                requestName,
+                attempt: attempts,
+              },
+            );
             await new Promise((resolve) => setTimeout(resolve, delay));
             continue;
           }
@@ -299,7 +334,7 @@ export class GeminiModelProvider implements ModelProvider {
       const hasParts = Boolean(
         response.candidates?.some((c) => c.content?.parts && c.content.parts.length > 0),
       );
-      
+
       logger.error('Model provider returned an empty response.', {
         hasCandidates,
         hasParts,
@@ -307,7 +342,7 @@ export class GeminiModelProvider implements ModelProvider {
         requestName,
         responseKeys: Object.keys(response),
       });
-      
+
       throw new ModelProviderError({
         code: 'PROVIDER_RESPONSE_EMPTY',
         message: 'Model provider returned an empty response.',
