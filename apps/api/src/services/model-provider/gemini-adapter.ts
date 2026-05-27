@@ -142,6 +142,7 @@ export class GeminiModelProvider implements ModelProvider {
       issues: firstParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
+      rawTextSnippet: firstResult.text.slice(0, 300),
     });
 
     const retryPrompt =
@@ -204,6 +205,10 @@ export class GeminiModelProvider implements ModelProvider {
         responseMimeType,
         temperature: temperature ?? this.defaultTemperature,
       };
+
+      if (responseMimeType === 'application/json') {
+        generationConfig.thinkingConfig = { thinkingBudget: 0 };
+      }
 
       const request: GenerateContentRequest = {
         contents: [
