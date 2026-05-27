@@ -46,7 +46,6 @@ const constToGeminiSchema = (value: unknown): ResponseSchema | undefined => {
   if (typeof value === 'string') {
     return {
       enum: [value],
-      format: 'enum',
       type: SchemaType.STRING,
     } satisfies ResponseSchema;
   }
@@ -128,8 +127,6 @@ const toGeminiSchema = (schema: JsonSchema): ResponseSchema => {
     return applyNullable(
       {
         items: toGeminiSchema(schema.items),
-        ...(typeof schema.maxItems === 'number' ? { maxItems: schema.maxItems } : {}),
-        ...(typeof schema.minItems === 'number' ? { minItems: schema.minItems } : {}),
         type: SchemaType.ARRAY,
       },
       nullable,
@@ -143,7 +140,6 @@ const toGeminiSchema = (schema: JsonSchema): ResponseSchema => {
       return applyNullable(
         {
           enum: enumValues,
-          format: 'enum',
           type: SchemaType.STRING,
         },
         nullable,
@@ -152,7 +148,6 @@ const toGeminiSchema = (schema: JsonSchema): ResponseSchema => {
 
     return applyNullable(
       {
-        ...(schema.format === 'date-time' ? { format: 'date-time' as const } : {}),
         type: SchemaType.STRING,
       },
       nullable,

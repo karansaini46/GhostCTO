@@ -15,26 +15,21 @@ describe('toGeminiResponseSchema', () => {
             properties: {
               decision: {
                 enum: ['in_scope', 'defer', 'exclude'],
-                format: 'enum',
                 type: 'string',
               },
             },
             type: 'object',
           },
-          maxItems: 20,
-          minItems: 6,
           type: 'array',
         },
         moduleType: {
           enum: ['roadmap'],
-          format: 'enum',
           type: 'string',
         },
         phase1Mvp: {
           properties: {
             title: {
               enum: ['Phase 1 MVP'],
-              format: 'enum',
               type: 'string',
             },
           },
