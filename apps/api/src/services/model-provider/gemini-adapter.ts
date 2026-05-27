@@ -73,14 +73,32 @@ const toStatusText = (error: unknown) => {
   return typeof statusText === 'string' ? statusText : undefined;
 };
 
-const toText = (response: GeminiResponse) =>
-  response.candidates
-    ?.flatMap((candidate) => candidate.content?.parts ?? [])
+const toText = (response: GeminiResponse) => {
+  const candidates = response.candidates;
+  if (!candidates || candidates.length === 0) {
+    return '';
+  }
+
+  const parts = candidates.flatMap((candidate) => candidate.content?.parts ?? []);
+  
+  // First try to get non-thinking text parts
+  const textParts = parts
     .filter((part) => !('thought' in part && part.thought === true))
     .map((part) => ('text' in part && typeof part.text === 'string' ? part.text : undefined))
-    .filter((text): text is string => Boolean(text?.trim()))
-    .join('\n')
-    .trim() ?? '';
+    .filter((text): text is string => Boolean(text?.trim()));
+
+  if (textParts.length > 0) {
+    return textParts.join('\n').trim();
+  }
+
+  // Fallback: if no non-thinking parts, try to get any text parts (including thinking)
+  // This handles cases where thinkingBudget: 0 doesn't fully disable thinking
+  const allTextParts = parts
+    .map((part) => ('text' in part && typeof part.text === 'string' ? part.text : undefined))
+    .filter((text): text is string => Boolean(text?.trim()));
+
+  return allTextParts.join('\n').trim();
+};
 
 export class GeminiModelProvider implements ModelProvider {
   private readonly createModel: (model: string) => Pick<GenerativeModel, 'generateContent'>;
@@ -142,7 +160,9 @@ export class GeminiModelProvider implements ModelProvider {
       issues: firstParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
-      rawTextSnippet: firstResult.text.slice(0, 300),
+      rawTextSnippet: firstResult.text.slice(0, 500),
+      textLength: firstResult.text.length,
+      isEmpty: firstResult.text.length === 0,
     });
 
     const retryPrompt =
@@ -177,6 +197,9 @@ export class GeminiModelProvider implements ModelProvider {
       issues: retryParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
+      rawTextSnippet: retryResult.text.slice(0, 500),
+      textLength: retryResult.text.length,
+      isEmpty: retryResult.text.length === 0,
     });
 
     throw new ModelProviderError({
@@ -210,13 +233,23 @@ export class GeminiModelProvider implements ModelProvider {
         generationConfig.thinkingConfig = { thinkingBudget: 0 };
       }
 
+      const contents: GenerateContentRequest['contents'] = [
+        {
+          parts: [{ text: prompt }],
+          role: 'user',
+        },
+      ];
+
+      // Add system instruction for JSON mode to enforce valid JSON output
+      if (responseMimeType === 'application/json') {
+        contents.unshift({
+          parts: [{ text: 'You must respond with valid JSON only. Do not include any markdown formatting, code fences, or explanatory text. Return only the JSON object.' }],
+          role: 'system',
+        });
+      }
+
       const request: GenerateContentRequest = {
-        contents: [
-          {
-            parts: [{ text: prompt }],
-            role: 'user',
-          },
-        ],
+        contents,
         generationConfig,
       };
 
@@ -262,6 +295,19 @@ export class GeminiModelProvider implements ModelProvider {
 
     const text = toText(response);
     if (!text) {
+      const hasCandidates = Boolean(response.candidates && response.candidates.length > 0);
+      const hasParts = Boolean(
+        response.candidates?.some((c) => c.content?.parts && c.content.parts.length > 0),
+      );
+      
+      logger.error('Model provider returned an empty response.', {
+        hasCandidates,
+        hasParts,
+        provider: 'gemini',
+        requestName,
+        responseKeys: Object.keys(response),
+      });
+      
       throw new ModelProviderError({
         code: 'PROVIDER_RESPONSE_EMPTY',
         message: 'Model provider returned an empty response.',
