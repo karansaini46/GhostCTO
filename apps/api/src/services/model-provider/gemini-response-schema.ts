@@ -47,7 +47,7 @@ const constToGeminiSchema = (value: unknown): ResponseSchema | undefined => {
     return {
       enum: [value],
       type: SchemaType.STRING,
-    } satisfies ResponseSchema;
+    } as any;
   }
 
   if (typeof value === 'number') {
@@ -141,7 +141,7 @@ const toGeminiSchema = (schema: JsonSchema): ResponseSchema => {
         {
           enum: enumValues,
           type: SchemaType.STRING,
-        },
+        } as any,
         nullable,
       );
     }
