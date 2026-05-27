@@ -1,4 +1,8 @@
-import { GoogleGenerativeAI as GoogleProviderClient } from '@google/generative-ai';
+import {
+  GoogleGenerativeAI as GoogleProviderClient,
+  SchemaType,
+  type Schema,
+} from '@google/generative-ai';
 import { logger } from '../../lib/logger.js';
 import { buildStructuredRetryPrompt } from '../prompts/index.js';
 import { ModelProviderError } from './errors.js';
@@ -20,6 +24,94 @@ import type {
 } from '@google/generative-ai';
 import type { z, ZodType } from 'zod';
 
+function zodToGeminiSchema(schema: any): Schema {
+  let isNullable = false;
+  let currentSchema = schema;
+  while (currentSchema) {
+    const typeName = currentSchema._def?.typeName;
+    if (typeName === 'ZodNullable') {
+      isNullable = true;
+      currentSchema = currentSchema._def.schema || currentSchema._def.innerType;
+    } else if (typeName === 'ZodOptional' || typeName === 'ZodEffects') {
+      currentSchema = currentSchema._def.schema || currentSchema._def.innerType;
+    } else {
+      break;
+    }
+  }
+
+  const typeName = currentSchema._def?.typeName;
+
+  const result: Schema = (() => {
+    switch (typeName) {
+      case 'ZodString': {
+        return { type: SchemaType.STRING };
+      }
+      case 'ZodNumber': {
+        return { type: SchemaType.NUMBER };
+      }
+      case 'ZodBoolean': {
+        return { type: SchemaType.BOOLEAN };
+      }
+      case 'ZodEnum': {
+        return {
+          type: SchemaType.STRING,
+          enum: currentSchema._def.values,
+        };
+      }
+      case 'ZodLiteral': {
+        return {
+          type: SchemaType.STRING,
+          enum: [currentSchema._def.value],
+        };
+      }
+      case 'ZodArray': {
+        return {
+          type: SchemaType.ARRAY,
+          items: zodToGeminiSchema(currentSchema._def.type),
+        };
+      }
+      case 'ZodObject': {
+        const properties: Record<string, Schema> = {};
+        const required: string[] = [];
+        const shape =
+          currentSchema.shape ||
+          (typeof currentSchema._def.shape === 'function' ? currentSchema._def.shape() : {});
+
+        for (const [key, value] of Object.entries(shape)) {
+          properties[key] = zodToGeminiSchema(value);
+          let isOptional = false;
+          let checkVal: any = value;
+          while (checkVal) {
+            if (checkVal._def?.typeName === 'ZodOptional') {
+              isOptional = true;
+              break;
+            }
+            checkVal = checkVal._def?.schema || checkVal._def?.innerType;
+          }
+          if (!isOptional) {
+            required.push(key);
+          }
+        }
+
+        return {
+          type: SchemaType.OBJECT,
+          properties,
+          required: required.length > 0 ? required : undefined,
+        };
+      }
+      default: {
+        return { type: SchemaType.STRING };
+      }
+    }
+  })();
+
+  if (isNullable) {
+    result.nullable = true;
+  }
+
+  return result;
+}
+
 type GeminiAdapterOptions = {
   apiKey?: string;
   baseUrl?: string;
@@ -39,6 +131,7 @@ type GeminiResponse = EnhancedGenerateContentResponse;
 
 type GeminiRequestOptions = GenerateTextInput & {
   responseMimeType?: 'application/json' | 'text/plain';
+  schema?: ZodType;
 };
 
 const toUsage = (usage?: GeminiUsageMetadata): ModelProviderUsage | undefined => {
@@ -126,6 +219,7 @@ export class GeminiModelProvider implements ModelProvider {
     const firstResult = await this.request({
       ...input,
       responseMimeType: 'application/json',
+      schema: input.schema,
     });
     const firstParseResult = parseStructuredOutput(firstResult.text, input.schema);
 
@@ -160,6 +254,7 @@ export class GeminiModelProvider implements ModelProvider {
       ...input,
       prompt: retryPrompt,
       responseMimeType: 'application/json',
+      schema: input.schema,
     });
     const retryParseResult = parseStructuredOutput(retryResult.text, input.schema);
 
@@ -190,6 +285,7 @@ export class GeminiModelProvider implements ModelProvider {
     prompt,
     requestName,
     responseMimeType,
+    schema,
     temperature,
   }: GeminiRequestOptions): Promise<GenerateTextResult> {
     let response: GeminiResponse;
@@ -197,14 +293,20 @@ export class GeminiModelProvider implements ModelProvider {
     try {
       const modelNameResolved = this.modelName ?? resolveModelName(modelTier);
       const model = this.createModel(modelNameResolved);
-      
+
       const generationConfig: Record<string, any> = {
         maxOutputTokens: maxOutputTokens ?? this.defaultMaxOutputTokens,
         responseMimeType,
         temperature: temperature ?? this.defaultTemperature,
       };
 
-
+      if (schema && responseMimeType === 'application/json') {
+        try {
+          generationConfig.responseSchema = zodToGeminiSchema(schema);
+        } catch (err) {
+          logger.warn('Failed to convert Zod schema to Gemini schema', { err });
+        }
+      }
 
       const request: GenerateContentRequest = {
         contents: [
