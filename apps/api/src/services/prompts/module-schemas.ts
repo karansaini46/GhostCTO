@@ -68,7 +68,7 @@ const roadmapMilestoneSchema = z
 
 const roadmapPhaseSchema = z
   .object({
-    boundary: nonEmptyText('Phase boundary', 260),
+    boundary: nonEmptyText('Phase boundary', 600),
     dependencies: z.array(nonEmptyText('Phase dependency', 180)).min(1).max(8),
     deliverables: z.array(nonEmptyText('Phase deliverable', 180)).min(1).max(8),
     durationWeeks: z.string().trim().min(1).max(80),
@@ -147,12 +147,12 @@ const stackAdviceCategorySchema = z
     commonAlternative: nonEmptyText('Common alternative', 180),
     costRisk: nonEmptyText('Cost risk', 260),
     costRiskLevel: z.enum(['low', 'medium', 'high']),
-    founderExplanation: nonEmptyText('Founder explanation', 280),
+    founderExplanation: nonEmptyText('Founder explanation', 600),
     operationalComplexity: nonEmptyText('Operational complexity', 260),
     operationalComplexityLevel: z.enum(['low', 'medium', 'high']),
     recommendation: nonEmptyText('Stack recommendation', 220),
-    whyItFits: nonEmptyText('Why it fits', 280),
-    whyNotCommonAlternative: nonEmptyText('Why not the common alternative', 280),
+    whyItFits: nonEmptyText('Why it fits', 600),
+    whyNotCommonAlternative: nonEmptyText('Why not the common alternative', 600),
   })
   .strict();
 
@@ -368,7 +368,7 @@ export const roadmapOutputSchema = baseModuleOutputSchema.extend({
     title: z.literal('Phase 3 Scale'),
   }),
   moduleType: z.literal('roadmap'),
-  recommendation: nonEmptyText('Roadmap recommendation', 320),
+  recommendation: nonEmptyText('Roadmap recommendation', 600),
   riskRegister: z.array(roadmapRiskSchema).min(3).max(10),
   technicalDependencies: z.array(roadmapDependencySchema).min(3).max(10),
   timelineEstimate: roadmapTimelineEstimateSchema,
@@ -428,9 +428,9 @@ export const stackAdviceOutputSchema = baseModuleOutputSchema.extend({
     }),
   executiveSummary: nonEmptyText('Executive summary', 1200),
   moduleType: z.literal('STACK_ADVICE'),
-  recommendation: nonEmptyText('Overall recommendation', 320),
+  recommendation: nonEmptyText('Overall recommendation', 600),
   scaleView: nonEmptyText('Scale view', 720),
-  teamAssumption: nonEmptyText('Team assumption', 360),
+  teamAssumption: nonEmptyText('Team assumption', 800),
 });
 
 const auditActionSchema = z
