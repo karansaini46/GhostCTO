@@ -73,10 +73,13 @@ const documentTypeLabels: Record<string, string> = {
 const getDocumentTypeLabel = (type: string) => documentTypeLabels[type] ?? formatStatus(type);
 
 const exportableDocumentTypes = new Set([
+  'code_audit',
   'developer_jd',
+  'rate_validator',
   'roadmap',
   'stack_advisor',
   'technical_spec',
+  'vetting_scorecard',
 ]);
 
 const sanitizeFilename = (value: string) =>

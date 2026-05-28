@@ -21,7 +21,15 @@ import {
 } from './project-api';
 import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 
-const exportablePdfTypes = new Set(['developer_jd', 'roadmap', 'stack_advisor', 'technical_spec']);
+const exportablePdfTypes = new Set([
+  'code_audit',
+  'developer_jd',
+  'rate_validator',
+  'roadmap',
+  'stack_advisor',
+  'technical_spec',
+  'vetting_scorecard',
+]);
 
 const documentTypeLabels: Record<string, string> = {
   code_audit: 'Code Audit',

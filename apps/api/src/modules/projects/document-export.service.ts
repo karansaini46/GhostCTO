@@ -17,6 +17,12 @@ const supportedDocumentTypes = new Set([
   'DEVELOPER_JD',
   'developer_jd',
   'developer_job_description',
+  'CODE_AUDIT',
+  'code_audit',
+  'QUOTE_ANALYSIS',
+  'rate_validator',
+  'VETTING_SCORECARD',
+  'vetting_scorecard',
 ]);
 
 const structuredOutputKeys = [
@@ -944,7 +950,7 @@ const renderPdf = async (html: string) => {
     config.pdfBrowserExecutablePath ??
     browserExecutableCandidates.find((candidate) => existsSync(candidate));
   const browser = await puppeteer.launch({
-    args: ['--no-sandbox', '--disable-setuid-sandbox'],
+    args: ['--no-sandbox', '--disable-setuid-sandbox', '--disable-dev-shm-usage'],
     executablePath,
     headless: true,
   });

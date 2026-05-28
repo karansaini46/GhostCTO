@@ -15,6 +15,7 @@ import {
   PageHeader,
   Select,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
@@ -25,6 +26,7 @@ import {
   technicalLevelOptions,
 } from './project-options';
 import {
+  exportProjectDocumentPdfRequest,
   generateStackAdviceRequest,
   getProjectRequest,
   listProjectDocumentsRequest,
@@ -270,6 +272,25 @@ const buildDeveloperBrief = (output: StackAdviceOutput) => {
 
 const buildCopyText = (title: string, body: string) => `${title}\n\n${body}`.trim();
 
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 80) || 'document';
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 const copyText = async (value: string) => {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -362,6 +383,8 @@ export const StackAdvicePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
 
   const loadWorkspace = useCallback(async () => {
@@ -483,6 +506,34 @@ export const StackAdvicePage = () => {
     }
   }, [accessToken, constraintState, id]);
 
+  const handleExportPdf = useCallback(async () => {
+    if (!accessToken || !project || !selectedDocument) {
+      return;
+    }
+
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(
+        accessToken,
+        project.id,
+        selectedDocument.id,
+      );
+      const fallbackFilename = `${slugify(project.name)}-${slugify(selectedDocument.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch (requestError) {
+      setExportError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Unable to export this document as a PDF.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, project, selectedDocument]);
+
   const handleSelectDocument = useCallback((document: ProjectDocument) => {
     setSelectedDocumentId(document.id);
     const output = getDocumentStackAdvice(document);
@@ -545,6 +596,11 @@ export const StackAdvicePage = () => {
             <Button onClick={() => navigate(`/projects/${project.id}`)} variant="secondary">
               Back to project
             </Button>
+            {selectedDocument?.status === 'COMPLETED' ? (
+              <Button isLoading={isExporting} onClick={handleExportPdf} variant="secondary">
+                Export PDF
+              </Button>
+            ) : null}
             <Button isLoading={isGenerating} onClick={handleGenerate}>
               Generate advice
             </Button>
@@ -554,6 +610,18 @@ export const StackAdvicePage = () => {
         eyebrow="Project workspace"
         title="Stack Advisor"
       />
+
+      {exportError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setExportError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Try again in a moment or contact support if the issue persists."
+          title={exportError}
+        />
+      ) : null}
 
       {generationError && !limitMessage ? (
         <ErrorState

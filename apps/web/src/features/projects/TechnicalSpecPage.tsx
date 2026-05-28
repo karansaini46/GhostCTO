@@ -20,11 +20,13 @@ import {
   Textarea,
   type TabItem,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import {
+  exportProjectDocumentPdfRequest,
   generateTechnicalSpecRequest,
   getProjectRequest,
   listProjectDocumentsRequest,
@@ -142,16 +144,21 @@ const slugify = (value: string) => {
   return slug || 'technical-spec';
 };
 
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 const exportMarkdown = (fileName: string, content: string) => {
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${slugify(fileName)}.md`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${slugify(fileName)}.md`);
 };
 
 const validateList = ({
@@ -888,6 +895,8 @@ export const TechnicalSpecPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [progressIndex, setProgressIndex] = useState(0);
   const [project, setProject] = useState<Project | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
@@ -1032,6 +1041,34 @@ export const TechnicalSpecPage = () => {
     [accessToken, formState, id],
   );
 
+  const handleExportPdf = useCallback(async () => {
+    if (!accessToken || !project || !selectedDocument) {
+      return;
+    }
+
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(
+        accessToken,
+        project.id,
+        selectedDocument.id,
+      );
+      const fallbackFilename = `${slugify(project.name)}-${slugify(selectedDocument.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch (requestError) {
+      setExportError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Unable to export this document as a PDF.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, project, selectedDocument]);
+
   const handleSelectDocument = useCallback((document: ProjectDocument) => {
     setSelectedDocumentId(document.id);
     const output = getDocumentTechnicalSpec(document);
@@ -1104,6 +1141,11 @@ export const TechnicalSpecPage = () => {
                 >
                   Export markdown
                 </Button>
+                {selectedDocument?.status === 'COMPLETED' ? (
+                  <Button isLoading={isExporting} onClick={handleExportPdf} variant="secondary">
+                    Export PDF
+                  </Button>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -1112,6 +1154,18 @@ export const TechnicalSpecPage = () => {
         eyebrow="Project workspace"
         title="Technical Spec Writer"
       />
+
+      {exportError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setExportError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Try again in a moment or contact support if the issue persists."
+          title={exportError}
+        />
+      ) : null}
 
       {generationError && !limitMessage ? (
         <ErrorState
