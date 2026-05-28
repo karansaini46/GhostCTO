@@ -1,22 +1,32 @@
+@import url('https://fonts.googleapis.com/css2?family=Instrument+Sans:ital,wght@0,400..700;1,400..700&family=Newsreader:opsz,wght@6..72,400..700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 @layer base {
   :root {
-    --color-background: 222 42% 5%;
-    --color-surface: 220 28% 9%;
-    --color-surface-raised: 220 24% 12%;
-    --color-border: 220 18% 20%;
-    --color-text: 210 28% 96%;
-    --color-muted-text: 218 12% 66%;
-    --color-accent: 174 72% 48%;
-    --color-danger: 350 76% 58%;
-    --color-success: 153 64% 45%;
-    --color-warning: 38 92% 56%;
-    color-scheme: dark;
+    --color-background: 42 38% 96%;
+    --color-surface: 40 35% 98%;
+    --color-surface-soft: 42 31% 93%;
+    --color-surface-card: 40 42% 99%;
+    --color-surface-raised: 42 39% 97%;
+    --color-surface-elevated: 39 43% 99%;
+    --color-border: 36 22% 82%;
+    --color-subtle-border: 40 24% 89%;
+    --color-text: 171 16% 15%;
+    --color-secondary-text: 165 9% 34%;
+    --color-muted-text: 162 7% 48%;
+    --color-accent: 88 21% 36%;
+    --color-accent-soft: 80 24% 90%;
+    --color-clay: 18 28% 54%;
+    --color-danger: 358 44% 45%;
+    --color-success: 137 25% 36%;
+    --color-warning: 35 45% 42%;
+    --color-focus: 88 28% 43%;
+    color-scheme: light;
     font-family:
-      Inter,
+      'Instrument Sans',
       ui-sans-serif,
       system-ui,
       -apple-system,
@@ -40,12 +50,99 @@
     color: hsl(var(--color-text));
   }
 
+  button,
+  input,
+  textarea,
+  select {
+    font: inherit;
+  }
+
   * {
     border-color: hsl(var(--color-border));
   }
 
   ::selection {
-    background: hsl(var(--color-accent) / 0.3);
+    background: hsl(var(--color-accent-soft));
     color: hsl(var(--color-text));
+  }
+}
+
+@layer utilities {
+  .font-editorial {
+    font-family: 'Newsreader', ui-serif, Georgia, Cambria, 'Times New Roman', Times, serif;
+  }
+
+  .text-balance {
+    text-wrap: balance;
+  }
+
+  .text-pretty {
+    text-wrap: pretty;
+  }
+
+  .paper-texture {
+    background-image:
+      radial-gradient(circle at 18% 18%, hsl(var(--color-surface-card) / 0.86), transparent 28rem),
+      radial-gradient(circle at 84% 4%, hsl(var(--color-accent-soft) / 0.5), transparent 22rem),
+      linear-gradient(180deg, hsl(var(--color-background)), hsl(var(--color-surface-soft)));
+  }
+
+  .surface-grain {
+    background-image:
+      linear-gradient(
+        135deg,
+        hsl(var(--color-surface-card) / 0.72),
+        hsl(var(--color-surface-raised) / 0.92)
+      ),
+      repeating-linear-gradient(
+        90deg,
+        hsl(var(--color-text) / 0.018) 0,
+        hsl(var(--color-text) / 0.018) 1px,
+        transparent 1px,
+        transparent 5px
+      );
+  }
+
+  .animate-enter {
+    animation: enter-soft 520ms cubic-bezier(0.2, 0.72, 0.18, 1) both;
+  }
+
+  .animate-rise {
+    animation: rise-soft 680ms cubic-bezier(0.2, 0.72, 0.18, 1) both;
+  }
+}
+
+@keyframes enter-soft {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes rise-soft {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.99);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 0.01ms !important;
   }
 }

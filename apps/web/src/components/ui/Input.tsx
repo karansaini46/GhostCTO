@@ -19,7 +19,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
     return (
       <div className="space-y-2">
         {label ? (
-          <label className="block text-sm font-medium text-text" htmlFor={inputId}>
+          <label className="block text-sm font-semibold text-text" htmlFor={inputId}>
             {label}
           </label>
         ) : null}
@@ -28,8 +28,8 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           aria-describedby={description ? helpTextId : undefined}
           aria-invalid={error ? true : undefined}
           className={cn(
-            'h-10 w-full rounded-md border bg-surface px-3 text-sm text-text shadow-sm transition-colors',
-            'placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-accent/25',
+            'min-h-11 w-full rounded-md border bg-surface-card px-3.5 text-sm text-text shadow-sm transition-all duration-200 ease-soft',
+            'placeholder:text-muted/70 focus:border-accent focus:outline-none focus:ring-2 focus:ring-focus/20',
             'disabled:cursor-not-allowed disabled:opacity-50',
             error ? 'border-danger focus:border-danger focus:ring-danger/20' : 'border-border',
             className,
@@ -38,7 +38,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
           {...props}
         />
         {description ? (
-          <p className={cn('text-sm', error ? 'text-danger' : 'text-muted')} id={helpTextId}>
+          <p
+            className={cn('text-sm leading-5', error ? 'text-danger' : 'text-muted')}
+            id={helpTextId}
+          >
             {description}
           </p>
         ) : null}

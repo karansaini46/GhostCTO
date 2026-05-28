@@ -94,7 +94,7 @@ export const generateRoadmapForUser = async (userId: string, projectId: string) 
   const prompt = buildGhostctoModulePrompt('roadmap', promptContext);
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
     prompt,
     requestName: 'projects.roadmap.generate',
     schema,
@@ -174,5 +174,5 @@ export const listRoadmapDocumentsForUser = async (
     },
   });
 
-  return documents.map(serializeGeneratedDocument);
+  return documents.map((document) => serializeGeneratedDocument(document));
 };

@@ -15,8 +15,8 @@ import {
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { StackAdviceOverridesInput } from './project.schemas.js';
 
-const stackAdviceDocumentType = 'STACK_ADVICE';
-const stackAdviceDocumentTitle = 'Tech Stack Advisor';
+const stackAdviceDocumentType = 'stack_advisor';
+const stackAdviceDocumentTitle = 'Stack Advisor';
 
 const projectWorkspaceInclude = {
   answers: {
@@ -106,7 +106,7 @@ export const generateStackAdviceForUser = async (
   const prompt = buildGhostctoModulePrompt('stack_advice', promptContext);
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
-    maxOutputTokens: 8192,
+    maxOutputTokens: 16384,
     prompt,
     requestName: 'projects.stackAdvice.generate',
     schema,

@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom';
 
+import { AdminPage } from './features/admin/AdminPage';
+import { AdminRoute } from './features/auth/AdminRoute';
 import { AppShell } from './layouts/AppShell';
 import { AuthProvider } from './features/auth/auth-store';
 import { BillingPage } from './features/billing/BillingPage';
@@ -9,28 +11,32 @@ import { ProtectedRoute } from './features/auth/ProtectedRoute';
 import { PublicRoute } from './features/auth/PublicRoute';
 import { RegisterPage } from './features/auth/RegisterPage';
 import { DashboardPage } from './features/dashboard/DashboardPage';
+import { LandingPage } from './features/landing/LandingPage';
 import { CodeAuditPage } from './features/projects/CodeAuditPage';
+import { DeveloperJdPage } from './features/projects/DeveloperJdPage';
 import { DocumentDetailPage } from './features/projects/DocumentDetailPage';
 import { DocumentsPage } from './features/projects/DocumentsPage';
 import { ProjectChatPage } from './features/projects/ProjectChatPage';
 import { ProjectDetailPage } from './features/projects/ProjectDetailPage';
 import { ProjectOnboardingPage } from './features/projects/ProjectOnboardingPage';
 import { RateValidatorPage } from './features/projects/RateValidatorPage';
+import { RoadmapPage } from './features/projects/RoadmapPage';
 import { StackAdvicePage } from './features/projects/StackAdvicePage';
-import { ShareDocumentPage } from './features/projects/ShareDocumentPage';
 import { TechnicalSpecPage } from './features/projects/TechnicalSpecPage';
 import { VettingScorecardPage } from './features/projects/VettingScorecardPage';
+import { AccountSettingsPage } from './features/settings/AccountSettingsPage';
+import { ProjectSettingsPage } from './features/settings/ProjectSettingsPage';
 
 export const App = () => (
   <AuthProvider>
     <BrowserRouter>
       <Routes>
+        <Route path="/" element={<LandingPage />} />
         <Route element={<PublicRoute />}>
           <Route path="/login" element={<LoginPage />} />
           <Route path="/register" element={<RegisterPage />} />
         </Route>
         <Route path="/logout" element={<LogoutPage />} />
-        <Route element={<ShareDocumentPage />} path="/share/:documentId" />
         <Route element={<ProtectedRoute />}>
           <Route
             element={
@@ -38,7 +44,7 @@ export const App = () => (
                 <DashboardPage />
               </AppShell>
             }
-            path="/"
+            path="/workspace"
           />
           <Route
             element={
@@ -59,10 +65,26 @@ export const App = () => (
           <Route
             element={
               <AppShell>
+                <AccountSettingsPage />
+              </AppShell>
+            }
+            path="/settings"
+          />
+          <Route
+            element={
+              <AppShell>
                 <ProjectDetailPage />
               </AppShell>
             }
             path="/projects/:id"
+          />
+          <Route
+            element={
+              <AppShell>
+                <ProjectSettingsPage />
+              </AppShell>
+            }
+            path="/projects/:id/settings"
           />
           <Route
             element={
@@ -99,10 +121,26 @@ export const App = () => (
           <Route
             element={
               <AppShell>
+                <RoadmapPage />
+              </AppShell>
+            }
+            path="/projects/:id/roadmap"
+          />
+          <Route
+            element={
+              <AppShell>
+                <DeveloperJdPage />
+              </AppShell>
+            }
+            path="/projects/:id/developer-jd"
+          />
+          <Route
+            element={
+              <AppShell>
                 <StackAdvicePage />
               </AppShell>
             }
-            path="/projects/:id/stack-advice"
+            path="/projects/:id/stack-advisor"
           />
           <Route
             element={
@@ -110,7 +148,7 @@ export const App = () => (
                 <TechnicalSpecPage />
               </AppShell>
             }
-            path="/projects/:id/specs"
+            path="/projects/:id/technical-spec"
           />
           <Route
             element={
@@ -128,6 +166,16 @@ export const App = () => (
             }
             path="/projects/:id/vetting"
           />
+          <Route element={<AdminRoute />}>
+            <Route
+              element={
+                <AppShell>
+                  <AdminPage />
+                </AppShell>
+              }
+              path="/admin"
+            />
+          </Route>
         </Route>
         <Route path="*" element={<Navigate replace to="/" />} />
       </Routes>

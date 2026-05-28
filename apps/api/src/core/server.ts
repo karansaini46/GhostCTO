@@ -2,24 +2,25 @@ import type { Server } from 'node:http';
 
 import { config } from './config.js';
 import { createApp } from './app.js';
+import { logger } from '../lib/logger.js';
 
 type ShutdownSignal = 'SIGINT' | 'SIGTERM';
 
 const closeServer = (server: Server, signal: ShutdownSignal) => {
-  console.info(`Received ${signal}. Closing HTTP server.`);
+  logger.info('Received shutdown signal. Closing HTTP server.', { signal });
 
   server.close((error) => {
     if (error) {
-      console.error('HTTP server closed with an error.');
+      logger.error('HTTP server closed with an error.', { error: error.message });
       process.exit(1);
     }
 
-    console.info('HTTP server closed.');
+    logger.info('HTTP server closed.');
     process.exit(0);
   });
 
   setTimeout(() => {
-    console.error('HTTP server shutdown timed out.');
+    logger.error('HTTP server shutdown timed out.');
     process.exit(1);
   }, 10_000).unref();
 };
@@ -27,7 +28,7 @@ const closeServer = (server: Server, signal: ShutdownSignal) => {
 export const startServer = () => {
   const app = createApp();
   const server = app.listen(config.port, () => {
-    console.info(`GhostCTO API listening on port ${config.port}.`);
+    logger.info('API server listening.', { port: config.port });
   });
 
   process.once('SIGINT', () => closeServer(server, 'SIGINT'));

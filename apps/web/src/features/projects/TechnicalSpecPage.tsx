@@ -11,6 +11,7 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   Input,
   LoadingState,
   PageHeader,
@@ -19,16 +20,19 @@ import {
   Textarea,
   type TabItem,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import {
+  exportProjectDocumentPdfRequest,
   generateTechnicalSpecRequest,
   getProjectRequest,
   listProjectDocumentsRequest,
 } from './project-api';
 import { getProjectOptionLabel } from './project-options';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 import type {
   TechnicalSpecDocumentMetadata,
   TechnicalSpecGenerationInput,
@@ -140,16 +144,21 @@ const slugify = (value: string) => {
   return slug || 'technical-spec';
 };
 
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 const exportMarkdown = (fileName: string, content: string) => {
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${slugify(fileName)}.md`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${slugify(fileName)}.md`);
 };
 
 const validateList = ({
@@ -285,10 +294,10 @@ const isTechnicalSpecOutput = (value: unknown): value is TechnicalSpecOutput => 
     return false;
   }
 
-  const output = value as Partial<TechnicalSpecOutput>;
+  const output = value as Partial<TechnicalSpecOutput> & { moduleType?: unknown };
 
   return (
-    output.moduleType === 'TECH_SPEC' &&
+    (output.moduleType === 'technical_spec' || output.moduleType === 'TECH_SPEC') &&
     typeof output.reportMarkdown === 'string' &&
     Boolean(output.featureOverview) &&
     Array.isArray(output.userStories) &&
@@ -332,8 +341,8 @@ const CopyButton = ({ label, onCopied, value, variant = 'secondary' }: CopyButto
 );
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -342,7 +351,7 @@ const ListBlock = ({ items }: { items: string[] }) => (
   <div className="grid gap-2">
     {items.map((item) => (
       <div
-        className="rounded-md border border-border bg-surface-raised px-3 py-2 text-sm leading-6 text-text"
+        className="rounded-panel border border-subtle bg-surface-card shadow-sm px-3 py-2 text-sm leading-6 text-text"
         key={item}
       >
         {item}
@@ -553,7 +562,7 @@ const buildSpecTabs = (
         <div className="grid gap-4">
           {output.userStories.map((story) => (
             <div
-              className="rounded-md border border-border bg-surface-raised p-4"
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={story.story}
             >
               <p className="text-sm font-semibold text-text">{story.story}</p>
@@ -567,7 +576,10 @@ const buildSpecTabs = (
         </div>
         <div className="grid gap-4">
           {output.userFlows.map((flow) => (
-            <div className="rounded-md border border-border bg-surface-raised p-4" key={flow.title}>
+            <div
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+              key={flow.title}
+            >
               <div className="flex flex-wrap items-center justify-between gap-3">
                 <h3 className="text-sm font-semibold text-text">{flow.title}</h3>
                 <Badge>{flow.actor}</Badge>
@@ -602,7 +614,7 @@ const buildSpecTabs = (
         <div className="grid gap-4">
           {output.apiEndpoints.map((endpoint) => (
             <div
-              className="rounded-md border border-border bg-surface-raised p-4"
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={`${endpoint.method}-${endpoint.path}`}
             >
               <div className="flex flex-wrap items-start justify-between gap-3">
@@ -617,13 +629,13 @@ const buildSpecTabs = (
                 <DetailBlock label="Request fields" value={formatBullets(endpoint.requestBody)} />
                 <DetailBlock label="Response fields" value={formatBullets(endpoint.responseBody)} />
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-normal text-muted">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                     Request example
                   </p>
                   <CodeBlock value={endpoint.requestExample} />
                 </div>
                 <div>
-                  <p className="mb-2 text-xs uppercase tracking-normal text-muted">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                     Response example
                   </p>
                   <CodeBlock value={endpoint.responseExample} />
@@ -658,7 +670,7 @@ const buildSpecTabs = (
         <div className="grid gap-4">
           {output.databaseChanges.map((change) => (
             <div
-              className="rounded-md border border-border bg-surface-raised p-4"
+              className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={`${change.changeType}-${change.entity}`}
             >
               <div className="flex flex-wrap items-center justify-between gap-3">
@@ -823,7 +835,7 @@ const buildSpecTabs = (
             .sort((first, second) => first.order - second.order)
             .map((step) => (
               <div
-                className="rounded-md border border-border bg-surface-raised p-4"
+                className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                 key={`${step.order}-${step.title}`}
               >
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -857,7 +869,7 @@ const buildSpecTabs = (
               variant="ghost"
             />
           </div>
-          <div className="max-h-[520px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+          <div className="max-h-[520px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
             {output.reportMarkdown}
           </div>
         </div>
@@ -876,12 +888,15 @@ export const TechnicalSpecPage = () => {
   const [activeTab, setActiveTab] = useState('overview');
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<SpecFormErrors>({});
   const [formState, setFormState] = useState<SpecFormState>(initialFormState);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [progressIndex, setProgressIndex] = useState(0);
   const [project, setProject] = useState<Project | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
@@ -892,7 +907,8 @@ export const TechnicalSpecPage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -904,7 +920,7 @@ export const TechnicalSpecPage = () => {
       setProject(projectResponse.project);
       setDocuments(documentsResponse.documents);
     } catch {
-      setError('Unable to load the technical spec workspace.');
+      setLoadError('Unable to load the technical spec workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -996,7 +1012,7 @@ export const TechnicalSpecPage = () => {
       }
 
       setIsGenerating(true);
-      setError(null);
+      setGenerationError(null);
       setLimitMessage(null);
 
       try {
@@ -1016,7 +1032,7 @@ export const TechnicalSpecPage = () => {
           'Unable to generate the technical spec right now.',
         );
 
-        setError(message);
+        setGenerationError(message);
         setLimitMessage(isGenerationLimitError(requestError) ? message : null);
       } finally {
         setIsGenerating(false);
@@ -1025,6 +1041,34 @@ export const TechnicalSpecPage = () => {
     [accessToken, formState, id],
   );
 
+  const handleExportPdf = useCallback(async () => {
+    if (!accessToken || !project || !selectedDocument) {
+      return;
+    }
+
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(
+        accessToken,
+        project.id,
+        selectedDocument.id,
+      );
+      const fallbackFilename = `${slugify(project.name)}-${slugify(selectedDocument.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch (requestError) {
+      setExportError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Unable to export this document as a PDF.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, project, selectedDocument]);
+
   const handleSelectDocument = useCallback((document: ProjectDocument) => {
     setSelectedDocumentId(document.id);
     const output = getDocumentTechnicalSpec(document);
@@ -1032,35 +1076,40 @@ export const TechnicalSpecPage = () => {
     setActiveTab('overview');
   }, []);
 
+  const handleFeedbackSaved = useCallback((feedback: ProjectDocumentFeedback) => {
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === feedback.documentId ? { ...document, feedback } : document,
+      ),
+    );
+  }, []);
+
   if (isLoading) {
     return <LoadingState label="Loading technical spec writer" />;
   }
 
-  if (error || !project) {
+  if (loadError || !project) {
     return (
       <div className="space-y-6">
         <PageHeader
           actions={
             <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
           }
-          description={error ?? 'The technical spec workspace could not be loaded.'}
+          description={loadError ?? 'The technical spec workspace could not be loaded.'}
           eyebrow="Project workspace"
           title="Technical Spec Writer"
         />
-        {limitMessage ? (
-          <GenerationLimitCallout message={limitMessage} />
-        ) : (
-          <Card className="border-danger/35 bg-danger/5">
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
-              </p>
-              <Button onClick={loadWorkspace} variant="secondary">
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              The workspace may be unavailable, or your account may not have access to the
+              project.
+            </p>
+            <Button onClick={loadWorkspace} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -1092,6 +1141,11 @@ export const TechnicalSpecPage = () => {
                 >
                   Export markdown
                 </Button>
+                {selectedDocument?.status === 'COMPLETED' ? (
+                  <Button isLoading={isExporting} onClick={handleExportPdf} variant="secondary">
+                    Export PDF
+                  </Button>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -1100,6 +1154,31 @@ export const TechnicalSpecPage = () => {
         eyebrow="Project workspace"
         title="Technical Spec Writer"
       />
+
+      {exportError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setExportError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Try again in a moment or contact support if the issue persists."
+          title={exportError}
+        />
+      ) : null}
+
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your form inputs have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -1243,7 +1322,7 @@ export const TechnicalSpecPage = () => {
                                 {isSelected ? 'Active' : 'Saved'}
                               </Badge>
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -1331,7 +1410,9 @@ export const TechnicalSpecPage = () => {
               <div className="rounded-lg border border-border bg-surface p-5">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                   <div>
-                    <p className="text-xs uppercase tracking-normal text-muted">Generated spec</p>
+                    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                      Generated spec
+                    </p>
                     <h2 className="mt-1 text-lg font-semibold text-text">
                       {selectedDocument?.title ?? (formState.featureName || 'Technical Spec')}
                     </h2>
@@ -1360,6 +1441,14 @@ export const TechnicalSpecPage = () => {
                   </div>
                 </div>
               </div>
+              {selectedDocument ? (
+                <DocumentFeedbackPanel
+                  accessToken={accessToken}
+                  document={selectedDocument}
+                  onFeedbackSaved={handleFeedbackSaved}
+                  projectId={project.id}
+                />
+              ) : null}
               <Tabs items={tabs} onValueChange={setActiveTab} value={activeTab} />
             </div>
           ) : selectedDocument?.content ? (
@@ -1396,7 +1485,7 @@ export const TechnicalSpecPage = () => {
                 </div>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[720px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
                   {selectedDocument.content}
                 </div>
               </CardContent>

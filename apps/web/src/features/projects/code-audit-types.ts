@@ -11,12 +11,7 @@ export type CodeAuditSeverity = 'low' | 'medium' | 'high' | 'critical';
 export type CodeAuditRiskLevel = 'low' | 'medium' | 'high' | 'critical';
 
 export type CodeAuditFinding = {
-  category:
-    | 'critical_risk'
-    | 'security'
-    | 'scalability'
-    | 'maintainability'
-    | 'delivery_risk';
+  category: 'critical_risk' | 'security' | 'scalability' | 'maintainability' | 'delivery_risk';
   confidenceLevel: CodeAuditConfidence;
   evidence: string;
   explanation: string;

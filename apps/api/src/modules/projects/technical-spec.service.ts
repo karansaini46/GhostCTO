@@ -16,7 +16,7 @@ import {
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { TechnicalSpecRequestInput } from './project.schemas.js';
 
-const technicalSpecDocumentType = 'TECH_SPEC';
+const technicalSpecDocumentType = 'technical_spec';
 
 const projectWorkspaceInclude = {
   answers: {
@@ -242,7 +242,7 @@ const buildTechnicalSpecPrompt = (
       'Write for a developer handoff. Use precise implementation language and avoid founder strategy language.',
     ],
     schemaDescription:
-      'Return { moduleType: "TECH_SPEC", reportMarkdown, featureOverview, userStories, userFlows, apiEndpoints, databaseChanges, permissions, edgeCases, errorStates, analyticsEvents, acceptanceCriteria, testCases, implementationSequence, outOfScope, assumptions }. Request and response examples must be valid JSON strings.',
+      'Return { moduleType: "technical_spec", reportMarkdown, featureOverview, userStories, userFlows, apiEndpoints, databaseChanges, permissions, edgeCases, errorStates, analyticsEvents, acceptanceCriteria, testCases, implementationSequence, outOfScope, assumptions }. Request and response examples must be valid JSON strings.',
     schemaName: 'FeatureTechnicalSpecOutput',
     task: [
       'Create a build-ready technical specification for this feature.',
@@ -273,6 +273,7 @@ export const generateTechnicalSpecForUser = async (
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
     maxOutputTokens: 12288,
+    modelTier: 'quality',
     prompt,
     requestName: 'projects.technicalSpec.generate',
     schema: technicalSpecOutputSchema,

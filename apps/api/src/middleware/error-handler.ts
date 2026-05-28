@@ -4,7 +4,9 @@ import { ZodError } from 'zod';
 
 import { config } from '../core/config.js';
 import { ApiError } from '../lib/api-error.js';
+import { logger } from '../lib/logger.js';
 import { sendError } from '../lib/responses.js';
+import { ModelProviderError } from '../services/model-provider/errors.js';
 
 const fallbackError = {
   code: 'INTERNAL_SERVER_ERROR',
@@ -34,6 +36,10 @@ const getHttpErrorMessage = (error: HttpErrorLike) => {
     return 'Invalid request body.';
   }
 
+  if (error.type === 'entity.too.large') {
+    return 'Request body is too large.';
+  }
+
   if (error.expose && error.status && error.status < 500) {
     return error.message;
   }
@@ -57,6 +63,44 @@ const getErrorCode = (statusCode: number) => {
   return statusCode >= 500 ? fallbackError.code : 'REQUEST_ERROR';
 };
 
+const normalizeModelProviderError = (error: ModelProviderError) => {
+  if (error.code === 'PROVIDER_RATE_LIMITED') {
+    return {
+      code: error.code,
+      message: 'Generation is temporarily rate limited. Please try again shortly.',
+      statusCode: 429,
+    };
+  }
+
+  if (error.code === 'PROVIDER_NOT_CONFIGURED') {
+    return {
+      code: error.code,
+      message: 'Generation is not configured for this environment.',
+      statusCode: 503,
+    };
+  }
+
+  return {
+    code: error.code,
+    message: 'Generation could not be completed. Please try again.',
+    statusCode: 502,
+  };
+};
+
+const getErrorLogContext = (error: unknown) => {
+  if (error instanceof Error) {
+    return {
+      errorMessage: error.message,
+      errorName: error.name,
+    };
+  }
+
+  return {
+    errorMessage: String(error),
+    errorName: typeof error,
+  };
+};
+
 export const errorHandler: ErrorRequestHandler = (error, request, response, next) => {
   if (response.headersSent) {
     next(error);
@@ -71,23 +115,26 @@ export const errorHandler: ErrorRequestHandler = (error, request, response, next
           message: error.issues[0]?.message ?? 'Invalid request body.',
           statusCode: 400,
         }
-      : error instanceof ApiError
-      ? {
-          code: error.code,
-          message: error.expose ? error.message : fallbackError.message,
-          statusCode: error.statusCode,
-        }
-      : httpStatusCode
-        ? {
-            code: getErrorCode(httpStatusCode),
-            message: getHttpErrorMessage(error as HttpErrorLike),
-            statusCode: httpStatusCode,
-          }
-        : fallbackError;
+      : error instanceof ModelProviderError
+        ? normalizeModelProviderError(error)
+        : error instanceof ApiError
+          ? {
+              code: error.code,
+              message: error.expose ? error.message : fallbackError.message,
+              statusCode: error.statusCode,
+            }
+          : httpStatusCode
+            ? {
+                code: getErrorCode(httpStatusCode),
+                message: getHttpErrorMessage(error as HttpErrorLike),
+                statusCode: httpStatusCode,
+              }
+            : fallbackError;
 
   if (normalized.statusCode >= 500) {
-    console.error('Request failed.', {
+    logger.error('Request failed.', {
       code: normalized.code,
+      ...getErrorLogContext(error),
       method: request.method,
       path: request.path,
       statusCode: normalized.statusCode,

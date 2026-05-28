@@ -13,6 +13,7 @@ import {
   refresh,
   register,
   startGoogleOAuth,
+  updateMe,
 } from './auth.controller.js';
 
 const buildRateLimiter = (windowMs: number, limit: number) =>
@@ -26,10 +27,7 @@ const buildRateLimiter = (windowMs: number, limit: number) =>
     windowMs,
   });
 
-const authMutationLimiter = buildRateLimiter(
-  config.authRateLimitWindowMs,
-  config.authRateLimitMax,
-);
+const authMutationLimiter = buildRateLimiter(config.authRateLimitWindowMs, config.authRateLimitMax);
 const authSessionLimiter = buildRateLimiter(
   config.authSessionRateLimitWindowMs,
   config.authSessionRateLimitMax,
@@ -44,3 +42,10 @@ authRouter.get('/google/callback', authMutationLimiter, asyncHandler(handleGoogl
 authRouter.post('/refresh', authSessionLimiter, asyncHandler(refresh));
 authRouter.post('/logout', authSessionLimiter, asyncHandler(logout));
 authRouter.get('/me', authSessionLimiter, authenticateRequest, requireAuth, asyncHandler(me));
+authRouter.patch(
+  '/me',
+  authMutationLimiter,
+  authenticateRequest,
+  requireAuth,
+  asyncHandler(updateMe),
+);

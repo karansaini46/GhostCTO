@@ -20,7 +20,7 @@ import {
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { CodeAuditRequestInput } from './project.schemas.js';
 
-const codeAuditDocumentType = 'CODE_AUDIT';
+const codeAuditDocumentType = 'code_audit';
 const codeAuditDocumentTitle = 'Code Audit';
 const sourceSnippetLimit = 18_000;
 
@@ -227,7 +227,9 @@ export const generateCodeAuditForUser = async (
 ) => {
   const project = await getProjectForUser(userId, projectId);
   await enforceDailyGenerationLimitForUser(userId);
-  const repositorySnapshot = input.repoUrl ? await fetchPublicGithubRepository(input.repoUrl) : null;
+  const repositorySnapshot = input.repoUrl
+    ? await fetchPublicGithubRepository(input.repoUrl)
+    : null;
   const promptContext = toProjectPromptContext(project);
   const prompt = buildCodeAuditPrompt(promptContext, input, repositorySnapshot);
   const provider = getModelProvider();
@@ -235,6 +237,7 @@ export const generateCodeAuditForUser = async (
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
     maxOutputTokens: 12288,
+    modelTier: 'pro',
     prompt,
     requestName: 'projects.codeAudit.generate',
     schema,

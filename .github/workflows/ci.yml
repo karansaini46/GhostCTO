@@ -1,0 +1,81 @@
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    name: Typecheck, lint, test, and build
+    runs-on: ubuntu-latest
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_DB: ghostcto_test
+          POSTGRES_HOST_AUTH_METHOD: trust
+          POSTGRES_USER: postgres
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres -d ghostcto_test"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    env:
+      AUTH_RATE_LIMIT_MAX: '10000'
+      AUTH_SESSION_RATE_LIMIT_MAX: '10000'
+      BCRYPT_ROUNDS: '4'
+      CI: 'true'
+      CLIENT_ORIGIN: http://localhost:5173,http://127.0.0.1:5173
+      DATABASE_URL: postgresql://postgres@localhost:5432/ghostcto_test
+      DIRECT_URL: postgresql://postgres@localhost:5432/ghostcto_test
+      GENERATION_RATE_LIMIT_MAX: '10000'
+      GUMROAD_PRODUCT_ID: ci-test-product
+      NODE_ENV: test
+      REFRESH_TOKEN_BYTES: '32'
+      TEST_DATABASE_URL: postgresql://postgres@localhost:5432/ghostcto_test
+      VITE_API_BASE_URL: http://localhost:4000
+      VITE_API_URL: http://localhost:4000
+      WEB_TEST_PORT: '5174'
+
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.0.0
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          cache: pnpm
+          cache-dependency-path: pnpm-lock.yaml
+          node-version: 22
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Install browser dependencies
+        run: pnpm --filter @ghostcto/web exec playwright install --with-deps chromium
+
+      - name: Typecheck
+        run: pnpm typecheck
+
+      - name: Lint
+        run: pnpm lint
+
+      - name: Test
+        run: pnpm test
+
+      - name: Build
+        run: pnpm build

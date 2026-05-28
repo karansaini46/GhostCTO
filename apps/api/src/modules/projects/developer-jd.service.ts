@@ -14,7 +14,7 @@ import {
 } from './document-history.service.js';
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 
-const developerJdDocumentType = 'DEVELOPER_JD';
+const developerJdDocumentType = 'developer_jd';
 
 const projectWorkspaceInclude = {
   answers: {
@@ -88,6 +88,7 @@ export const createDeveloperJdForUser = async (userId: string, projectId: string
   const generatedAt = new Date();
   const generation = await provider.generateStructured({
     maxOutputTokens: 10000,
+    modelTier: 'quality',
     prompt,
     requestName: 'projects.developerJd.create',
     schema,

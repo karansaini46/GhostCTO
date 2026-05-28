@@ -3,12 +3,14 @@ import type { RequestHandler } from 'express';
 import { ApiError } from '../../lib/api-error.js';
 import { sendJson } from '../../lib/responses.js';
 import {
+  deleteProjectPayloadSchema,
   projectIdParamSchema,
   projectPayloadSchema,
   updateProjectPayloadSchema,
 } from './project.schemas.js';
 import {
   createProjectForUser,
+  deleteProjectForUser,
   getProjectForUser,
   listProjectsForUser,
   updateProjectForUser,
@@ -61,6 +63,19 @@ export const updateProject: RequestHandler = async (request, response, next) => 
     const project = await updateProjectForUser(getUserId(request), params.id, input);
 
     sendJson(response, { project });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const deleteProject: RequestHandler = async (request, response, next) => {
+  try {
+    const params = projectIdParamSchema.parse(request.params);
+    const input = deleteProjectPayloadSchema.parse(request.body);
+
+    await deleteProjectForUser(getUserId(request), params.id, input);
+
+    response.status(204).send();
   } catch (error) {
     next(error);
   }

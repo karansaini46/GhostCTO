@@ -6,22 +6,30 @@ import {
   Button,
   Card,
   CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
+  MarkdownReport,
+  ReportCard,
   LoadingState,
   PageHeader,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import {
   exportProjectDocumentPdfRequest,
   getProjectDocumentRequest,
   getProjectRequest,
 } from './project-api';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 
-const exportablePdfTypes = new Set(['developer_jd', 'roadmap', 'stack_advisor', 'technical_spec']);
+const exportablePdfTypes = new Set([
+  'code_audit',
+  'developer_jd',
+  'rate_validator',
+  'roadmap',
+  'stack_advisor',
+  'technical_spec',
+  'vetting_scorecard',
+]);
 
 const documentTypeLabels: Record<string, string> = {
   code_audit: 'Code Audit',
@@ -172,6 +180,12 @@ export const DocumentDetailPage = () => {
     }
   };
 
+  const handleFeedbackSaved = (feedback: ProjectDocumentFeedback) => {
+    setDocumentRecord((current) =>
+      current?.id === feedback.documentId ? { ...current, feedback } : current,
+    );
+  };
+
   if (isLoading) {
     return <LoadingState label="Loading document" />;
   }
@@ -180,7 +194,9 @@ export const DocumentDetailPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate(`/projects/${id ?? ''}/documents`)}>Back</Button>}
+          actions={
+            <Button onClick={() => navigate(`/projects/${id ?? ''}/documents`)}>Back</Button>
+          }
           description={error ?? 'The requested document could not be loaded.'}
           eyebrow="Project documents"
           title="Document"
@@ -203,13 +219,17 @@ export const DocumentDetailPage = () => {
     documentRecord.status === 'COMPLETED' &&
     Boolean(documentRecord.content?.trim()) &&
     exportablePdfTypes.has(documentRecord.type);
+  const reportContent = documentRecord.content?.replace(/^#\s+.+\n+/, '');
 
   return (
     <div className="space-y-8">
       <PageHeader
         actions={
           <div className="flex flex-wrap items-center gap-2">
-            <Button onClick={() => navigate(`/projects/${project.id}/documents`)} variant="secondary">
+            <Button
+              onClick={() => navigate(`/projects/${project.id}/documents`)}
+              variant="secondary"
+            >
               Back to documents
             </Button>
             <Button disabled={!documentRecord.content} onClick={handleCopy} variant="secondary">
@@ -231,7 +251,7 @@ export const DocumentDetailPage = () => {
         }
         description={documentRecord.summary ?? 'Saved generated document.'}
         eyebrow="Project documents"
-        title={documentRecord.title}
+        title="Document"
       />
 
       {exportError ? (
@@ -242,33 +262,35 @@ export const DocumentDetailPage = () => {
         </Card>
       ) : null}
 
-      <Card>
-        <CardHeader>
-          <div className="flex flex-wrap items-center gap-2">
+      <DocumentFeedbackPanel
+        accessToken={accessToken}
+        document={documentRecord}
+        onFeedbackSaved={handleFeedbackSaved}
+        projectId={project.id}
+      />
+
+      <ReportCard
+        meta={
+          <>
             <Badge>{getDocumentTypeLabel(documentRecord.type)}</Badge>
             <Badge variant="accent">v{documentRecord.version}</Badge>
             <Badge>{formatLabel(documentRecord.status)}</Badge>
-          </div>
-          <CardTitle>Document details</CardTitle>
-          <CardDescription>
-            Created {formatDateTime(documentRecord.createdAt)}
-            {documentRecord.completedAt
-              ? ` and completed ${formatDateTime(documentRecord.completedAt)}`
-              : ''}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="rounded-md border border-border bg-surface-raised p-4">
-            {documentRecord.content ? (
-              <pre className="whitespace-pre-wrap text-sm leading-6 text-text">
-                {documentRecord.content}
-              </pre>
-            ) : (
-              <p className="text-sm leading-6 text-muted">No content saved for this document.</p>
-            )}
-          </div>
-        </CardContent>
-      </Card>
+            <Badge>{formatDateTime(documentRecord.createdAt)}</Badge>
+          </>
+        }
+        subtitle={
+          documentRecord.completedAt
+            ? `Completed ${formatDateTime(documentRecord.completedAt)}`
+            : 'Saved project document.'
+        }
+        title={documentRecord.title}
+      >
+        {reportContent ? (
+          <MarkdownReport content={reportContent} />
+        ) : (
+          <p className="text-sm leading-6 text-secondary">No content saved for this document.</p>
+        )}
+      </ReportCard>
     </div>
   );
 };

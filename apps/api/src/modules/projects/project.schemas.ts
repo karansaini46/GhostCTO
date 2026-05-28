@@ -44,6 +44,34 @@ const optionalTrimmedText = (maxCharacters: number) =>
     .nullable()
     .transform((value) => (value ? value : null));
 
+const githubRepositoryUrlSchema = z
+  .string()
+  .trim()
+  .url('Enter a valid GitHub repository URL.')
+  .max(2048, 'Repository URL is too long.')
+  .refine(
+    (value) => {
+      try {
+        const url = new URL(value);
+        const hostname = url.hostname.toLowerCase();
+        const pathSegments = url.pathname.split('/').filter(Boolean);
+
+        return (
+          url.protocol === 'https:' &&
+          (hostname === 'github.com' || hostname === 'www.github.com') &&
+          pathSegments.length === 2
+        );
+      } catch {
+        return false;
+      }
+    },
+    {
+      message: 'Provide the root GitHub repository URL, such as https://github.com/owner/repo.',
+    },
+  );
+
+export const emptyMutationBodySchema = z.object({}).strict();
+
 export const projectPayloadSchema = z
   .object({
     biggestConcern: detailedText('Biggest concern', 50, 8, 1200),
@@ -115,46 +143,85 @@ export const updateProjectPayloadSchema = projectPayloadSchema
     message: 'Provide at least one project field to update.',
   });
 
-export const projectIdParamSchema = z.object({
-  id: z.string().uuid(),
-});
+export const deleteProjectPayloadSchema = z
+  .object({
+    confirmationName: z.string().min(1).max(200),
+  })
+  .strict();
 
-export const documentExportParamsSchema = z.object({
-  documentId: z.string().uuid(),
-  projectId: z.string().uuid(),
-});
+export const projectIdParamSchema = z
+  .object({
+    id: z.string().uuid(),
+  })
+  .strict();
 
-export const documentDetailParamsSchema = z.object({
-  documentId: z.string().uuid(),
-  id: z.string().uuid(),
-});
+export const documentExportParamsSchema = z
+  .object({
+    documentId: z.string().uuid(),
+    projectId: z.string().uuid(),
+  })
+  .strict();
 
-export const projectDocumentsQuerySchema = z.object({
-  type: z.preprocess(
-    (value) => {
-      if (value === undefined || value === null || value === '') {
-        return undefined;
-      }
+export const documentDetailParamsSchema = z
+  .object({
+    documentId: z.string().uuid(),
+    id: z.string().uuid(),
+  })
+  .strict();
 
-      if (typeof value === 'string') {
-        return value.trim().toLowerCase();
-      }
-
-      return undefined;
-    },
-    z
+export const documentFeedbackPayloadSchema = z
+  .object({
+    comment: z
+      .string()
+      .trim()
+      .max(2000, 'Comment is too long.')
+      .optional()
+      .nullable()
+      .transform((value) => (value ? value : null)),
+    issueType: z
       .enum([
-        'code_audit',
-        'developer_jd',
-        'rate_validator',
-        'roadmap',
-        'stack_advisor',
-        'technical_spec',
-        'vetting_scorecard',
+        'MISSING_CONTEXT',
+        'INCORRECT_CONTENT',
+        'TOO_GENERIC',
+        'MISSING_DETAIL',
+        'HARD_TO_ACT_ON',
+        'OTHER',
       ])
-      .optional(),
-  ),
-});
+      .optional()
+      .nullable()
+      .transform((value) => value ?? null),
+    usefulness: z.enum(['USEFUL', 'NEEDS_WORK', 'WRONG']),
+  })
+  .strict();
+
+export const projectDocumentsQuerySchema = z
+  .object({
+    type: z.preprocess(
+      (value) => {
+        if (value === undefined || value === null || value === '') {
+          return undefined;
+        }
+
+        if (typeof value === 'string') {
+          return value.trim().toLowerCase();
+        }
+
+        return undefined;
+      },
+      z
+        .enum([
+          'code_audit',
+          'developer_jd',
+          'rate_validator',
+          'roadmap',
+          'stack_advisor',
+          'technical_spec',
+          'vetting_scorecard',
+        ])
+        .optional(),
+    ),
+  })
+  .strict();
 
 export const stackAdviceOverridesSchema = z
   .object({
@@ -194,7 +261,12 @@ export const codeAuditRequestSchema = z
       .optional()
       .nullable()
       .transform((value) => (value?.length ? value : null)),
-    repoUrl: optionalTrimmedText(2048),
+    repoUrl: z
+      .preprocess(
+        (value) => (typeof value === 'string' && !value.trim() ? null : value),
+        githubRepositoryUrlSchema.optional().nullable(),
+      )
+      .transform((value) => (value ? value : null)),
   })
   .strict()
   .refine((value) => Boolean(value.repoUrl) !== Boolean(value.codeSnippet), {
@@ -263,7 +335,9 @@ export const chatMessagesQuerySchema = z
 
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
+export type DeleteProjectPayloadInput = z.infer<typeof deleteProjectPayloadSchema>;
 export type DocumentDetailParamsInput = z.infer<typeof documentDetailParamsSchema>;
+export type DocumentFeedbackPayloadInput = z.infer<typeof documentFeedbackPayloadSchema>;
 export type DocumentExportParamsInput = z.infer<typeof documentExportParamsSchema>;
 export type ProjectDocumentsQueryInput = z.infer<typeof projectDocumentsQuerySchema>;
 export type StackAdviceOverridesInput = z.infer<typeof stackAdviceOverridesSchema>;

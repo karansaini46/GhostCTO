@@ -11,15 +11,22 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   Input,
   LoadingState,
   PageHeader,
   Textarea,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
+import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
-import { generateCodeAuditRequest, getProjectRequest, listProjectDocumentsRequest } from './project-api';
-import type { Project, ProjectDocument } from './project-types';
+import {
+  generateCodeAuditRequest,
+  getProjectRequest,
+  listProjectDocumentsRequest,
+} from './project-api';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 import type {
   CodeAuditAction,
   CodeAuditDocumentMetadata,
@@ -206,9 +213,16 @@ const buildQuestionsCopyText = (questions: CodeAuditQuestion[]) =>
     .trim();
 
 const buildActionsCopyText = (actions: CodeAuditAction[]) =>
-  actions.map((action) => `- ${action.action}\n  - ${action.reason}`).join('\n').trim();
+  actions
+    .map((action) => `- ${action.action}\n  - ${action.reason}`)
+    .join('\n')
+    .trim();
 
-const downloadTextFile = (filename: string, content: string, mimeType = 'text/markdown;charset=utf-8') => {
+const downloadTextFile = (
+  filename: string,
+  content: string,
+  mimeType = 'text/markdown;charset=utf-8',
+) => {
   const blob = new Blob([content], { type: mimeType });
   const url = window.URL.createObjectURL(blob);
   const anchor = document.createElement('a');
@@ -278,15 +292,22 @@ const FindingGroup = ({ items, subtitle, title, tone }: FindingGroupProps) => (
           <CardTitle>{title}</CardTitle>
           <CardDescription>{subtitle}</CardDescription>
         </div>
-        <Badge variant={tone}>{items.length > 0 ? `${items.length} finding${items.length === 1 ? '' : 's'}` : 'Clear'}</Badge>
+        <Badge variant={tone}>
+          {items.length > 0 ? `${items.length} finding${items.length === 1 ? '' : 's'}` : 'Clear'}
+        </Badge>
       </div>
     </CardHeader>
     <CardContent className="space-y-4">
       {items.length > 0 ? (
         items.map((item, index) => (
-          <div className={index === 0 ? '' : 'border-t border-border pt-4'} key={`${item.title}-${index}`}>
+          <div
+            className={index === 0 ? '' : 'border-t border-border pt-4'}
+            key={`${item.title}-${index}`}
+          >
             <div className="flex flex-wrap items-center gap-2">
-              <Badge variant={getSeverityVariant(item.severity)}>{severityLabels[item.severity]}</Badge>
+              <Badge variant={getSeverityVariant(item.severity)}>
+                {severityLabels[item.severity]}
+              </Badge>
               <Badge variant={priorityTone[item.priority]}>{item.priority.toUpperCase()}</Badge>
               <Badge variant="neutral">{formatCategoryLabel(item.category)}</Badge>
               <Badge variant="neutral">Confidence {item.confidenceLevel}</Badge>
@@ -294,23 +315,31 @@ const FindingGroup = ({ items, subtitle, title, tone }: FindingGroupProps) => (
             <p className="mt-3 text-sm font-semibold leading-6 text-text">{item.title}</p>
             <p className="mt-2 text-sm leading-6 text-text">{item.explanation}</p>
             <div className="mt-3 grid gap-3 lg:grid-cols-2">
-              <div className="rounded-md border border-border bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-normal text-muted">Why the founder should care</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Why the founder should care
+                </p>
                 <p className="mt-2 text-sm leading-6 text-text">{item.impact}</p>
               </div>
-              <div className="rounded-md border border-border bg-surface-raised p-3">
-                <p className="text-xs uppercase tracking-normal text-muted">Suggested fix</p>
+              <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                  Suggested fix
+                </p>
                 <p className="mt-2 text-sm leading-6 text-text">{item.suggestedFix}</p>
               </div>
             </div>
-            <div className="mt-3 rounded-md border border-border bg-surface-raised p-3">
-              <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+            <div className="mt-3 rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                Evidence
+              </p>
               <pre className="mt-2 max-h-56 overflow-auto whitespace-pre-wrap break-words text-sm leading-6 text-text">
                 {item.evidence}
               </pre>
             </div>
-            <div className="mt-3 rounded-md border border-border bg-surface-raised p-3">
-              <p className="text-xs uppercase tracking-normal text-muted">What to ask the developer</p>
+            <div className="mt-3 rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                What to ask the developer
+              </p>
               <p className="mt-2 text-sm leading-6 text-text">{buildFindingQuestion(item)}</p>
             </div>
           </div>
@@ -326,7 +355,8 @@ const CodeAuditPage = () => {
   const navigate = useNavigate();
   const { accessToken } = useAuth();
   const { id } = useParams();
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [project, setProject] = useState<Project | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -344,7 +374,8 @@ const CodeAuditPage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -356,7 +387,7 @@ const CodeAuditPage = () => {
       setProject(projectResponse.project);
       setDocuments(documentsResponse.documents);
     } catch {
-      setError('Unable to load the code audit workspace.');
+      setLoadError('Unable to load the code audit workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -376,7 +407,8 @@ const CodeAuditPage = () => {
         .filter((document) => document.type === 'code_audit')
         .map((document) => ({ audit: getDocumentCodeAudit(document), document }))
         .filter(
-          (item): item is { audit: CodeAuditOutput; document: ProjectDocument } => item.audit !== null,
+          (item): item is { audit: CodeAuditOutput; document: ProjectDocument } =>
+            item.audit !== null,
         ),
     [documents],
   );
@@ -414,26 +446,40 @@ const CodeAuditPage = () => {
     }
 
     setIsGenerating(true);
-    setError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
       const response = await generateCodeAuditRequest(accessToken, id, toPayload(formState));
       setGeneratedDocument(response.document);
       setGeneratedAudit(response.codeAudit);
-      setDocuments((current) => [response.document, ...current.filter((item) => item.id !== response.document.id)]);
+      setDocuments((current) => [
+        response.document,
+        ...current.filter((item) => item.id !== response.document.id),
+      ]);
     } catch (requestError) {
       const message = getGenerationErrorMessage(
         requestError,
         'Unable to generate the code audit right now.',
       );
 
-      setError(message);
+      setGenerationError(message);
       setLimitMessage(isGenerationLimitError(requestError) ? message : null);
     } finally {
       setIsGenerating(false);
     }
   };
+
+  const handleFeedbackSaved = useCallback((feedback: ProjectDocumentFeedback) => {
+    setGeneratedDocument((current) =>
+      current?.id === feedback.documentId ? { ...current, feedback } : current,
+    );
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === feedback.documentId ? { ...document, feedback } : document,
+      ),
+    );
+  }, []);
 
   const handleExportReport = useCallback(() => {
     if (!activeAudit) {
@@ -467,16 +513,16 @@ const CodeAuditPage = () => {
     return <LoadingState label="Loading code audit workspace..." />;
   }
 
-  if (error || !project) {
+  if (loadError || !project) {
     return (
       <EmptyState
         action={
-          <Button onClick={() => navigate(limitMessage ? '/billing' : '/')} variant="secondary">
-            {limitMessage ? 'Review access' : 'Back to projects'}
+          <Button onClick={() => navigate('/')} variant="secondary">
+            Back to projects
           </Button>
         }
-        description={error ?? 'This workspace is unavailable.'}
-        title={limitMessage ? 'Generation limit reached' : 'Code audit unavailable'}
+        description={loadError ?? 'This workspace is unavailable.'}
+        title="Code audit unavailable"
       />
     );
   }
@@ -488,10 +534,25 @@ const CodeAuditPage = () => {
         title="Code Audit"
       />
 
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your audit inputs have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
+
       <Card>
         <CardHeader>
           <CardTitle>Audit source</CardTitle>
-          <CardDescription>Use a public GitHub repository URL or paste the code directly.</CardDescription>
+          <CardDescription>
+            Use a public GitHub repository URL or paste the code directly.
+          </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
           <div className="flex flex-wrap gap-2">
@@ -514,20 +575,30 @@ const CodeAuditPage = () => {
           <form className="space-y-4" onSubmit={handleSubmit}>
             {formState.sourceMode === 'repo' ? (
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-normal text-muted" htmlFor="repo-url">
+                <label
+                  className="text-xs font-semibold uppercase tracking-[0.14em] text-muted"
+                  htmlFor="repo-url"
+                >
                   Public GitHub repository URL
                 </label>
                 <Input
                   id="repo-url"
                   placeholder="https://github.com/owner/repository"
                   value={formState.repoUrl}
-                  onChange={(event) => setFormState((current) => ({ ...current, repoUrl: event.target.value }))}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, repoUrl: event.target.value }))
+                  }
                 />
-                {formErrors.repoUrl ? <p className="text-sm text-danger">{formErrors.repoUrl}</p> : null}
+                {formErrors.repoUrl ? (
+                  <p className="text-sm text-danger">{formErrors.repoUrl}</p>
+                ) : null}
               </div>
             ) : (
               <div className="space-y-2">
-                <label className="text-xs uppercase tracking-normal text-muted" htmlFor="code-snippet">
+                <label
+                  className="text-xs font-semibold uppercase tracking-[0.14em] text-muted"
+                  htmlFor="code-snippet"
+                >
                   Pasted code
                 </label>
                 <Textarea
@@ -539,22 +610,36 @@ const CodeAuditPage = () => {
                     setFormState((current) => ({ ...current, codeSnippet: event.target.value }))
                   }
                 />
-                {formErrors.codeSnippet ? <p className="text-sm text-danger">{formErrors.codeSnippet}</p> : null}
+                {formErrors.codeSnippet ? (
+                  <p className="text-sm text-danger">{formErrors.codeSnippet}</p>
+                ) : null}
               </div>
             )}
 
-            <div className="rounded-md border border-border bg-surface-raised p-4">
-              <p className="text-xs uppercase tracking-normal text-muted">Review limits</p>
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                Review limits
+              </p>
               <ul className="mt-2 space-y-2 text-sm leading-6 text-text">
-                <li>Public GitHub repositories only. Private repositories are not accessible in this version.</li>
-                <li>This is an advisory review, not a penetration test, certification, or code warranty.</li>
-                <li>Evidence is drawn from the supplied source only. Missing context will be called out explicitly.</li>
+                <li>
+                  Public GitHub repositories only. Private repositories are not accessible in this
+                  version.
+                </li>
+                <li>
+                  This is an advisory review, not a penetration test, certification, or code
+                  warranty.
+                </li>
+                <li>
+                  Evidence is drawn from the supplied source only. Missing context will be called
+                  out explicitly.
+                </li>
               </ul>
             </div>
 
             <div className="flex flex-wrap items-center justify-between gap-3">
               <p className="max-w-2xl text-sm leading-6 text-muted">
-                Use the result to decide whether to keep investing, slow down, or ask for a clearer fix plan.
+                Use the result to decide whether to keep investing, slow down, or ask for a clearer
+                fix plan.
               </p>
               <Button isLoading={isGenerating} type="submit">
                 Run audit
@@ -566,6 +651,15 @@ const CodeAuditPage = () => {
 
       {activeAudit ? (
         <div className="space-y-6">
+          {activeDocument ? (
+            <DocumentFeedbackPanel
+              accessToken={accessToken}
+              document={activeDocument}
+              onFeedbackSaved={handleFeedbackSaved}
+              projectId={project.id}
+            />
+          ) : null}
+
           <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
             <Card>
               <CardHeader>
@@ -581,8 +675,10 @@ const CodeAuditPage = () => {
               </CardHeader>
               <CardContent className="space-y-4">
                 <p className="text-sm leading-6 text-text">{activeAudit.recommendation}</p>
-                <div className="rounded-md border border-border bg-surface-raised p-4">
-                  <p className="text-xs uppercase tracking-normal text-muted">Disclaimer</p>
+                <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                  <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                    Disclaimer
+                  </p>
                   <p className="mt-2 text-sm leading-6 text-text">{activeAudit.disclaimer}</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-2">
@@ -599,8 +695,12 @@ const CodeAuditPage = () => {
                   <Button onClick={handleExportReport} size="sm" variant="secondary">
                     Export report
                   </Button>
-                  {copyLabel === 'report' ? <span className="text-sm text-success">Copied</span> : null}
-                  {copyLabel === 'export' ? <span className="text-sm text-success">Exported</span> : null}
+                  {copyLabel === 'report' ? (
+                    <span className="text-sm text-success">Copied</span>
+                  ) : null}
+                  {copyLabel === 'export' ? (
+                    <span className="text-sm text-success">Exported</span>
+                  ) : null}
                 </div>
               </CardContent>
             </Card>
@@ -608,7 +708,9 @@ const CodeAuditPage = () => {
             <Card>
               <CardHeader>
                 <CardTitle>Audit snapshot</CardTitle>
-                <CardDescription>At-a-glance view of the report structure and signal strength.</CardDescription>
+                <CardDescription>
+                  At-a-glance view of the report structure and signal strength.
+                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div className="grid gap-3 sm:grid-cols-2">
@@ -616,19 +718,29 @@ const CodeAuditPage = () => {
                     const count = getSeverityItems(activeAudit.findings, severity).length;
 
                     return (
-                      <div className="rounded-md border border-border bg-surface-raised p-3" key={severity}>
+                      <div
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
+                        key={severity}
+                      >
                         <div className="flex items-center justify-between gap-3">
-                          <span className="text-sm font-medium text-text">{severityLabels[severity]}</span>
+                          <span className="text-sm font-medium text-text">
+                            {severityLabels[severity]}
+                          </span>
                           <Badge variant={getSeverityVariant(severity)}>{count}</Badge>
                         </div>
-                        <p className="mt-2 text-sm leading-6 text-muted">{severityDescriptions[severity]}</p>
+                        <p className="mt-2 text-sm leading-6 text-muted">
+                          {severityDescriptions[severity]}
+                        </p>
                       </div>
                     );
                   })}
                 </div>
                 {activeAudit.cards.length > 0 ? (
                   activeAudit.cards.map((card) => (
-                    <div className="rounded-md border border-border bg-surface-raised p-3" key={card.title}>
+                    <div
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
+                      key={card.title}
+                    >
                       <div className="flex items-center justify-between gap-3">
                         <span className="text-sm font-medium text-text">{card.title}</span>
                         <Badge
@@ -647,7 +759,9 @@ const CodeAuditPage = () => {
                           {card.value}
                         </Badge>
                       </div>
-                      {card.detail ? <p className="mt-2 text-sm leading-6 text-muted">{card.detail}</p> : null}
+                      {card.detail ? (
+                        <p className="mt-2 text-sm leading-6 text-muted">{card.detail}</p>
+                      ) : null}
                     </div>
                   ))
                 ) : (
@@ -690,11 +804,16 @@ const CodeAuditPage = () => {
               <CardContent className="space-y-3">
                 {activeAudit.acceptableAreas.length > 0 ? (
                   activeAudit.acceptableAreas.map((item) => (
-                    <div className="rounded-md border border-border bg-surface-raised p-3" key={item.area}>
+                    <div
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
+                      key={item.area}
+                    >
                       <p className="text-sm font-medium text-text">{item.area}</p>
                       <p className="mt-2 text-sm leading-6 text-text">{item.explanation}</p>
                       <div className="mt-3 rounded-md border border-border bg-surface p-3">
-                        <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+                        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                          Evidence
+                        </p>
                         <pre className="mt-2 whitespace-pre-wrap break-words text-sm leading-6 text-text">
                           {item.evidence}
                         </pre>
@@ -702,7 +821,9 @@ const CodeAuditPage = () => {
                     </div>
                   ))
                 ) : (
-                  <p className="text-sm leading-6 text-muted">Nothing material stood out as a good sign.</p>
+                  <p className="text-sm leading-6 text-muted">
+                    Nothing material stood out as a good sign.
+                  </p>
                 )}
               </CardContent>
             </Card>
@@ -719,7 +840,9 @@ const CodeAuditPage = () => {
                   <Button
                     className="shrink-0"
                     onClick={() => {
-                      copyText(buildQuestionsCopyText(activeAudit.questionsForDeveloper)).catch(() => undefined);
+                      copyText(buildQuestionsCopyText(activeAudit.questionsForDeveloper)).catch(
+                        () => undefined,
+                      );
                       handleCopied('questions');
                     }}
                     size="sm"
@@ -731,9 +854,20 @@ const CodeAuditPage = () => {
               </CardHeader>
               <CardContent className="space-y-3">
                 {activeAudit.questionsForDeveloper.map((item) => (
-                  <div className="rounded-md border border-border bg-surface-raised p-3" key={item.question}>
+                  <div
+                    className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
+                    key={item.question}
+                  >
                     <div className="flex flex-wrap items-center gap-2">
-                      <Badge variant={item.priority === 'high' ? 'danger' : item.priority === 'medium' ? 'warning' : 'neutral'}>
+                      <Badge
+                        variant={
+                          item.priority === 'high'
+                            ? 'danger'
+                            : item.priority === 'medium'
+                              ? 'warning'
+                              : 'neutral'
+                        }
+                      >
                         {item.priority.toUpperCase()}
                       </Badge>
                       <span className="text-sm font-medium text-text">{item.question}</span>
@@ -751,12 +885,16 @@ const CodeAuditPage = () => {
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <CardTitle>Recommended next actions</CardTitle>
-                  <CardDescription>What to do before approving more work or spending more budget.</CardDescription>
+                  <CardDescription>
+                    What to do before approving more work or spending more budget.
+                  </CardDescription>
                 </div>
                 <Button
                   className="shrink-0"
                   onClick={() => {
-                    copyText(buildActionsCopyText(activeAudit.recommendedNextActions)).catch(() => undefined);
+                    copyText(buildActionsCopyText(activeAudit.recommendedNextActions)).catch(
+                      () => undefined,
+                    );
                     handleCopied('actions');
                   }}
                   size="sm"
@@ -768,9 +906,20 @@ const CodeAuditPage = () => {
             </CardHeader>
             <CardContent className="space-y-3">
               {activeAudit.recommendedNextActions.map((action) => (
-                <div className="rounded-md border border-border bg-surface-raised p-3" key={action.action}>
+                <div
+                  className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
+                  key={action.action}
+                >
                   <div className="flex flex-wrap items-center gap-2">
-                    <Badge variant={action.priority === 'high' ? 'danger' : action.priority === 'medium' ? 'warning' : 'neutral'}>
+                    <Badge
+                      variant={
+                        action.priority === 'high'
+                          ? 'danger'
+                          : action.priority === 'medium'
+                            ? 'warning'
+                            : 'neutral'
+                      }
+                    >
                       {action.priority.toUpperCase()}
                     </Badge>
                     <span className="text-sm font-medium text-text">{action.action}</span>
@@ -795,27 +944,42 @@ const CodeAuditPage = () => {
               {activeDocument ? (
                 <>
                   <div className="grid gap-3 sm:grid-cols-3">
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Document type</p>
-                      <p className="mt-2 text-sm font-medium text-text">{formatLabel(activeDocument.type)}</p>
-                    </div>
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Completed</p>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                        Document type
+                      </p>
                       <p className="mt-2 text-sm font-medium text-text">
-                        {activeDocument.completedAt ? formatDate(activeDocument.completedAt) : 'Pending'}
+                        {formatLabel(activeDocument.type)}
                       </p>
                     </div>
-                    <div className="rounded-md border border-border bg-surface-raised p-3">
-                      <p className="text-xs uppercase tracking-normal text-muted">Summary</p>
-                      <p className="mt-2 text-sm font-medium leading-6 text-text">{activeDocument.summary ?? 'Not set'}</p>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                        Completed
+                      </p>
+                      <p className="mt-2 text-sm font-medium text-text">
+                        {activeDocument.completedAt
+                          ? formatDate(activeDocument.completedAt)
+                          : 'Pending'}
+                      </p>
+                    </div>
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
+                      <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                        Summary
+                      </p>
+                      <p className="mt-2 text-sm font-medium leading-6 text-text">
+                        {activeDocument.summary ?? 'Not set'}
+                      </p>
                     </div>
                   </div>
                   <p className="text-sm leading-6 text-muted">
-                    Saved audit documents stay attached to the project so you can compare earlier and later reviews.
+                    Saved audit documents stay attached to the project so you can compare earlier
+                    and later reviews.
                   </p>
                 </>
               ) : (
-                <p className="text-sm leading-6 text-muted">Generate an audit to store a document here.</p>
+                <p className="text-sm leading-6 text-muted">
+                  Generate an audit to store a document here.
+                </p>
               )}
             </CardContent>
           </Card>
@@ -828,15 +992,20 @@ const CodeAuditPage = () => {
             <CardContent className="space-y-3">
               {historyDocuments.length > 0 ? (
                 historyDocuments.map(({ document, audit }) => (
-                  <div className="rounded-md border border-border bg-surface-raised p-3" key={document.id}>
+                  <div
+                    className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
+                    key={document.id}
+                  >
                     <div className="flex flex-wrap items-center justify-between gap-3">
                       <div>
                         <p className="text-sm font-medium text-text">{document.title}</p>
-                        <p className="mt-1 text-xs uppercase tracking-normal text-muted">
+                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                           {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                         </p>
                       </div>
-                      <Badge variant={riskTone[audit.overviewRiskLevel]}>{audit.overviewRiskLevel.toUpperCase()}</Badge>
+                      <Badge variant={riskTone[audit.overviewRiskLevel]}>
+                        {audit.overviewRiskLevel.toUpperCase()}
+                      </Badge>
                     </div>
                     <p className="mt-2 text-sm leading-6 text-muted">{audit.executiveSummary}</p>
                   </div>

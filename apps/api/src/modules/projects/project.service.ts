@@ -2,7 +2,11 @@ import { Prisma } from '../../generated/prisma/client.js';
 import { prisma } from '../../infrastructure/database/prisma.js';
 import { ApiError } from '../../lib/api-error.js';
 import { normalizeGeneratedDocumentType } from './document-history.service.js';
-import type { ProjectPayloadInput, UpdateProjectPayloadInput } from './project.schemas.js';
+import type {
+  DeleteProjectPayloadInput,
+  ProjectPayloadInput,
+  UpdateProjectPayloadInput,
+} from './project.schemas.js';
 
 const answerDefinitions = [
   { key: 'name', label: 'Project name', step: 'foundation' },
@@ -57,7 +61,7 @@ const toStringArray = (value: Prisma.JsonValue): string[] => {
   return value.filter((item): item is string => typeof item === 'string');
 };
 
-const buildAnswerRecords = (userId: string, input: ProjectAnswerInput) =>
+const buildAnswerRecords = (input: ProjectAnswerInput) =>
   answerDefinitions.flatMap((definition) => {
     const value = input[definition.key];
 
@@ -74,7 +78,6 @@ const buildAnswerRecords = (userId: string, input: ProjectAnswerInput) =>
         step: definition.step,
       },
       type: 'project_onboarding',
-      userId,
     };
   });
 
@@ -182,6 +185,7 @@ const toProjectResponse = (project: ProjectWithWorkspace) => ({
     completedAt: document.completedAt?.toISOString() ?? null,
     createdAt: document.createdAt.toISOString(),
     content: document.content,
+    feedback: null,
     id: document.id,
     metadata: document.metadata,
     projectId: document.projectId,
@@ -233,7 +237,7 @@ export const createProjectForUser = async (userId: string, input: ProjectPayload
       data: {
         ...buildProjectCreateData(userId, slug, input),
         answers: {
-          create: buildAnswerRecords(userId, input),
+          create: buildAnswerRecords(input),
         },
       },
       include: projectInclude,
@@ -301,13 +305,14 @@ export const updateProjectForUser = async (
       },
     });
 
-    const answers = buildAnswerRecords(userId, input);
+    const answers = buildAnswerRecords(input);
 
     for (const answer of answers) {
       await transaction.projectAnswer.upsert({
         create: {
           ...answer,
           projectId,
+          userId,
         },
         update: {
           answer: answer.answer,
@@ -336,4 +341,43 @@ export const updateProjectForUser = async (
   });
 
   return toProjectResponse(project);
+};
+
+export const deleteProjectForUser = async (
+  userId: string,
+  projectId: string,
+  input: DeleteProjectPayloadInput,
+) => {
+  await prisma.$transaction(async (transaction) => {
+    const project = await transaction.project.findUnique({
+      select: { id: true, name: true },
+      where: {
+        id_userId: {
+          id: projectId,
+          userId,
+        },
+      },
+    });
+
+    if (!project) {
+      throw new ApiError(404, 'PROJECT_NOT_FOUND', 'Project not found.');
+    }
+
+    if (input.confirmationName !== project.name) {
+      throw new ApiError(
+        400,
+        'PROJECT_DELETE_CONFIRMATION_MISMATCH',
+        'Type the project name exactly to delete it.',
+      );
+    }
+
+    await transaction.project.delete({
+      where: {
+        id_userId: {
+          id: projectId,
+          userId,
+        },
+      },
+    });
+  });
 };

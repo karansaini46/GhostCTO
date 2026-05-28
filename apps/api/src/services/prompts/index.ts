@@ -19,12 +19,8 @@ export {
   roadmapOutputSchema,
   stackAdviceOutputSchema,
   type StackAdviceOutput,
-  technicalSpecificationSchema,
-  techStackRecommendationSchema,
   type QuoteAnalysisOutput,
   type RoadmapOutput,
-  type TechnicalSpecificationOutput,
-  type TechStackRecommendationOutput,
   vettingScorecardSchema,
   type VettingScorecardOutput,
 } from './module-schemas.js';

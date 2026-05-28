@@ -18,13 +18,19 @@ import {
   googleOAuthFrontendErrors,
   type GoogleOAuthFrontendError,
 } from './auth.oauth.js';
-import { emptyBodySchema, loginSchema, registerSchema } from './auth.schemas.js';
+import {
+  emptyBodySchema,
+  loginSchema,
+  registerSchema,
+  updateProfileSchema,
+} from './auth.schemas.js';
 import {
   loginUser,
   loginWithGoogleProfile,
   logoutUserSession,
   refreshUserSession,
   registerUser,
+  updateUserProfile,
 } from './auth.service.js';
 
 const getRefreshTokenFromRequest = (request: Parameters<RequestHandler>[0]) => {
@@ -97,11 +103,7 @@ export const startGoogleOAuth: RequestHandler = async (_request, response, next)
     const state = createGoogleOAuthState();
     const authorizationUrl = buildGoogleAuthorizationUrl(state);
 
-    response.cookie(
-      googleOAuthStateCookieName,
-      state,
-      getGoogleOAuthStateCookieOptions(),
-    );
+    response.cookie(googleOAuthStateCookieName, state, getGoogleOAuthStateCookieOptions());
     response.redirect(authorizationUrl);
   } catch (error) {
     next(error);
@@ -126,13 +128,7 @@ export const handleGoogleOAuthCallback: RequestHandler = async (request, respons
     const state = getQueryValue(request.query.state);
     const savedState = request.cookies?.[googleOAuthStateCookieName];
 
-    if (
-      !code ||
-      !state ||
-      typeof savedState !== 'string' ||
-      !savedState ||
-      savedState !== state
-    ) {
+    if (!code || !state || typeof savedState !== 'string' || !savedState || savedState !== state) {
       redirectToGoogleError(response, googleOAuthFrontendErrors.invalid);
       return;
     }
@@ -192,6 +188,21 @@ export const me: RequestHandler = async (request, response, next) => {
     }
 
     sendJson(response, { user: request.user });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const updateMe: RequestHandler = async (request, response, next) => {
+  try {
+    if (!request.user) {
+      throw new ApiError(401, 'UNAUTHORIZED', 'Authentication required.');
+    }
+
+    const input = updateProfileSchema.parse(request.body);
+    const user = await updateUserProfile(request.user.id, input);
+
+    sendJson(response, { user });
   } catch (error) {
     next(error);
   }

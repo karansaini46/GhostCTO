@@ -11,8 +11,10 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  Input,
   LoadingState,
   PageHeader,
+  Select,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { getProjectRequest, listProjectDocumentsRequest } from './project-api';
@@ -70,6 +72,8 @@ export const DocumentsPage = () => {
   const [error, setError] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [project, setProject] = useState<Project | null>(null);
+  const [query, setQuery] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
 
   const loadDocuments = useCallback(async () => {
     if (!accessToken || !id) {
@@ -98,13 +102,33 @@ export const DocumentsPage = () => {
     void loadDocuments();
   }, [loadDocuments]);
 
+  const filteredDocuments = useMemo(() => {
+    const normalizedQuery = query.trim().toLowerCase();
+
+    return documents.filter((document) => {
+      const matchesType = typeFilter ? document.type === typeFilter : true;
+      const matchesQuery = normalizedQuery
+        ? `${document.title} ${document.summary ?? ''} ${getDocumentTypeLabel(document.type)}`
+            .toLowerCase()
+            .includes(normalizedQuery)
+        : true;
+
+      return matchesType && matchesQuery;
+    });
+  }, [documents, query, typeFilter]);
+
   const groupedDocuments = useMemo(
     () =>
-      documents.reduce<Record<string, ProjectDocument[]>>((groups, document) => {
+      filteredDocuments.reduce<Record<string, ProjectDocument[]>>((groups, document) => {
         const key = document.type;
         groups[key] = [...(groups[key] ?? []), document];
         return groups;
       }, {}),
+    [filteredDocuments],
+  );
+
+  const documentTypes = useMemo(
+    () => Array.from(new Set(documents.map((document) => document.type))).sort(),
     [documents],
   );
 
@@ -116,7 +140,9 @@ export const DocumentsPage = () => {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>}
+          actions={
+            <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
+          }
           description={error ?? 'Document history could not be loaded.'}
           eyebrow="Project documents"
           title="Documents"
@@ -143,61 +169,90 @@ export const DocumentsPage = () => {
             Back to project
           </Button>
         }
-        description="Review generated artifacts and open earlier versions when you need the original output."
+        description="Review saved outputs and open earlier versions when you need the original document."
         eyebrow="Project documents"
         title={`${project.name} documents`}
       />
 
       <Card>
         <CardHeader>
-          <CardTitle>All generated artifacts</CardTitle>
+          <CardTitle>All saved outputs</CardTitle>
           <CardDescription>
-            Versions are preserved each time a document is regenerated.
+            Versions are preserved each time a document is refreshed.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-5">
           {documents.length > 0 ? (
-            <div className="space-y-6">
-              {Object.entries(groupedDocuments).map(([type, typeDocuments]) => (
-                <section className="space-y-3" key={type}>
-                  <div className="flex items-center justify-between gap-3">
-                    <h2 className="text-sm font-semibold tracking-normal text-text">
+            <>
+              <div className="grid gap-3 md:grid-cols-[1fr_16rem]">
+                <Input
+                  label="Search documents"
+                  onChange={(event) => setQuery(event.target.value)}
+                  placeholder="Search by title, summary, or type"
+                  value={query}
+                />
+                <Select
+                  label="Document type"
+                  onChange={(event) => setTypeFilter(event.target.value)}
+                  value={typeFilter}
+                >
+                  <option value="">All types</option>
+                  {documentTypes.map((type) => (
+                    <option key={type} value={type}>
                       {getDocumentTypeLabel(type)}
-                    </h2>
-                    <Badge>{typeDocuments.length} saved</Badge>
-                  </div>
-                  <div className="grid gap-3">
-                    {typeDocuments.map((document) => (
-                      <Link
-                        className="rounded-md border border-border bg-surface-raised p-4 transition-colors hover:border-accent/35"
-                        key={document.id}
-                        to={`/projects/${project.id}/documents/${document.id}`}
-                      >
-                        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-sm font-semibold tracking-normal text-text">
-                                {document.title}
-                              </h3>
-                              <Badge variant="accent">v{document.version}</Badge>
-                              <Badge variant={getStatusVariant(document.status)}>
-                                {formatLabel(document.status)}
-                              </Badge>
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              {filteredDocuments.length > 0 ? (
+                <div className="space-y-6">
+                  {Object.entries(groupedDocuments).map(([type, typeDocuments]) => (
+                    <section className="space-y-3" key={type}>
+                      <div className="flex items-center justify-between gap-3">
+                        <h2 className="text-lg font-semibold tracking-normal text-text">
+                          {getDocumentTypeLabel(type)}
+                        </h2>
+                        <Badge>{typeDocuments.length} saved</Badge>
+                      </div>
+                      <div className="grid gap-3">
+                        {typeDocuments.map((document) => (
+                          <Link
+                            className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:shadow-soft"
+                            key={document.id}
+                            to={`/projects/${project.id}/documents/${document.id}`}
+                          >
+                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+                              <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                  <h3 className="text-sm font-semibold tracking-normal text-text">
+                                    {document.title}
+                                  </h3>
+                                  <Badge variant="accent">v{document.version}</Badge>
+                                  <Badge variant={getStatusVariant(document.status)}>
+                                    {formatLabel(document.status)}
+                                  </Badge>
+                                </div>
+                                <p className="mt-2 text-sm leading-6 text-secondary">
+                                  {document.summary ?? 'No summary saved for this document.'}
+                                </p>
+                              </div>
+                              <p className="shrink-0 text-sm text-muted">
+                                {formatDateTime(document.createdAt)}
+                              </p>
                             </div>
-                            <p className="mt-2 text-sm leading-6 text-muted">
-                              {document.summary ?? 'No summary saved for this document.'}
-                            </p>
-                          </div>
-                          <p className="shrink-0 text-sm text-muted">
-                            {formatDateTime(document.createdAt)}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </section>
-              ))}
-            </div>
+                          </Link>
+                        ))}
+                      </div>
+                    </section>
+                  ))}
+                </div>
+              ) : (
+                <EmptyState
+                  description="Try a different search term or clear the type filter."
+                  title="No matching documents"
+                />
+              )}
+            </>
           ) : (
             <EmptyState
               description="Generate a roadmap, stack recommendation, spec, audit, quote review, or scorecard to build document history."

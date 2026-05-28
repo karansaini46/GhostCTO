@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 
 import { config } from '../../core/config.js';
 import { ApiError } from '../../lib/api-error.js';
@@ -12,10 +12,20 @@ import {
 } from '../billing/billing.middleware.js';
 import { createProjectChatMessage, listProjectChatMessages } from './chat.controller.js';
 import { generateCodeAudit } from './code-audit.controller.js';
-import { getProjectDocument, listProjectDocuments } from './document-history.controller.js';
+import {
+  getProjectDocument,
+  listProjectDocuments,
+  submitProjectDocumentFeedback,
+} from './document-history.controller.js';
 import { exportProjectDocumentPdf } from './document-export.controller.js';
 import { createDeveloperJd } from './developer-jd.controller.js';
-import { createProject, getProject, listProjects, updateProject } from './project.controller.js';
+import {
+  createProject,
+  deleteProject,
+  getProject,
+  listProjects,
+  updateProject,
+} from './project.controller.js';
 import { analyzeQuote } from './quote-analysis.controller.js';
 import { generateRoadmap } from './roadmap.controller.js';
 import { generateStackAdvice } from './stack-advice.controller.js';
@@ -36,7 +46,7 @@ const generationEndpointLimiter = rateLimit({
       ),
     );
   },
-  keyGenerator: (request) => request.user?.id ?? request.ip ?? 'anonymous',
+  keyGenerator: (request) => request.user?.id ?? ipKeyGenerator(request.ip ?? 'anonymous'),
   legacyHeaders: false,
   limit: config.generationRateLimitMax,
   standardHeaders: true,
@@ -63,19 +73,19 @@ projectRouter.post(
   asyncHandler(generateRoadmap),
 );
 projectRouter.post(
-  '/:id/stack-advice',
+  '/:id/stack-advisor',
   generationEndpointLimiter,
   requireGenerationCapacity,
   asyncHandler(generateStackAdvice),
 );
 projectRouter.post(
-  '/:id/specs',
+  '/:id/technical-spec',
   generationEndpointLimiter,
   requireGenerationCapacity,
   asyncHandler(generateTechnicalSpec),
 );
 projectRouter.post(
-  '/:id/quote-analysis',
+  '/:id/rate-validator',
   generationEndpointLimiter,
   requireGenerationCapacity,
   asyncHandler(analyzeQuote),
@@ -99,6 +109,11 @@ projectRouter.post(
 );
 projectRouter.get('/:id/documents', asyncHandler(listProjectDocuments));
 projectRouter.get('/:id/documents/:documentId', asyncHandler(getProjectDocument));
+projectRouter.post(
+  '/:id/documents/:documentId/feedback',
+  asyncHandler(submitProjectDocumentFeedback),
+);
 projectRouter.get('/', asyncHandler(listProjects));
 projectRouter.get('/:id', asyncHandler(getProject));
 projectRouter.patch('/:id', asyncHandler(updateProject));
+projectRouter.delete('/:id', asyncHandler(deleteProject));

@@ -50,6 +50,21 @@ enum BillingPlan {
   LIFETIME
 }
 
+enum GeneratedDocumentFeedbackUsefulness {
+  USEFUL
+  NEEDS_WORK
+  WRONG
+}
+
+enum GeneratedDocumentFeedbackIssueType {
+  MISSING_CONTEXT
+  INCORRECT_CONTENT
+  TOO_GENERIC
+  MISSING_DETAIL
+  HARD_TO_ACT_ON
+  OTHER
+}
+
 model User {
   id              String              @id @default(uuid()) @db.Uuid
   email           String              @unique
@@ -71,6 +86,7 @@ model User {
   vettingReports  VettingReport[]
   payments        Payment[]
   refreshTokens   RefreshToken[]
+  documentFeedback GeneratedDocumentFeedback[]
 
   @@index([createdAt])
   @@index([plan])
@@ -109,6 +125,7 @@ model Project {
   quoteAnalyses  QuoteAnalysis[]
   vettingReports VettingReport[]
   payments       Payment[]
+  documentFeedback GeneratedDocumentFeedback[]
 
   @@unique([id, userId])
   @@unique([userId, slug])
@@ -154,12 +171,38 @@ model GeneratedDocument {
   updatedAt   DateTime   @updatedAt @db.Timestamptz(6)
   user        User       @relation(fields: [userId], references: [id], onDelete: Cascade)
   project     Project?   @relation(fields: [projectId, userId], references: [id, userId], onDelete: Cascade)
+  feedback    GeneratedDocumentFeedback[]
 
   @@index([userId])
   @@index([projectId])
   @@index([type])
   @@index([status])
   @@index([projectId, type, version])
+  @@index([createdAt])
+}
+
+model GeneratedDocumentFeedback {
+  id           String                              @id @default(uuid()) @db.Uuid
+  userId       String                              @db.Uuid
+  projectId    String                              @db.Uuid
+  documentId   String                              @db.Uuid
+  documentType String
+  rating       Int                                 @db.SmallInt
+  usefulness   GeneratedDocumentFeedbackUsefulness
+  issueType    GeneratedDocumentFeedbackIssueType?
+  comment      String?
+  createdAt    DateTime                            @default(now()) @db.Timestamptz(6)
+  updatedAt    DateTime                            @updatedAt @db.Timestamptz(6)
+  user         User                                @relation(fields: [userId], references: [id], onDelete: Cascade)
+  project      Project                             @relation(fields: [projectId, userId], references: [id, userId], onDelete: Cascade)
+  document     GeneratedDocument                   @relation(fields: [documentId], references: [id], onDelete: Cascade)
+
+  @@unique([documentId, userId])
+  @@index([userId])
+  @@index([projectId])
+  @@index([documentId])
+  @@index([documentType])
+  @@index([rating])
   @@index([createdAt])
 }
 

@@ -9,7 +9,7 @@ export const createConfiguredModelProvider = (): ModelProvider =>
   new GeminiModelProvider({
     apiKey: config.modelProviderApiKey,
     baseUrl: config.modelProviderBaseUrl,
-    model: config.modelProviderModel,
+    modelName: config.modelProviderModel,
   });
 
 export const getModelProvider = () => {
@@ -32,6 +32,7 @@ export const setModelProviderForTesting = (nextProvider: ModelProvider | null) =
 };
 
 export { ModelProviderError } from './errors.js';
+export { MODELS } from './models.js';
 export type {
   GenerateStructuredInput,
   GenerateStructuredResult,

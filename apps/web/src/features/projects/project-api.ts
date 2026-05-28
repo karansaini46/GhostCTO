@@ -7,6 +7,8 @@ import type {
   Project,
   ProjectChatMessage,
   ProjectChatPagination,
+  ProjectDocumentFeedback,
+  ProjectDocumentFeedbackPayload,
   ProjectDocumentType,
   ProjectPayload,
   StackAdviceGenerationOverrides,
@@ -44,13 +46,44 @@ export const updateProjectRequest = (
     method: 'PATCH',
   });
 
+export const deleteProjectRequest = (
+  accessToken: string,
+  projectId: string,
+  confirmationName: string,
+) =>
+  apiRequest<void>(`/projects/${projectId}`, {
+    body: JSON.stringify({ confirmationName }),
+    headers: authHeaders(accessToken),
+    method: 'DELETE',
+  });
+
+export const generateRoadmapRequest = (accessToken: string, projectId: string) =>
+  apiRequest<{ document: Project['documents'][number]; roadmap: unknown }>(
+    `/projects/${projectId}/roadmap`,
+    {
+      body: JSON.stringify({}),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
+export const createDeveloperJdRequest = (accessToken: string, projectId: string) =>
+  apiRequest<{ developerJobDescription: unknown; document: Project['documents'][number] }>(
+    `/projects/${projectId}/developer-jd`,
+    {
+      body: JSON.stringify({}),
+      headers: authHeaders(accessToken),
+      method: 'POST',
+    },
+  );
+
 export const generateStackAdviceRequest = (
   accessToken: string,
   projectId: string,
   payload: StackAdviceGenerationOverrides,
 ) =>
   apiRequest<{ document: Project['documents'][number]; stackAdvice: unknown }>(
-    `/projects/${projectId}/stack-advice`,
+    `/projects/${projectId}/stack-advisor`,
     {
       body: JSON.stringify(payload),
       headers: authHeaders(accessToken),
@@ -64,7 +97,7 @@ export const generateTechnicalSpecRequest = (
   payload: TechnicalSpecGenerationInput,
 ) =>
   apiRequest<{ document: Project['documents'][number]; technicalSpec: TechnicalSpecOutput }>(
-    `/projects/${projectId}/specs`,
+    `/projects/${projectId}/technical-spec`,
     {
       body: JSON.stringify(payload),
       headers: authHeaders(accessToken),
@@ -81,7 +114,7 @@ export const generateRateValidationRequest = (
     document: Project['documents'][number];
     quoteAnalysis: unknown;
     rateValidation: RateValidatorOutput;
-  }>(`/projects/${projectId}/quote-analysis`, {
+  }>(`/projects/${projectId}/rate-validator`, {
     body: JSON.stringify(payload),
     headers: authHeaders(accessToken),
     method: 'POST',
@@ -124,9 +157,12 @@ export const listProjectDocumentsRequest = (
 ) => {
   const query = type ? `?type=${type}` : '';
 
-  return apiRequest<{ documents: Project['documents'] }>(`/projects/${projectId}/documents${query}`, {
-    headers: authHeaders(accessToken),
-  });
+  return apiRequest<{ documents: Project['documents'] }>(
+    `/projects/${projectId}/documents${query}`,
+    {
+      headers: authHeaders(accessToken),
+    },
+  );
 };
 
 export const getProjectDocumentRequest = (
@@ -138,6 +174,21 @@ export const getProjectDocumentRequest = (
     `/projects/${projectId}/documents/${documentId}`,
     {
       headers: authHeaders(accessToken),
+    },
+  );
+
+export const submitProjectDocumentFeedbackRequest = (
+  accessToken: string,
+  projectId: string,
+  documentId: string,
+  payload: ProjectDocumentFeedbackPayload,
+) =>
+  apiRequest<{ feedback: ProjectDocumentFeedback }>(
+    `/projects/${projectId}/documents/${documentId}/feedback`,
+    {
+      body: JSON.stringify(payload),
+      headers: authHeaders(accessToken),
+      method: 'POST',
     },
   );
 

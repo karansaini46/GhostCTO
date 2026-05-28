@@ -1,6 +1,10 @@
+import { GoogleGenerativeAI as GoogleProviderClient } from '@google/generative-ai';
+import { logger } from '../../lib/logger.js';
 import { buildStructuredRetryPrompt } from '../prompts/index.js';
 import { ModelProviderError } from './errors.js';
+import { toGeminiResponseSchema } from './gemini-response-schema.js';
 import { parseStructuredOutput } from './json.js';
+import { resolveModelName } from './models.js';
 import type {
   GenerateStructuredInput,
   GenerateStructuredResult,
@@ -9,14 +13,22 @@ import type {
   ModelProvider,
   ModelProviderUsage,
 } from './types.js';
+import type {
+  EnhancedGenerateContentResponse,
+  GenerateContentRequest,
+  GenerativeModel,
+  RequestOptions,
+  ResponseSchema,
+} from '@google/generative-ai';
 import type { z, ZodType } from 'zod';
 
 type GeminiAdapterOptions = {
   apiKey?: string;
   baseUrl?: string;
+  createModel?: (model: string) => Pick<GenerativeModel, 'generateContent'>;
   defaultMaxOutputTokens?: number;
   defaultTemperature?: number;
-  model?: string;
+  modelName?: string;
 };
 
 type GeminiUsageMetadata = {
@@ -25,26 +37,24 @@ type GeminiUsageMetadata = {
   totalTokenCount?: number;
 };
 
-type GeminiResponse = {
-  candidates?: Array<{
-    content?: {
-      parts?: Array<{
-        text?: string;
-      }>;
-    };
-    finishReason?: string;
-  }>;
-  usageMetadata?: GeminiUsageMetadata;
-};
+type GeminiResponse = EnhancedGenerateContentResponse;
 
 type GeminiRequestOptions = GenerateTextInput & {
   responseMimeType?: 'application/json' | 'text/plain';
+  responseSchema?: ResponseSchema;
 };
 
-const defaultBaseUrl = 'https://generativelanguage.googleapis.com';
+type GeminiGenerationConfig = NonNullable<GenerateContentRequest['generationConfig']> & {
+  thinkingConfig?: {
+    thinkingBudget: number;
+  };
+};
 
-const normalizeModelName = (model: string) =>
-  model.startsWith('models/') ? model.slice('models/'.length) : model;
+const jsonSystemInstruction = [
+  'You must respond with valid JSON only.',
+  'Return exactly one JSON object at the top level, not an array.',
+  'Do not include markdown formatting, code fences, or explanatory text.',
+].join(' ');
 
 const toUsage = (usage?: GeminiUsageMetadata): ModelProviderUsage | undefined => {
   if (!usage) {
@@ -58,27 +68,66 @@ const toUsage = (usage?: GeminiUsageMetadata): ModelProviderUsage | undefined =>
   };
 };
 
-const toText = (response: GeminiResponse) =>
-  response.candidates
-    ?.flatMap((candidate) => candidate.content?.parts ?? [])
-    .map((part) => part.text)
-    .filter((text): text is string => Boolean(text?.trim()))
-    .join('\n')
-    .trim() ?? '';
+const toStatusCode = (error: unknown) => {
+  if (!error || typeof error !== 'object' || !('status' in error)) {
+    return undefined;
+  }
+
+  const status = (error as { status?: unknown }).status;
+
+  return typeof status === 'number' ? status : undefined;
+};
+
+const toStatusText = (error: unknown) => {
+  if (!error || typeof error !== 'object' || !('statusText' in error)) {
+    return undefined;
+  }
+
+  const statusText = (error as { statusText?: unknown }).statusText;
+
+  return typeof statusText === 'string' ? statusText : undefined;
+};
+
+const toText = (response: GeminiResponse) => {
+  const candidates = response.candidates;
+  if (!candidates || candidates.length === 0) {
+    return '';
+  }
+
+  const parts = candidates.flatMap((candidate) => candidate.content?.parts ?? []);
+
+  // First try to get non-thinking text parts
+  const textParts = parts
+    .filter((part) => !('thought' in part && part.thought === true))
+    .map((part) => ('text' in part && typeof part.text === 'string' ? part.text : undefined))
+    .filter((text): text is string => Boolean(text?.trim()));
+
+  if (textParts.length > 0) {
+    return textParts.join('\n').trim();
+  }
+
+  // Fallback: if no non-thinking parts, try to get any text parts (including thinking)
+  // This handles cases where thinkingBudget: 0 doesn't fully disable thinking
+  const allTextParts = parts
+    .map((part) => ('text' in part && typeof part.text === 'string' ? part.text : undefined))
+    .filter((text): text is string => Boolean(text?.trim()));
+
+  return allTextParts.join('\n').trim();
+};
 
 export class GeminiModelProvider implements ModelProvider {
-  private readonly apiKey: string;
-  private readonly baseUrl: string;
+  private readonly createModel: (model: string) => Pick<GenerativeModel, 'generateContent'>;
   private readonly defaultMaxOutputTokens: number;
   private readonly defaultTemperature: number;
-  private readonly model: string;
+  private readonly modelName?: string;
 
   constructor({
     apiKey,
-    baseUrl = defaultBaseUrl,
+    baseUrl,
+    createModel,
     defaultMaxOutputTokens = 4096,
     defaultTemperature = 0.2,
-    model,
+    modelName,
   }: GeminiAdapterOptions) {
     if (!apiKey) {
       throw new ModelProviderError({
@@ -87,20 +136,18 @@ export class GeminiModelProvider implements ModelProvider {
       });
     }
 
-    const modelName = model?.trim();
+    if (createModel) {
+      this.createModel = createModel;
+    } else {
+      const client = new GoogleProviderClient(apiKey);
+      const requestOptions: RequestOptions | undefined = baseUrl ? { baseUrl } : undefined;
 
-    if (!modelName) {
-      throw new ModelProviderError({
-        code: 'PROVIDER_NOT_CONFIGURED',
-        message: 'Model provider name is not configured.',
-      });
+      this.createModel = (model) => client.getGenerativeModel({ model }, requestOptions);
     }
 
-    this.apiKey = apiKey;
-    this.baseUrl = baseUrl;
     this.defaultMaxOutputTokens = defaultMaxOutputTokens;
     this.defaultTemperature = defaultTemperature;
-    this.model = normalizeModelName(modelName);
+    this.modelName = modelName;
   }
 
   async generateText(input: GenerateTextInput): Promise<GenerateTextResult> {
@@ -110,9 +157,25 @@ export class GeminiModelProvider implements ModelProvider {
   async generateStructured<Schema extends ZodType>(
     input: GenerateStructuredInput<Schema>,
   ): Promise<GenerateStructuredResult<z.infer<Schema>>> {
+    let responseSchema: ResponseSchema | undefined;
+
+    try {
+      responseSchema = toGeminiResponseSchema(input.schema);
+    } catch (error) {
+      logger.warn(
+        'Could not build Gemini response schema. Falling back to prompt-only JSON mode.',
+        {
+          errorMessage: error instanceof Error ? error.message : 'Unknown schema conversion error.',
+          provider: 'gemini',
+          requestName: input.requestName,
+        },
+      );
+    }
+
     const firstResult = await this.request({
       ...input,
       responseMimeType: 'application/json',
+      responseSchema,
     });
     const firstParseResult = parseStructuredOutput(firstResult.text, input.schema);
 
@@ -124,10 +187,13 @@ export class GeminiModelProvider implements ModelProvider {
       };
     }
 
-    console.warn('Structured model output failed validation. Retrying once.', {
+    logger.warn('Structured model output failed validation. Retrying once.', {
       issues: firstParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
+      rawTextSnippet: firstResult.text.slice(0, 500),
+      textLength: firstResult.text.length,
+      isEmpty: firstResult.text.length === 0,
     });
 
     const retryPrompt =
@@ -147,6 +213,7 @@ export class GeminiModelProvider implements ModelProvider {
       ...input,
       prompt: retryPrompt,
       responseMimeType: 'application/json',
+      responseSchema,
     });
     const retryParseResult = parseStructuredOutput(retryResult.text, input.schema);
 
@@ -158,10 +225,13 @@ export class GeminiModelProvider implements ModelProvider {
       };
     }
 
-    console.warn('Structured model output failed validation after retry.', {
+    logger.warn('Structured model output failed validation after retry.', {
       issues: retryParseResult.issues,
       provider: 'gemini',
       requestName: input.requestName,
+      rawTextSnippet: retryResult.text.slice(0, 500),
+      textLength: retryResult.text.length,
+      isEmpty: retryResult.text.length === 0,
     });
 
     throw new ModelProviderError({
@@ -173,104 +243,84 @@ export class GeminiModelProvider implements ModelProvider {
 
   private async request({
     maxOutputTokens,
+    modelTier,
     prompt,
     requestName,
     responseMimeType,
+    responseSchema,
     temperature,
   }: GeminiRequestOptions): Promise<GenerateTextResult> {
-    const endpoint = new URL(
-      `/v1beta/models/${encodeURIComponent(this.model)}:generateContent`,
-      this.baseUrl,
-    );
-
-    let response: Response;
+    let response: GeminiResponse;
 
     try {
-      response = await fetch(endpoint, {
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [{ text: prompt }],
-              role: 'user',
-            },
-          ],
-          generationConfig: {
-            maxOutputTokens: maxOutputTokens ?? this.defaultMaxOutputTokens,
-            responseMimeType,
-            temperature: temperature ?? this.defaultTemperature,
-          },
-        }),
-        headers: {
-          'Content-Type': 'application/json',
-          'x-goog-api-key': this.apiKey,
+      const modelNameResolved = this.modelName ?? resolveModelName(modelTier);
+      const model = this.createModel(modelNameResolved);
+
+      const generationConfig: GeminiGenerationConfig = {
+        maxOutputTokens: maxOutputTokens ?? this.defaultMaxOutputTokens,
+        responseMimeType,
+        temperature: temperature ?? this.defaultTemperature,
+      };
+
+      if (responseMimeType === 'application/json') {
+        generationConfig.thinkingConfig = { thinkingBudget: 0 };
+        if (responseSchema) {
+          generationConfig.responseSchema = responseSchema;
+        }
+      }
+
+      const contents: GenerateContentRequest['contents'] = [
+        {
+          parts: [{ text: prompt }],
+          role: 'user',
         },
-        method: 'POST',
-      });
-    } catch {
-      console.error('Model provider request failed before receiving a response.', {
-        provider: 'gemini',
-        requestName,
-      });
+      ];
 
-      throw new ModelProviderError({
-        code: 'PROVIDER_REQUEST_FAILED',
-        message: 'Model provider request failed.',
-        retryable: true,
-      });
+      const request: GenerateContentRequest = {
+        contents,
+        generationConfig,
+      };
+
+      if (responseMimeType === 'application/json') {
+        request.systemInstruction = jsonSystemInstruction;
+      }
+
+      let result;
+      let attempts = 0;
+      const maxAttempts = 3;
+      while (true) {
+        try {
+          result = await model.generateContent(request);
+          break;
+        } catch (error) {
+          attempts += 1;
+          const statusCode = toStatusCode(error);
+          const isTransient = statusCode === 429 || (statusCode && statusCode >= 500);
+          if (isTransient && attempts < maxAttempts) {
+            const delay = Math.pow(2, attempts) * 1000 + Math.random() * 1000;
+            logger.warn(
+              `Model request failed with transient error ${statusCode}. Retrying in ${delay.toFixed(0)}ms...`,
+              {
+                provider: 'gemini',
+                requestName,
+                attempt: attempts,
+              },
+            );
+            await new Promise((resolve) => setTimeout(resolve, delay));
+            continue;
+          }
+          throw error;
+        }
+      }
+
+      response = result.response;
+    } catch (error) {
+      this.handleRequestError(error, requestName);
     }
 
-    if (response.status === 429) {
-      console.warn('Model provider rate limit reached.', {
-        provider: 'gemini',
-        requestName,
-        retryAfter: response.headers.get('retry-after'),
-        statusCode: response.status,
-      });
+    const usage = toUsage(response.usageMetadata);
 
-      throw new ModelProviderError({
-        code: 'PROVIDER_RATE_LIMITED',
-        message: 'Model provider rate limit reached. Please retry shortly.',
-        retryable: true,
-        statusCode: response.status,
-      });
-    }
-
-    if (!response.ok) {
-      console.error('Model provider request returned an error.', {
-        provider: 'gemini',
-        requestName,
-        statusCode: response.status,
-      });
-
-      throw new ModelProviderError({
-        code: 'PROVIDER_REQUEST_FAILED',
-        message: 'Model provider request failed.',
-        retryable: response.status >= 500,
-        statusCode: response.status,
-      });
-    }
-
-    let body: GeminiResponse;
-
-    try {
-      body = (await response.json()) as GeminiResponse;
-    } catch {
-      console.error('Model provider response could not be parsed.', {
-        provider: 'gemini',
-        requestName,
-      });
-
-      throw new ModelProviderError({
-        code: 'PROVIDER_REQUEST_FAILED',
-        message: 'Model provider response could not be parsed.',
-        retryable: true,
-        statusCode: response.status,
-      });
-    }
-
-    const usage = toUsage(body.usageMetadata);
-
-    console.info('Model token usage.', {
+    logger.info('Model token usage.', {
       inputTokens: usage?.inputTokens,
       outputTokens: usage?.outputTokens,
       provider: 'gemini',
@@ -278,9 +328,21 @@ export class GeminiModelProvider implements ModelProvider {
       totalTokens: usage?.totalTokens,
     });
 
-    const text = toText(body);
-
+    const text = toText(response);
     if (!text) {
+      const hasCandidates = Boolean(response.candidates && response.candidates.length > 0);
+      const hasParts = Boolean(
+        response.candidates?.some((c) => c.content?.parts && c.content.parts.length > 0),
+      );
+
+      logger.error('Model provider returned an empty response.', {
+        hasCandidates,
+        hasParts,
+        provider: 'gemini',
+        requestName,
+        responseKeys: Object.keys(response),
+      });
+
       throw new ModelProviderError({
         code: 'PROVIDER_RESPONSE_EMPTY',
         message: 'Model provider returned an empty response.',
@@ -289,9 +351,56 @@ export class GeminiModelProvider implements ModelProvider {
     }
 
     return {
-      finishReason: body.candidates?.[0]?.finishReason,
+      finishReason: response.candidates?.[0]?.finishReason,
       text,
       usage,
     };
+  }
+
+  private handleRequestError(error: unknown, requestName?: string): never {
+    const statusCode = toStatusCode(error);
+
+    if (statusCode === 429) {
+      logger.warn('Model provider rate limit reached.', {
+        provider: 'gemini',
+        requestName,
+        statusCode,
+        statusText: toStatusText(error),
+      });
+
+      throw new ModelProviderError({
+        code: 'PROVIDER_RATE_LIMITED',
+        message: 'Model provider rate limit reached. Please retry shortly.',
+        retryable: true,
+        statusCode,
+      });
+    }
+
+    if (statusCode) {
+      logger.error('Model provider request returned an error.', {
+        provider: 'gemini',
+        requestName,
+        statusCode,
+        statusText: toStatusText(error),
+      });
+
+      throw new ModelProviderError({
+        code: 'PROVIDER_REQUEST_FAILED',
+        message: 'Model provider request failed.',
+        retryable: statusCode >= 500,
+        statusCode,
+      });
+    }
+
+    logger.error('Model provider request failed before receiving a response.', {
+      provider: 'gemini',
+      requestName,
+    });
+
+    throw new ModelProviderError({
+      code: 'PROVIDER_REQUEST_FAILED',
+      message: 'Model provider request failed.',
+      retryable: true,
+    });
   }
 }

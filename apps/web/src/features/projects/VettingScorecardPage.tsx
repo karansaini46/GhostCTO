@@ -11,12 +11,14 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   Input,
   LoadingState,
   PageHeader,
   Textarea,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import {
@@ -25,7 +27,7 @@ import {
   listProjectDocumentsRequest,
 } from './project-api';
 import { getProjectOptionLabel } from './project-options';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 import type {
   VettingDocumentMetadata,
   VettingFlag,
@@ -261,8 +263,8 @@ const buildNextStepsText = (items: VettingNextStep[]) =>
     .join('\n\n');
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -301,7 +303,7 @@ const ScoreBlock = ({
   const tone = scoreTone(resolvedScore);
 
   return (
-    <div className="rounded-md border border-border bg-surface-raised p-4">
+    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-sm font-semibold leading-6 text-text">{label}</p>
@@ -354,7 +356,7 @@ const FlagList = ({
         </div>
         <p className="mt-3 text-sm leading-6 text-text">{item.whyItMatters}</p>
         <div className="mt-3 rounded-md border border-current/20 bg-background/20 p-3">
-          <p className="text-xs uppercase tracking-normal text-muted">Evidence</p>
+          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">Evidence</p>
           <p className="mt-2 text-sm leading-6 text-text">{item.evidence}</p>
         </div>
       </div>
@@ -369,7 +371,8 @@ export const VettingScorecardPage = () => {
   const [activeOutput, setActiveOutput] = useState<VettingOutput | null>(null);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [formErrors, setFormErrors] = useState<FormErrors>({});
   const [formState, setFormState] = useState<FormState | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
@@ -385,7 +388,8 @@ export const VettingScorecardPage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -398,7 +402,7 @@ export const VettingScorecardPage = () => {
       setDocuments(documentsResponse.documents);
       setFormState(defaultFormState(projectResponse.project));
     } catch {
-      setError('Unable to load the vetting workspace.');
+      setLoadError('Unable to load the vetting workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -486,7 +490,7 @@ export const VettingScorecardPage = () => {
       }
 
       setIsGenerating(true);
-      setError(null);
+      setGenerationError(null);
       setLimitMessage(null);
 
       try {
@@ -508,7 +512,7 @@ export const VettingScorecardPage = () => {
           'Unable to generate this vetting scorecard right now.',
         );
 
-        setError(message);
+        setGenerationError(message);
         setLimitMessage(isGenerationLimitError(requestError) ? message : null);
       } finally {
         setIsGenerating(false);
@@ -522,6 +526,14 @@ export const VettingScorecardPage = () => {
     setActiveOutput(getDocumentScorecard(document));
   }, []);
 
+  const handleFeedbackSaved = useCallback((feedback: ProjectDocumentFeedback) => {
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === feedback.documentId ? { ...document, feedback } : document,
+      ),
+    );
+  }, []);
+
   const resetForm = useCallback(() => {
     setFormState(defaultFormState(project));
     setFormErrors({});
@@ -531,31 +543,28 @@ export const VettingScorecardPage = () => {
     return <LoadingState label="Loading vetting workspace" />;
   }
 
-  if (error || !project || !formState) {
+  if (loadError || !project || !formState) {
     return (
       <div className="space-y-6">
         <PageHeader
           actions={
             <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
           }
-          description={error ?? 'The vetting workspace could not be loaded.'}
+          description={loadError ?? 'The vetting workspace could not be loaded.'}
           eyebrow="Project workspace"
           title="Agency and Developer Vetting"
         />
-        {limitMessage ? (
-          <GenerationLimitCallout message={limitMessage} />
-        ) : (
-          <Card className="border-danger/35 bg-danger/5">
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
-              </p>
-              <Button onClick={loadWorkspace} variant="secondary">
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              The workspace may be unavailable, or your account may not have access to the
+              project.
+            </p>
+            <Button onClick={loadWorkspace} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -596,6 +605,19 @@ export const VettingScorecardPage = () => {
         eyebrow="Project workspace"
         title="Agency and Developer Vetting"
       />
+
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your candidate inputs have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[430px_minmax(0,1fr)]">
         <div className="space-y-6">
@@ -725,7 +747,7 @@ export const VettingScorecardPage = () => {
                                 </Badge>
                               )}
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -820,6 +842,15 @@ export const VettingScorecardPage = () => {
                   </div>
                 </div>
               </div>
+
+              {selectedDocument ? (
+                <DocumentFeedbackPanel
+                  accessToken={accessToken}
+                  document={selectedDocument}
+                  onFeedbackSaved={handleFeedbackSaved}
+                  projectId={project.id}
+                />
+              ) : null}
 
               <Card>
                 <CardHeader>
@@ -949,7 +980,7 @@ export const VettingScorecardPage = () => {
                 <CardContent className="grid gap-3">
                   {currentOutput.interviewQuestions.map((item, index) => (
                     <div
-                      className="rounded-md border border-border bg-surface-raised p-4"
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                       key={item.question}
                     >
                       <div className="flex flex-wrap items-start gap-3">
@@ -960,7 +991,7 @@ export const VettingScorecardPage = () => {
                           </p>
                           <p className="mt-2 text-sm leading-6 text-muted">{item.reason}</p>
                           <div className="mt-3 rounded-md border border-border bg-surface p-3">
-                            <p className="text-xs uppercase tracking-normal text-muted">
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               Strong answer signals
                             </p>
                             <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-text">
@@ -1022,7 +1053,7 @@ export const VettingScorecardPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="max-h-[720px] overflow-auto rounded-md border border-border bg-surface-raised p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
                   {selectedDocument.content}
                 </div>
               </CardContent>

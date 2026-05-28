@@ -1,8 +1,18 @@
 import bcrypt from 'bcryptjs';
 
+const writeLine = (message: string) => {
+  process.stdout.write(`${message}\n`);
+};
+
+const writeError = (error: unknown) => {
+  const message = error instanceof Error ? (error.stack ?? error.message) : String(error);
+
+  process.stderr.write(`${message}\n`);
+};
+
 const seed = async () => {
   if (process.env.NODE_ENV !== 'development') {
-    console.info('Seed skipped outside development.');
+    writeLine('Seed skipped outside development.');
     return;
   }
 
@@ -23,6 +33,36 @@ const seed = async () => {
         name: 'Test Founder',
         passwordHash,
         role: 'FOUNDER',
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: 'admin12@gmail.com' },
+      update: {
+        name: 'Admin User 12',
+        role: 'ADMIN',
+        passwordHash,
+      },
+      create: {
+        email: 'admin12@gmail.com',
+        name: 'Admin User 12',
+        passwordHash,
+        role: 'ADMIN',
+      },
+    });
+
+    await prisma.user.upsert({
+      where: { email: 'admin@gmail.com' },
+      update: {
+        name: 'Admin User',
+        role: 'ADMIN',
+        passwordHash,
+      },
+      create: {
+        email: 'admin@gmail.com',
+        name: 'Admin User',
+        passwordHash,
+        role: 'ADMIN',
       },
     });
 
@@ -57,6 +97,6 @@ const seed = async () => {
 };
 
 seed().catch((error: unknown) => {
-  console.error(error);
+  writeError(error);
   process.exit(1);
 });

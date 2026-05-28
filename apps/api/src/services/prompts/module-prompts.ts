@@ -7,8 +7,6 @@ import {
   quoteAnalysisSchema,
   roadmapOutputSchema,
   stackAdviceOutputSchema,
-  technicalSpecificationSchema,
-  techStackRecommendationSchema,
   type GhostCTOModuleType,
   vettingScorecardSchema,
 } from './module-schemas.js';
@@ -27,8 +25,6 @@ type GhostCTOModulePromptMap = {
   quote_analysis: ModulePromptDefinition<typeof quoteAnalysisSchema>;
   roadmap: ModulePromptDefinition<typeof roadmapOutputSchema>;
   stack_advice: ModulePromptDefinition<typeof stackAdviceOutputSchema>;
-  technical_specification: ModulePromptDefinition<typeof technicalSpecificationSchema>;
-  tech_stack_recommendation: ModulePromptDefinition<typeof techStackRecommendationSchema>;
   vetting_scorecard: ModulePromptDefinition<typeof vettingScorecardSchema>;
 };
 
@@ -40,6 +36,8 @@ const sharedPromptRequirements = [
   'Never leave a recommendation at "it depends"; if tradeoffs exist, state them and still choose the best option.',
   'Review the draft for vagueness before finishing. Replace generic advice with specific guidance, then return the improved version.',
   'Return a JSON object that includes a markdown report string plus structured sections for UI cards and module-specific data.',
+  'Use single quotes (\') for any nested quotes, code blocks, or HTML/markdown attributes inside JSON string values to avoid JSON escape errors.',
+  'Keep all JSON string descriptions and list items brief and punchy. Keep structured fields concise (1-2 sentences max per item) to prevent output truncation.',
 ];
 
 const joinRequirements = (...requirements: string[]) => [
@@ -98,20 +96,6 @@ const stackAdvicePrompt = (project: ProjectPromptContext) =>
     task: 'Recommend a specific technical stack for this project. Make the advice change based on the founder technical level, budget, stage, launch timeline, and expected team shape inferred from the project context. For each stack choice, give the recommended option, explain why it fits this project, explain why the common alternative is not the better fit here, and call out the cost and operational tradeoffs in plain language. Keep the output specific enough that a founder could hand it to a developer or vendor without needing extra translation.',
   });
 
-const techStackRecommendationPrompt = (project: ProjectPromptContext) =>
-  buildModulePrompt({
-    project,
-    requirements: joinRequirements(
-      'The markdown report must compare the recommended stack against the practical alternatives the founder is likely to consider.',
-      'Cover frontend, backend, database, auth, hosting, testing, and any other layer that materially affects delivery or cost.',
-      'Use the cards array for the top stack decisions so the UI can render a compact summary.',
-    ),
-    schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, stack, rejectedOptions }. Each stack entry must include layer, decision, rationale, and tradeoffs.',
-    schemaName: 'TechStackRecommendationOutput',
-    task: 'Recommend a production-ready technical stack for the project. Choose the stack that best fits the project stage, budget, timeline, product complexity, and founder technical level. Explain the decisions in practical language, state the tradeoffs, and make it clear why each rejected option was not the better choice for this situation.',
-  });
-
 const developerJobDescriptionPrompt = (project: ProjectPromptContext) =>
   buildModulePrompt({
     project,
@@ -130,20 +114,6 @@ const developerJobDescriptionPrompt = (project: ProjectPromptContext) =>
       'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, roleTitle, seniorityRecommendation, employmentType, roleSummary, responsibilities, requiredSkills, niceToHaveSkills, projectContext, screeningQuestions, takeHomeTask, evaluationRubric, redFlags, priceTimelineGuidance }. Each screening question includes what strong answers should show.',
     schemaName: 'DeveloperJobDescriptionOutput',
     task: 'Write a developer job description for the most appropriate first technical hire or contractor. Make it specific to the project stage, scope, budget, and launch timeline. Define the role title, seniority, engagement type, work the person must own, required skills, useful but optional skills, screening questions, practical take-home task, evaluation rubric, red flags, and expected price and timeline guidance.',
-  });
-
-const technicalSpecificationPrompt = (project: ProjectPromptContext) =>
-  buildModulePrompt({
-    project,
-    requirements: joinRequirements(
-      'The markdown report must read like a build-ready technical specification, not a generic summary.',
-      'Include enough detail that an engineer or vendor can estimate the work without guessing at the scope.',
-      'Use the cards array for the most important implementation decisions and delivery risks.',
-    ),
-    schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, nonGoals, components, dataModel, apiEndpoints, implementationPhases, acceptanceCriteria }. Each section must be specific and actionable.',
-    schemaName: 'TechnicalSpecificationOutput',
-    task: 'Produce a technical specification that can guide implementation. Define the scope, non-goals, major components, data model, API surface, implementation phases, and acceptance criteria. Make the output concrete enough that a team can build from it and a founder can use it to control scope.',
   });
 
 const quoteAnalysisPrompt = (project: ProjectPromptContext) =>
@@ -229,20 +199,6 @@ export const ghostctoModulePrompts = {
     schemaDescription:
       'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, executiveSummary, recommendation, teamAssumption, scaleView, categories }.',
     schemaName: 'StackAdviceOutput',
-  },
-  technical_specification: {
-    buildPrompt: technicalSpecificationPrompt,
-    schema: technicalSpecificationSchema,
-    schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, nonGoals, components, dataModel, apiEndpoints, implementationPhases, acceptanceCriteria }.',
-    schemaName: 'TechnicalSpecificationOutput',
-  },
-  tech_stack_recommendation: {
-    buildPrompt: techStackRecommendationPrompt,
-    schema: techStackRecommendationSchema,
-    schemaDescription:
-      'Return { moduleType, reportMarkdown, cards, assumptions, risks, nextSteps, recommendation, stack, rejectedOptions }.',
-    schemaName: 'TechStackRecommendationOutput',
   },
   vetting_scorecard: {
     buildPrompt: vettingScorecardPrompt,

@@ -15,7 +15,7 @@ import {
 import { enforceDailyGenerationLimitForUser } from './generation-usage.service.js';
 import type { VettingRequestInput } from './project.schemas.js';
 
-const vettingScorecardType = 'VETTING_SCORECARD';
+const vettingScorecardType = 'vetting_scorecard';
 const vettingScorecardTitle = 'Vetting Scorecard';
 
 const projectWorkspaceInclude = {

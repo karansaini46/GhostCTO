@@ -6,9 +6,7 @@ const nonEmptyText = (label: string, maxLength = 240) =>
 export const ghostctoModuleTypes = [
   'roadmap',
   'stack_advice',
-  'tech_stack_recommendation',
   'developer_job_description',
-  'technical_specification',
   'quote_analysis',
   'code_audit',
   'vetting_scorecard',
@@ -70,7 +68,7 @@ const roadmapMilestoneSchema = z
 
 const roadmapPhaseSchema = z
   .object({
-    boundary: nonEmptyText('Phase boundary', 260),
+    boundary: nonEmptyText('Phase boundary', 600),
     dependencies: z.array(nonEmptyText('Phase dependency', 180)).min(1).max(8),
     deliverables: z.array(nonEmptyText('Phase deliverable', 180)).min(1).max(8),
     durationWeeks: z.string().trim().min(1).max(80),
@@ -131,27 +129,6 @@ const roadmapHandoffChecklistItemSchema = z
   })
   .strict();
 
-const stackLayerSchema = z
-  .object({
-    decision: nonEmptyText('Stack decision', 160),
-    layer: z.enum([
-      'frontend',
-      'backend',
-      'database',
-      'auth',
-      'hosting',
-      'payments',
-      'analytics',
-      'automation',
-      'testing',
-      'search',
-      'model_services',
-    ]),
-    rationale: nonEmptyText('Stack rationale', 280),
-    tradeoffs: z.array(nonEmptyText('Stack tradeoff', 180)).max(4),
-  })
-  .strict();
-
 const stackAdviceCategorySchema = z
   .object({
     category: z.enum([
@@ -170,12 +147,12 @@ const stackAdviceCategorySchema = z
     commonAlternative: nonEmptyText('Common alternative', 180),
     costRisk: nonEmptyText('Cost risk', 260),
     costRiskLevel: z.enum(['low', 'medium', 'high']),
-    founderExplanation: nonEmptyText('Founder explanation', 280),
+    founderExplanation: nonEmptyText('Founder explanation', 600),
     operationalComplexity: nonEmptyText('Operational complexity', 260),
     operationalComplexityLevel: z.enum(['low', 'medium', 'high']),
     recommendation: nonEmptyText('Stack recommendation', 220),
-    whyItFits: nonEmptyText('Why it fits', 280),
-    whyNotCommonAlternative: nonEmptyText('Why not the common alternative', 280),
+    whyItFits: nonEmptyText('Why it fits', 600),
+    whyNotCommonAlternative: nonEmptyText('Why not the common alternative', 600),
   })
   .strict();
 
@@ -244,59 +221,9 @@ const priceTimelineGuidanceSchema = z
   })
   .strict();
 
-const specificationSectionSchema = z
-  .object({
-    decision: nonEmptyText('Specification decision', 180),
-    explanation: nonEmptyText('Specification explanation', 260),
-    title: nonEmptyText('Specification section title', 120),
-  })
-  .strict();
-
-const componentSchema = z
-  .object({
-    dependencies: z.array(nonEmptyText('Component dependency', 120)).max(6),
-    inputs: z.array(nonEmptyText('Component input', 160)).min(1).max(6),
-    name: nonEmptyText('Component name', 120),
-    outputs: z.array(nonEmptyText('Component output', 160)).min(1).max(6),
-    purpose: nonEmptyText('Component purpose', 240),
-  })
-  .strict();
-
-const apiEndpointSchema = z
-  .object({
-    auth: nonEmptyText('API auth requirement', 120),
-    method: z.enum(['GET', 'POST', 'PUT', 'PATCH', 'DELETE']),
-    path: nonEmptyText('API path', 160),
-    purpose: nonEmptyText('API purpose', 220),
-    requestShape: z.array(nonEmptyText('Request field', 160)).max(8),
-    responseShape: z.array(nonEmptyText('Response field', 160)).max(8),
-  })
-  .strict();
-
-const dataEntitySchema = z
-  .object({
-    fields: z.array(nonEmptyText('Data field', 160)).min(1).max(10),
-    name: nonEmptyText('Data entity name', 120),
-    notes: nonEmptyText('Data entity notes', 240),
-  })
-  .strict();
-
-const acceptanceCriterionSchema = z
-  .object({
-    criterion: nonEmptyText('Acceptance criterion', 220),
-    howToVerify: nonEmptyText('Verification step', 220),
-  })
-  .strict();
-
 const confidenceLevelSchema = z.enum(['low', 'medium', 'high']);
 
-const quoteVerdictSchema = z.enum([
-  'fair',
-  'risky',
-  'overpriced',
-  'under_scoped',
-  'unrealistic',
-]);
+const quoteVerdictSchema = z.enum(['fair', 'risky', 'overpriced', 'under_scoped', 'unrealistic']);
 
 const parsedScopeItemSchema = z
   .object({
@@ -441,7 +368,7 @@ export const roadmapOutputSchema = baseModuleOutputSchema.extend({
     title: z.literal('Phase 3 Scale'),
   }),
   moduleType: z.literal('roadmap'),
-  recommendation: nonEmptyText('Roadmap recommendation', 320),
+  recommendation: nonEmptyText('Roadmap recommendation', 600),
   riskRegister: z.array(roadmapRiskSchema).min(3).max(10),
   technicalDependencies: z.array(roadmapDependencySchema).min(3).max(10),
   timelineEstimate: roadmapTimelineEstimateSchema,
@@ -501,26 +428,9 @@ export const stackAdviceOutputSchema = baseModuleOutputSchema.extend({
     }),
   executiveSummary: nonEmptyText('Executive summary', 1200),
   moduleType: z.literal('STACK_ADVICE'),
-  recommendation: nonEmptyText('Overall recommendation', 320),
+  recommendation: nonEmptyText('Overall recommendation', 600),
   scaleView: nonEmptyText('Scale view', 720),
-  teamAssumption: nonEmptyText('Team assumption', 360),
-});
-
-export const techStackRecommendationSchema = baseModuleOutputSchema.extend({
-  moduleType: z.literal('tech_stack_recommendation'),
-  recommendation: nonEmptyText('Stack recommendation', 320),
-  rejectedOptions: z
-    .array(
-      z
-        .object({
-          reason: nonEmptyText('Rejected option reason', 240),
-          option: nonEmptyText('Rejected option', 180),
-        })
-        .strict(),
-    )
-    .min(2)
-    .max(8),
-  stack: z.array(stackLayerSchema).min(5).max(10),
+  teamAssumption: nonEmptyText('Team assumption', 800),
 });
 
 const auditActionSchema = z
@@ -565,17 +475,6 @@ export const developerJobDescriptionSchema = baseModuleOutputSchema.extend({
   takeHomeTask: takeHomeTaskSchema,
 });
 
-export const technicalSpecificationSchema = baseModuleOutputSchema.extend({
-  acceptanceCriteria: z.array(acceptanceCriterionSchema).min(4).max(12),
-  components: z.array(componentSchema).min(3).max(12),
-  dataModel: z.array(dataEntitySchema).min(2).max(12),
-  implementationPhases: z.array(specificationSectionSchema).min(3).max(8),
-  moduleType: z.literal('technical_specification'),
-  nonGoals: z.array(nonEmptyText('Non-goal', 200)).min(2).max(10),
-  recommendation: nonEmptyText('Specification recommendation', 320),
-  apiEndpoints: z.array(apiEndpointSchema).min(1).max(12),
-});
-
 export const quoteAnalysisSchema = baseModuleOutputSchema.extend({
   dangerousContractGaps: z.array(contractGapSchema).min(2).max(10),
   estimatedComplexity: complexityEstimateSchema,
@@ -617,7 +516,9 @@ export const codeAuditSchema = baseModuleOutputSchema.extend({
         }
 
         const currentIndex = priorityOrder.indexOf(item.priority as (typeof priorityOrder)[number]);
-        const nextIndex = priorityOrder.indexOf(nextItem.priority as (typeof priorityOrder)[number]);
+        const nextIndex = priorityOrder.indexOf(
+          nextItem.priority as (typeof priorityOrder)[number],
+        );
 
         if (currentIndex > nextIndex) {
           ctx.addIssue({
@@ -669,9 +570,7 @@ export const vettingScorecardSchema = baseModuleOutputSchema.extend({
 
 export type RoadmapOutput = z.infer<typeof roadmapOutputSchema>;
 export type StackAdviceOutput = z.infer<typeof stackAdviceOutputSchema>;
-export type TechStackRecommendationOutput = z.infer<typeof techStackRecommendationSchema>;
 export type DeveloperJobDescriptionOutput = z.infer<typeof developerJobDescriptionSchema>;
-export type TechnicalSpecificationOutput = z.infer<typeof technicalSpecificationSchema>;
 export type QuoteAnalysisOutput = z.infer<typeof quoteAnalysisSchema>;
 export type CodeAuditOutput = z.infer<typeof codeAuditSchema>;
 export type VettingScorecardOutput = z.infer<typeof vettingScorecardSchema>;

@@ -10,20 +10,28 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   LoadingState,
   PageHeader,
   Select,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
+import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
-import { budgetRangeOptions, getProjectOptionLabel, technicalLevelOptions } from './project-options';
 import {
+  budgetRangeOptions,
+  getProjectOptionLabel,
+  technicalLevelOptions,
+} from './project-options';
+import {
+  exportProjectDocumentPdfRequest,
   generateStackAdviceRequest,
   getProjectRequest,
   listProjectDocumentsRequest,
 } from './project-api';
-import type { Project, ProjectDocument } from './project-types';
+import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 import {
   type StackAdviceCategory,
   type StackAdviceDocumentMetadata,
@@ -82,7 +90,8 @@ const formatLabel = (value: string | null | undefined) => {
 };
 
 const formatBudgetLabel = (value: string | null) => getProjectOptionLabel.budgetRange(value);
-const formatTechnicalLabel = (value: string | null) => getProjectOptionLabel.founderTechnicalLevel(value);
+const formatTechnicalLabel = (value: string | null) =>
+  getProjectOptionLabel.founderTechnicalLevel(value);
 
 const getOptionLabel = (options: ConstraintOption[], value: string) =>
   options.find((option) => option.value === value)?.label ?? value;
@@ -135,6 +144,8 @@ const formatConstraintKey = (key: string) => {
   return formatLabel(key);
 };
 
+const getStackLayerLabel = (key: string) => stackAdviceLayerLabels[key] ?? formatLabel(key);
+
 const deriveTargetScale = (project: Project | null) => {
   if (!project?.currentStage) {
     return 'early_mvp';
@@ -153,7 +164,15 @@ const deriveTargetScale = (project: Project | null) => {
 
 const deriveComplianceSensitivity = (project: Project | null) => {
   const text = `${project?.industry ?? ''} ${project?.targetCustomer ?? ''}`.toLowerCase();
-  const sensitiveSignals = ['health', 'medical', 'finance', 'financial', 'payments', 'insurance', 'legal'];
+  const sensitiveSignals = [
+    'health',
+    'medical',
+    'finance',
+    'financial',
+    'payments',
+    'insurance',
+    'legal',
+  ];
 
   if (sensitiveSignals.some((signal) => text.includes(signal))) {
     return 'high';
@@ -215,7 +234,10 @@ const isStackAdviceMetadata = (value: unknown): value is StackAdviceDocumentMeta
 };
 
 const getDocumentStackAdvice = (document: ProjectDocument): StackAdviceOutput | null => {
-  if (!isStackAdviceMetadata(document.metadata) || !isStackAdviceOutput(document.metadata.stackAdvice)) {
+  if (
+    !isStackAdviceMetadata(document.metadata) ||
+    !isStackAdviceOutput(document.metadata.stackAdvice)
+  ) {
     return null;
   }
 
@@ -232,7 +254,7 @@ const getDocumentOverrides = (document: ProjectDocument) => {
 
 const buildDeveloperBrief = (output: StackAdviceOutput) => {
   const layerLines = output.categories.map(
-    (category) => `- ${stackAdviceLayerLabels[category.category]}: ${category.recommendation}`,
+    (category) => `- ${getStackLayerLabel(category.category)}: ${category.recommendation}`,
   );
 
   return [
@@ -249,6 +271,25 @@ const buildDeveloperBrief = (output: StackAdviceOutput) => {
 };
 
 const buildCopyText = (title: string, body: string) => `${title}\n\n${body}`.trim();
+
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 80) || 'document';
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
 
 const copyText = async (value: string) => {
   if (navigator.clipboard?.writeText) {
@@ -299,8 +340,8 @@ const defaultConstraintState = (project: Project | null): StackAdviceConstraintS
 });
 
 const DetailBlock = ({ label, value }: { label: string; value: string }) => (
-  <div className="rounded-md border border-border bg-surface-raised p-4">
-    <p className="text-xs uppercase tracking-normal text-muted">{label}</p>
+  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+    <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">{label}</p>
     <p className="mt-2 whitespace-pre-line text-sm leading-6 text-text">{value}</p>
   </div>
 );
@@ -335,12 +376,15 @@ export const StackAdvicePage = () => {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [activeOutput, setActiveOutput] = useState<StackAdviceOutput | null>(null);
   const [constraintState, setConstraintState] = useState<StackAdviceConstraintState | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
 
   const loadWorkspace = useCallback(async () => {
@@ -349,7 +393,8 @@ export const StackAdvicePage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setHistoryError(null);
     setLimitMessage(null);
 
@@ -363,7 +408,7 @@ export const StackAdvicePage = () => {
       setDocuments(documentsResponse.documents);
       setConstraintState(defaultConstraintState(projectResponse.project));
     } catch {
-      setError('Unable to load the stack advisor workspace.');
+      setLoadError('Unable to load the stack advisor workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -435,7 +480,7 @@ export const StackAdvicePage = () => {
     }
 
     setIsGenerating(true);
-    setError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -454,12 +499,40 @@ export const StackAdvicePage = () => {
         'Unable to generate stack advice right now.',
       );
 
-      setError(message);
+      setGenerationError(message);
       setLimitMessage(isGenerationLimitError(requestError) ? message : null);
     } finally {
       setIsGenerating(false);
     }
   }, [accessToken, constraintState, id]);
+
+  const handleExportPdf = useCallback(async () => {
+    if (!accessToken || !project || !selectedDocument) {
+      return;
+    }
+
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(
+        accessToken,
+        project.id,
+        selectedDocument.id,
+      );
+      const fallbackFilename = `${slugify(project.name)}-${slugify(selectedDocument.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch (requestError) {
+      setExportError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Unable to export this document as a PDF.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, project, selectedDocument]);
 
   const handleSelectDocument = useCallback((document: ProjectDocument) => {
     setSelectedDocumentId(document.id);
@@ -467,6 +540,14 @@ export const StackAdvicePage = () => {
     if (output) {
       setActiveOutput(output);
     }
+  }, []);
+
+  const handleFeedbackSaved = useCallback((feedback: ProjectDocumentFeedback) => {
+    setDocuments((current) =>
+      current.map((document) =>
+        document.id === feedback.documentId ? { ...document, feedback } : document,
+      ),
+    );
   }, []);
 
   const resetConstraints = useCallback(() => {
@@ -477,29 +558,28 @@ export const StackAdvicePage = () => {
     return <LoadingState label="Loading stack advisor" />;
   }
 
-  if (error || !project || !constraintState) {
+  if (loadError || !project || !constraintState) {
     return (
       <div className="space-y-6">
         <PageHeader
-          actions={<Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>}
-          description={error ?? 'The stack advisor workspace could not be loaded.'}
+          actions={
+            <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
+          }
+          description={loadError ?? 'The stack advisor workspace could not be loaded.'}
           eyebrow="Project workspace"
           title="Stack Advisor"
         />
-        {limitMessage ? (
-          <GenerationLimitCallout message={limitMessage} />
-        ) : (
-          <Card className="border-danger/35 bg-danger/5">
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the project.
-              </p>
-              <Button onClick={loadWorkspace} variant="secondary">
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              The workspace may be unavailable, or your account may not have access to the
+              project.
+            </p>
+            <Button onClick={loadWorkspace} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -516,6 +596,11 @@ export const StackAdvicePage = () => {
             <Button onClick={() => navigate(`/projects/${project.id}`)} variant="secondary">
               Back to project
             </Button>
+            {selectedDocument?.status === 'COMPLETED' ? (
+              <Button isLoading={isExporting} onClick={handleExportPdf} variant="secondary">
+                Export PDF
+              </Button>
+            ) : null}
             <Button isLoading={isGenerating} onClick={handleGenerate}>
               Generate advice
             </Button>
@@ -526,12 +611,39 @@ export const StackAdvicePage = () => {
         title="Stack Advisor"
       />
 
+      {exportError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setExportError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Try again in a moment or contact support if the issue persists."
+          title={exportError}
+        />
+      ) : null}
+
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your constraints have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
+
       <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
         <div className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>Project constraints</CardTitle>
-              <CardDescription>Update the inputs that shape the stack recommendation.</CardDescription>
+              <CardDescription>
+                Update the inputs that shape the stack recommendation.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <DetailBlock
@@ -550,21 +662,17 @@ export const StackAdvicePage = () => {
                 label="Launch timeline"
                 value={getProjectOptionLabel.launchTimeline(project.launchTimeline)}
               />
-              <DetailBlock
-                label="Industry"
-                value={project.industry ?? 'Not set'}
-              />
-              <DetailBlock
-                label="Target customer"
-                value={project.targetCustomer ?? 'Not set'}
-              />
+              <DetailBlock label="Industry" value={project.industry ?? 'Not set'} />
+              <DetailBlock label="Target customer" value={project.targetCustomer ?? 'Not set'} />
             </CardContent>
           </Card>
 
           <Card>
             <CardHeader>
               <CardTitle>Generation controls</CardTitle>
-              <CardDescription>These settings only affect the next generated recommendation.</CardDescription>
+              <CardDescription>
+                These settings only affect the next generated recommendation.
+              </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
               <Select
@@ -689,7 +797,7 @@ export const StackAdvicePage = () => {
                                 {isSelected ? 'Active' : 'Saved'}
                               </Badge>
                             </div>
-                            <p className="mt-2 text-xs uppercase tracking-normal text-muted">
+                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                               {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
                             </p>
                           </div>
@@ -707,7 +815,9 @@ export const StackAdvicePage = () => {
                         {overrides ? (
                           <div className="mt-3 flex flex-wrap gap-2">
                             {overrides.budgetRange ? (
-                              <Badge>{getProjectOptionLabel.budgetRange(overrides.budgetRange)}</Badge>
+                              <Badge>
+                                {getProjectOptionLabel.budgetRange(overrides.budgetRange)}
+                              </Badge>
                             ) : null}
                             {overrides.founderTechnicalLevel ? (
                               <Badge>
@@ -716,19 +826,23 @@ export const StackAdvicePage = () => {
                                 )}
                               </Badge>
                             ) : null}
-                            {overrides.targetScale ? <Badge>{formatLabel(overrides.targetScale)}</Badge> : null}
+                            {overrides.targetScale ? (
+                              <Badge>{formatLabel(overrides.targetScale)}</Badge>
+                            ) : null}
                             {overrides.complianceSensitivity ? (
                               <Badge>{formatLabel(overrides.complianceSensitivity)}</Badge>
                             ) : null}
-                            {overrides.speedPriority ? <Badge>{formatLabel(overrides.speedPriority)}</Badge> : null}
+                            {overrides.speedPriority ? (
+                              <Badge>{formatLabel(overrides.speedPriority)}</Badge>
+                            ) : null}
                           </div>
                         ) : null}
                         {document.content ? (
                           <div className="mt-3">
                             <Button
                               onClick={async () => {
-                              await copyText(document.content ?? '');
-                              saveCopiedLabel('Saved report');
+                                await copyText(document.content ?? '');
+                                saveCopiedLabel('Saved report');
                               }}
                               size="sm"
                               variant="ghost"
@@ -781,11 +895,22 @@ export const StackAdvicePage = () => {
             </Card>
           ) : null}
 
+          {selectedDocument && currentOutput ? (
+            <DocumentFeedbackPanel
+              accessToken={accessToken}
+              document={selectedDocument}
+              onFeedbackSaved={handleFeedbackSaved}
+              projectId={project.id}
+            />
+          ) : null}
+
           <Card>
             <CardHeader>
               <CardTitle>Recommendation summary</CardTitle>
               <CardDescription>
-                {currentOutput ? 'A clear recommendation you can hand to a developer.' : 'Generate a recommendation to see the stack choices.'}
+                {currentOutput
+                  ? 'A clear recommendation you can hand to a developer.'
+                  : 'Generate a recommendation to see the stack choices.'}
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4">
@@ -799,16 +924,25 @@ export const StackAdvicePage = () => {
                       >
                         <div className="flex items-start justify-between gap-3">
                           <div>
-                            <p className="text-xs uppercase tracking-normal opacity-70">{card.title}</p>
-                            <p className="mt-2 text-lg font-semibold tracking-normal">{card.value}</p>
+                            <p className="text-xs uppercase tracking-normal opacity-70">
+                              {card.title}
+                            </p>
+                            <p className="mt-2 text-lg font-semibold tracking-normal">
+                              {card.value}
+                            </p>
                           </div>
                           <CopyButton
                             label={card.title}
                             onCopied={saveCopiedLabel}
-                            value={buildCopyText(card.title, `${card.value}\n${card.detail ?? ''}`.trim())}
+                            value={buildCopyText(
+                              card.title,
+                              `${card.value}\n${card.detail ?? ''}`.trim(),
+                            )}
                           />
                         </div>
-                        {card.detail ? <p className="mt-3 text-sm leading-6 opacity-90">{card.detail}</p> : null}
+                        {card.detail ? (
+                          <p className="mt-3 text-sm leading-6 opacity-90">{card.detail}</p>
+                        ) : null}
                       </div>
                     ))}
                   </div>
@@ -817,7 +951,10 @@ export const StackAdvicePage = () => {
                     <DetailBlock label="Executive summary" value={currentOutput.executiveSummary} />
                     <DetailBlock label="Team assumption" value={currentOutput.teamAssumption} />
                     <DetailBlock label="Scale view" value={currentOutput.scaleView} />
-                    <DetailBlock label="Overall recommendation" value={currentOutput.recommendation} />
+                    <DetailBlock
+                      label="Overall recommendation"
+                      value={currentOutput.recommendation}
+                    />
                   </div>
                 </>
               ) : (
@@ -854,11 +991,14 @@ export const StackAdvicePage = () => {
                 </CardHeader>
                 <CardContent className="grid gap-4">
                   {currentOutput.categories.map((category) => (
-                    <div className="rounded-md border border-border bg-surface-raised p-4" key={category.category}>
+                    <div
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                      key={category.category}
+                    >
                       <div className="flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
                         <div>
-                          <p className="text-xs uppercase tracking-normal text-muted">
-                            {stackAdviceLayerLabels[category.category]}
+                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                            {getStackLayerLabel(category.category)}
                           </p>
                           <h3 className="mt-1 text-sm font-semibold tracking-normal text-text">
                             {category.recommendation}
@@ -874,7 +1014,7 @@ export const StackAdvicePage = () => {
                           <Button
                             onClick={async () => {
                               const text = [
-                                `${stackAdviceLayerLabels[category.category]}: ${category.recommendation}`,
+                                `${getStackLayerLabel(category.category)}: ${category.recommendation}`,
                                 '',
                                 `Why it fits: ${category.whyItFits}`,
                                 `Why not ${category.commonAlternative}: ${category.whyNotCommonAlternative}`,
@@ -883,7 +1023,7 @@ export const StackAdvicePage = () => {
                                 `Founder explanation: ${category.founderExplanation}`,
                               ].join('\n');
                               await copyText(text);
-                              saveCopiedLabel(stackAdviceLayerLabels[category.category]);
+                              saveCopiedLabel(getStackLayerLabel(category.category));
                             }}
                             size="sm"
                             variant="ghost"
@@ -899,9 +1039,15 @@ export const StackAdvicePage = () => {
                           value={category.whyNotCommonAlternative}
                         />
                         <DetailBlock label="Cost risk" value={category.costRisk} />
-                        <DetailBlock label="Operational complexity" value={category.operationalComplexity} />
+                        <DetailBlock
+                          label="Operational complexity"
+                          value={category.operationalComplexity}
+                        />
                         <div className="lg:col-span-2">
-                          <DetailBlock label="Founder explanation" value={category.founderExplanation} />
+                          <DetailBlock
+                            label="Founder explanation"
+                            value={category.founderExplanation}
+                          />
                         </div>
                       </div>
                     </div>
@@ -914,26 +1060,28 @@ export const StackAdvicePage = () => {
                   <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                       <CardTitle>Tradeoff table</CardTitle>
-                      <CardDescription>A compact view of the main layer decisions and tradeoffs.</CardDescription>
+                      <CardDescription>
+                        A compact view of the main layer decisions and tradeoffs.
+                      </CardDescription>
                     </div>
                     <Button
                       onClick={async () => {
                         const rows = currentOutput.categories
-                          .map(
-                            (category) =>
-                              [
-                                stackAdviceLayerLabels[category.category],
-                                category.recommendation,
-                                category.commonAlternative,
-                                category.costRisk,
-                                category.operationalComplexity,
-                              ].join('\t'),
+                          .map((category) =>
+                            [
+                              getStackLayerLabel(category.category),
+                              category.recommendation,
+                              category.commonAlternative,
+                              category.costRisk,
+                              category.operationalComplexity,
+                            ].join('\t'),
                           )
                           .join('\n');
                         await copyText(
-                          ['Layer\tRecommendation\tAlternative\tCost risk\tOperational complexity', rows].join(
-                            '\n',
-                          ),
+                          [
+                            'Layer\tRecommendation\tAlternative\tCost risk\tOperational complexity',
+                            rows,
+                          ].join('\n'),
                         );
                         saveCopiedLabel('Tradeoff table');
                       }}
@@ -947,19 +1095,25 @@ export const StackAdvicePage = () => {
                 <CardContent className="overflow-x-auto">
                   <table className="min-w-full border-separate border-spacing-0">
                     <thead>
-                      <tr className="text-left text-xs uppercase tracking-normal text-muted">
+                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                         <th className="border-b border-border px-3 py-3 font-medium">Layer</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Recommendation</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Alternative</th>
+                        <th className="border-b border-border px-3 py-3 font-medium">
+                          Recommendation
+                        </th>
+                        <th className="border-b border-border px-3 py-3 font-medium">
+                          Alternative
+                        </th>
                         <th className="border-b border-border px-3 py-3 font-medium">Cost risk</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Operational complexity</th>
+                        <th className="border-b border-border px-3 py-3 font-medium">
+                          Operational complexity
+                        </th>
                       </tr>
                     </thead>
                     <tbody>
                       {currentOutput.categories.map((category) => (
                         <tr key={category.category}>
                           <td className="border-b border-border px-3 py-4 align-top text-sm text-text">
-                            {stackAdviceLayerLabels[category.category]}
+                            {getStackLayerLabel(category.category)}
                           </td>
                           <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-text">
                             {category.recommendation}
@@ -1003,7 +1157,7 @@ export const StackAdvicePage = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <pre className="whitespace-pre-wrap rounded-md border border-border bg-surface-raised p-4 text-sm leading-6 text-text">
+                    <pre className="whitespace-pre-wrap rounded-panel border border-subtle bg-surface-card shadow-sm p-4 text-sm leading-6 text-text">
                       {developerBrief}
                     </pre>
                   </CardContent>
@@ -1031,7 +1185,7 @@ export const StackAdvicePage = () => {
                     </div>
                   </CardHeader>
                   <CardContent>
-                    <div className="rounded-md border border-border bg-surface-raised p-4">
+                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
                       <div className="mb-4 flex flex-wrap items-center gap-2">
                         <Badge variant="accent">Markdown</Badge>
                         {copiedLabel ? <Badge>{copiedLabel} copied</Badge> : null}
@@ -1050,7 +1204,9 @@ export const StackAdvicePage = () => {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <CardTitle>Assumptions</CardTitle>
-                        <CardDescription>What the recommendation is assuming about the project.</CardDescription>
+                        <CardDescription>
+                          What the recommendation is assuming about the project.
+                        </CardDescription>
                       </div>
                       <Button
                         onClick={async () => {
@@ -1073,7 +1229,10 @@ export const StackAdvicePage = () => {
                   </CardHeader>
                   <CardContent className="grid gap-3">
                     {currentOutput.assumptions.map((assumption) => (
-                      <div className="rounded-md border border-border bg-surface-raised p-4" key={assumption.text}>
+                      <div
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                        key={assumption.text}
+                      >
                         <p className="text-sm leading-6 text-text">{assumption.text}</p>
                         {assumption.reason ? (
                           <p className="mt-2 text-sm leading-6 text-muted">{assumption.reason}</p>
@@ -1088,7 +1247,9 @@ export const StackAdvicePage = () => {
                     <div className="flex flex-wrap items-start justify-between gap-3">
                       <div>
                         <CardTitle>Risks and next steps</CardTitle>
-                        <CardDescription>What can go wrong and what should happen next.</CardDescription>
+                        <CardDescription>
+                          What can go wrong and what should happen next.
+                        </CardDescription>
                       </div>
                       <Button
                         onClick={async () => {
@@ -1100,7 +1261,9 @@ export const StackAdvicePage = () => {
                             '',
                             'Next steps:',
                             ...currentOutput.nextSteps.map((step) =>
-                              step.reason ? `- ${step.action} (${step.reason})` : `- ${step.action}`,
+                              step.reason
+                                ? `- ${step.action} (${step.reason})`
+                                : `- ${step.action}`,
                             ),
                           ].join('\n');
                           await copyText(text);
@@ -1116,8 +1279,13 @@ export const StackAdvicePage = () => {
                   <CardContent className="grid gap-4">
                     <div className="grid gap-3">
                       {currentOutput.risks.map((risk) => (
-                        <div className="rounded-md border border-border bg-surface-raised p-4" key={risk.risk}>
-                          <p className="text-sm font-medium tracking-normal text-text">{risk.risk}</p>
+                        <div
+                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                          key={risk.risk}
+                        >
+                          <p className="text-sm font-medium tracking-normal text-text">
+                            {risk.risk}
+                          </p>
                           <p className="mt-2 text-sm leading-6 text-muted">{risk.impact}</p>
                           <p className="mt-2 text-sm leading-6 text-muted">{risk.mitigation}</p>
                         </div>
@@ -1125,9 +1293,16 @@ export const StackAdvicePage = () => {
                     </div>
                     <div className="grid gap-3">
                       {currentOutput.nextSteps.map((step) => (
-                        <div className="rounded-md border border-border bg-surface-raised p-4" key={step.action}>
-                          <p className="text-sm font-medium tracking-normal text-text">{step.action}</p>
-                          {step.reason ? <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p> : null}
+                        <div
+                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                          key={step.action}
+                        >
+                          <p className="text-sm font-medium tracking-normal text-text">
+                            {step.action}
+                          </p>
+                          {step.reason ? (
+                            <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p>
+                          ) : null}
                         </div>
                       ))}
                     </div>
@@ -1135,7 +1310,7 @@ export const StackAdvicePage = () => {
                 </Card>
               </div>
 
-                      {selectedDocument ? (
+              {selectedDocument ? (
                 <Card>
                   <CardHeader>
                     <CardTitle>Selected document details</CardTitle>
@@ -1156,7 +1331,10 @@ export const StackAdvicePage = () => {
                         value={
                           selectedOverrideSummary
                             ? Object.entries(selectedOverrideSummary)
-                                .map(([key, value]) => `${formatConstraintKey(key)}: ${formatConstraintValue(key, String(value))}`)
+                                .map(
+                                  ([key, value]) =>
+                                    `${formatConstraintKey(key)}: ${formatConstraintValue(key, String(value))}`,
+                                )
                                 .join('\n')
                             : 'No constraint overrides were saved with this document.'
                         }
@@ -1170,7 +1348,10 @@ export const StackAdvicePage = () => {
         </div>
       </div>
 
-      <Link className="text-sm font-medium text-accent hover:text-accent/80" to={`/projects/${project.id}`}>
+      <Link
+        className="text-sm font-medium text-accent hover:text-accent/80"
+        to={`/projects/${project.id}`}
+      >
         Back to project
       </Link>
     </div>
