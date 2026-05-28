@@ -53,6 +53,8 @@ const browserExecutableCandidates = [
   '/usr/bin/chromium-browser',
   '/usr/bin/google-chrome',
   '/usr/bin/google-chrome-stable',
+  '/snap/bin/chromium',
+  '/snap/bin/chromium-browser',
 ];
 
 const documentSelect = {
