@@ -555,21 +555,29 @@ const CodeAuditPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            <Button
+          <div className="inline-flex rounded-md bg-surface p-1 border border-border">
+            <button
               onClick={() => setFormState((current) => ({ ...current, sourceMode: 'repo' }))}
-              size="sm"
-              variant={formState.sourceMode === 'repo' ? 'primary' : 'secondary'}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${
+                formState.sourceMode === 'repo'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-secondary hover:text-text'
+              }`}
+              type="button"
             >
               Repository URL
-            </Button>
-            <Button
+            </button>
+            <button
               onClick={() => setFormState((current) => ({ ...current, sourceMode: 'snippet' }))}
-              size="sm"
-              variant={formState.sourceMode === 'snippet' ? 'primary' : 'secondary'}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${
+                formState.sourceMode === 'snippet'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-secondary hover:text-text'
+              }`}
+              type="button"
             >
               Pasted code
-            </Button>
+            </button>
           </div>
 
           <form className="space-y-4" onSubmit={handleSubmit}>

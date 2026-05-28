@@ -598,8 +598,8 @@ export const ProjectDetailPage = () => {
         </Badge>
       </div>
 
-      <Surface className="grid gap-5 lg:grid-cols-[1fr_20rem]" tone="elevated">
-        <div>
+      <Surface className="grid gap-6 xl:grid-cols-12" tone="elevated">
+        <div className="xl:col-span-8">
           <p className="text-xs font-semibold uppercase tracking-[0.14em] text-accent">
             Project room
           </p>
@@ -611,19 +611,21 @@ export const ProjectDetailPage = () => {
               'Add the project summary, target customer, and launch scope so each tool can give practical guidance.'}
           </p>
         </div>
-        <div className="rounded-panel border border-accent/20 bg-accent-soft p-4">
-          <p className="text-sm font-semibold text-text">Next best action</p>
-          <p className="mt-2 text-sm leading-6 text-secondary">
-            {!contextReady
-              ? 'Complete the project context before asking for build plans or vendor reviews.'
-              : !moduleDocuments.get('roadmap')
-                ? 'Generate the roadmap first so every later decision has a source of truth.'
-                : !moduleDocuments.get('technical_spec')
-                  ? 'Turn the roadmap into a developer-ready technical spec.'
-                  : 'Review the latest documents before the next vendor conversation.'}
-          </p>
+        <div className="rounded-panel border border-accent/20 bg-accent-soft p-4 xl:col-span-4 flex flex-col justify-between">
+          <div>
+            <p className="text-sm font-semibold text-text">Next best action</p>
+            <p className="mt-2 text-sm leading-6 text-secondary">
+              {!contextReady
+                ? 'Complete the project context before asking for build plans or vendor reviews.'
+                : !moduleDocuments.get('roadmap')
+                  ? 'Generate the roadmap first so every later decision has a source of truth.'
+                  : !moduleDocuments.get('technical_spec')
+                    ? 'Turn the roadmap into a developer-ready technical spec.'
+                    : 'Review the latest documents before the next vendor conversation.'}
+            </p>
+          </div>
           <Button
-            className="mt-4"
+            className="mt-4 w-fit"
             onClick={() =>
               navigate(
                 !contextReady
@@ -676,13 +678,13 @@ export const ProjectDetailPage = () => {
           <CardTitle>Project summary</CardTitle>
           <CardDescription>The saved context used across the workspace.</CardDescription>
         </CardHeader>
-        <CardContent className="grid gap-5 lg:grid-cols-[1.2fr_0.8fr]">
-          <div className="space-y-4">
+        <CardContent className="grid gap-6 xl:grid-cols-12">
+          <div className="space-y-4 xl:col-span-8">
             <DetailBlock label="Idea summary" value={project.ideaSummary} />
             <DetailBlock label="Target customer" value={project.targetCustomer} />
             <DetailBlock label="Biggest concern" value={project.biggestConcern} />
           </div>
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-1">
+          <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-1 xl:col-span-4">
             <DetailBlock
               label="Stage"
               value={getProjectOptionLabel.currentStage(project.currentStage)}
@@ -841,41 +843,41 @@ export const ProjectDetailPage = () => {
             </div>
           ) : null}
           {project.documents.length > 0 ? (
-            <div className="grid gap-3">
+            <div className="grid gap-4 sm:grid-cols-2">
               {project.documents.map((document) => (
                 <div
-                  className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                  className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4 flex flex-col justify-between"
                   key={document.id}
                 >
-                  <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                    <div>
-                      <div className="flex flex-wrap items-center gap-2">
-                        <h3 className="text-sm font-semibold tracking-normal text-text">
-                          {document.title}
-                        </h3>
-                        <Badge>{getDocumentTypeLabel(document.type)}</Badge>
-                        <Badge variant="accent">v{document.version}</Badge>
-                      </div>
-                      <p className="mt-2 text-sm leading-6 text-muted">
-                        {document.summary ?? 'No summary saved for this document.'}
-                      </p>
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <h3 className="text-sm font-semibold tracking-normal text-text">
+                        {document.title}
+                      </h3>
+                      <Badge>{getDocumentTypeLabel(document.type)}</Badge>
+                      <Badge variant="accent">v{document.version}</Badge>
                     </div>
-                    <div className="flex shrink-0 flex-wrap items-center gap-2">
+                    <p className="mt-2 text-xs leading-5 text-muted">
+                      {document.summary ?? 'No summary saved for this document.'}
+                    </p>
+                  </div>
+                  <div className="mt-4 flex flex-wrap items-center justify-between gap-2 border-t border-border pt-3">
+                    <div className="flex flex-wrap items-center gap-1.5">
                       <Badge variant={getStatusVariant(document.status)}>
                         {formatStatus(document.status)}
                       </Badge>
                       <Badge>{formatDate(document.completedAt ?? document.updatedAt)}</Badge>
-                      {exportableDocumentTypes.has(document.type) ? (
-                        <Button
-                          isLoading={exportingDocumentId === document.id}
-                          onClick={() => handleExportPdf(document)}
-                          size="sm"
-                          variant="secondary"
-                        >
-                          Export PDF
-                        </Button>
-                      ) : null}
                     </div>
+                    {exportableDocumentTypes.has(document.type) ? (
+                      <Button
+                        isLoading={exportingDocumentId === document.id}
+                        onClick={() => handleExportPdf(document)}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        Export PDF
+                      </Button>
+                    ) : null}
                   </div>
                 </div>
               ))}

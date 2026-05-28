@@ -1180,8 +1180,8 @@ export const TechnicalSpecPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-12">
+        <div className="space-y-6 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Feature inputs</CardTitle>
@@ -1192,27 +1192,29 @@ export const TechnicalSpecPage = () => {
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={handleGenerate}>
-                <Input
-                  error={formErrors.featureName}
-                  hint="Name the feature the same way you would describe it to a developer."
-                  label="Feature name"
-                  onChange={(event) => updateFormField('featureName', event.target.value)}
-                  placeholder="Example: Founder onboarding checklist"
-                  value={formState.featureName}
-                />
-                <Select
-                  label="Priority"
-                  onChange={(event) =>
-                    updateFormField('priority', event.target.value as TechnicalSpecPriority)
-                  }
-                  value={formState.priority}
-                >
-                  {priorityOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input
+                    error={formErrors.featureName}
+                    hint="Describe it to a developer."
+                    label="Feature name"
+                    onChange={(event) => updateFormField('featureName', event.target.value)}
+                    placeholder="Example: Founder onboarding checklist"
+                    value={formState.featureName}
+                  />
+                  <Select
+                    label="Priority"
+                    onChange={(event) =>
+                      updateFormField('priority', event.target.value as TechnicalSpecPriority)
+                    }
+                    value={formState.priority}
+                  >
+                    {priorityOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
                 <Textarea
                   error={formErrors.desiredUserOutcome}
                   hint="State who succeeds, what they can do afterward, and what problem is removed."
@@ -1372,7 +1374,7 @@ export const TechnicalSpecPage = () => {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 xl:col-span-8">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -1491,10 +1493,57 @@ export const TechnicalSpecPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <EmptyState
-              description="A clear technical spec prevents developers from building the wrong thing by turning the outcome, rules, edge cases, tests, and handoff sequence into one saved document."
-              title="No spec generated yet"
-            />
+            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
+              <div className="border-b border-border pb-4">
+                <h3 className="text-lg font-semibold text-text">Expected Spec Sections & Output</h3>
+                <p className="text-sm text-muted mt-1">Provide feature inputs on the left to generate a comprehensive technical specification covering:</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Feature Overview & Goals</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Clear definition of the problem, targeted user outcome, project priorities, and what lies outside the project scope.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">User Stories & Flows</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Step-by-step breakdown of user interactions, success scenarios, and error boundaries for each user role.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">API Endpoints Schema</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    HTTP endpoints, payload formats, error responses, authentication scopes, and copy-pasteable request/response JSON examples.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Database & Migration Plan</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Proposed entity fields, relationships, actor permissions, and background jobs or events triggered by operations.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
+                <h4 className="text-sm font-semibold text-text">Pro Tip: Specification Precision</h4>
+                <p className="text-sm text-secondary mt-1 leading-relaxed">
+                  Include edge cases (e.g. what happens if internet disconnects, or if a field is empty) under user outcome to ensure the generated spec covers all engineering blindspots.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </div>

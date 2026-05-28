@@ -184,62 +184,64 @@ export const DocumentsPage = () => {
         <CardContent className="space-y-5">
           {documents.length > 0 ? (
             <>
-              <div className="grid gap-3 md:grid-cols-[1fr_16rem]">
-                <Input
-                  label="Search documents"
-                  onChange={(event) => setQuery(event.target.value)}
-                  placeholder="Search by title, summary, or type"
-                  value={query}
-                />
-                <Select
-                  label="Document type"
-                  onChange={(event) => setTypeFilter(event.target.value)}
-                  value={typeFilter}
-                >
-                  <option value="">All types</option>
-                  {documentTypes.map((type) => (
-                    <option key={type} value={type}>
-                      {getDocumentTypeLabel(type)}
-                    </option>
-                  ))}
-                </Select>
+              <div className="grid gap-4 sm:grid-cols-4">
+                <div className="sm:col-span-3">
+                  <Input
+                    label="Search documents"
+                    onChange={(event) => setQuery(event.target.value)}
+                    placeholder="Search by title, summary, or type"
+                    value={query}
+                  />
+                </div>
+                <div className="sm:col-span-1">
+                  <Select
+                    label="Document type"
+                    onChange={(event) => setTypeFilter(event.target.value)}
+                    value={typeFilter}
+                  >
+                    <option value="">All types</option>
+                    {documentTypes.map((type) => (
+                      <option key={type} value={type}>
+                        {getDocumentTypeLabel(type)}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
               </div>
               {filteredDocuments.length > 0 ? (
                 <div className="space-y-6">
                   {Object.entries(groupedDocuments).map(([type, typeDocuments]) => (
                     <section className="space-y-3" key={type}>
                       <div className="flex items-center justify-between gap-3">
-                        <h2 className="text-lg font-semibold tracking-normal text-text">
+                        <h2 className="text-base font-semibold tracking-normal text-text">
                           {getDocumentTypeLabel(type)}
                         </h2>
                         <Badge>{typeDocuments.length} saved</Badge>
                       </div>
-                      <div className="grid gap-3">
+                      <div className="grid gap-4 sm:grid-cols-2">
                         {typeDocuments.map((document) => (
                           <Link
-                            className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:shadow-soft"
+                            className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:shadow-soft flex flex-col justify-between"
                             key={document.id}
                             to={`/projects/${project.id}/documents/${document.id}`}
                           >
-                            <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
-                              <div>
-                                <div className="flex flex-wrap items-center gap-2">
-                                  <h3 className="text-sm font-semibold tracking-normal text-text">
-                                    {document.title}
-                                  </h3>
-                                  <Badge variant="accent">v{document.version}</Badge>
-                                  <Badge variant={getStatusVariant(document.status)}>
-                                    {formatLabel(document.status)}
-                                  </Badge>
-                                </div>
-                                <p className="mt-2 text-sm leading-6 text-secondary">
-                                  {document.summary ?? 'No summary saved for this document.'}
-                                </p>
+                            <div>
+                              <div className="flex flex-wrap items-center gap-2">
+                                <h3 className="text-sm font-semibold tracking-normal text-text">
+                                  {document.title}
+                                </h3>
+                                <Badge variant="accent">v{document.version}</Badge>
+                                <Badge variant={getStatusVariant(document.status)}>
+                                  {formatLabel(document.status)}
+                                </Badge>
                               </div>
-                              <p className="shrink-0 text-sm text-muted">
-                                {formatDateTime(document.createdAt)}
+                              <p className="mt-2 text-xs leading-5 text-secondary">
+                                {document.summary ?? 'No summary saved for this document.'}
                               </p>
                             </div>
+                            <p className="mt-4 text-xs text-muted text-right">
+                              {formatDateTime(document.createdAt)}
+                            </p>
                           </Link>
                         ))}
                       </div>

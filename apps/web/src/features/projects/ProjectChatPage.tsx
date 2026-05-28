@@ -141,7 +141,7 @@ const MessageBubble = ({ message, status }: MessageBubbleProps) => {
     <div className={cn('flex', isFounder ? 'justify-end' : 'justify-start')}>
       <div
         className={cn(
-          'max-w-[min(100%,44rem)] rounded-lg border px-4 py-3 shadow-sm',
+          'max-w-[90%] rounded-lg border px-4 py-3 shadow-sm',
           isFounder
             ? 'border-accent/35 bg-accent/10 text-text'
             : 'border-border bg-surface-raised text-text',
@@ -437,8 +437,8 @@ export const ProjectChatPage = () => {
         title="Talk through the next technical decision"
       />
 
-      <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_23rem]">
-        <Card className="min-w-0">
+      <div className="grid gap-6 xl:grid-cols-12">
+        <Card className="min-w-0 xl:col-span-8">
           <CardHeader className="border-b border-border pb-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -454,9 +454,9 @@ export const ProjectChatPage = () => {
               </div>
             </div>
           </CardHeader>
-          <CardContent className="space-y-5">
+          <CardContent className="space-y-4 flex flex-col h-[700px]">
             {pagination?.hasNextPage ? (
-              <div className="flex justify-center">
+              <div className="flex justify-center shrink-0">
                 <Button
                   isLoading={isLoadingOlder}
                   onClick={loadOlderMessages}
@@ -468,7 +468,7 @@ export const ProjectChatPage = () => {
               </div>
             ) : null}
 
-            <div className="min-h-[26rem] space-y-4">
+            <div className="flex-1 overflow-y-auto pr-2 space-y-4">
               {messages.length === 0 && !outboxMessage ? (
                 <EmptyState
                   description="Start with the decision in front of you: build order, hiring risk, stack tradeoffs, vendor quotes, or implementation scope."
@@ -495,10 +495,14 @@ export const ProjectChatPage = () => {
               <div ref={messagesEndRef} />
             </div>
 
-            {sendLimitMessage ? <GenerationLimitCallout message={sendLimitMessage} /> : null}
+            {sendLimitMessage ? (
+              <div className="shrink-0">
+                <GenerationLimitCallout message={sendLimitMessage} />
+              </div>
+            ) : null}
 
             {sendError && outboxMessage?.status === 'failed' && !sendLimitMessage ? (
-              <div className="rounded-md border border-danger/35 bg-danger/5 p-4">
+              <div className="rounded-md border border-danger/35 bg-danger/5 p-4 shrink-0">
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <p className="text-sm leading-6 text-danger">{sendError}</p>
                   <Button
@@ -513,12 +517,12 @@ export const ProjectChatPage = () => {
             ) : null}
 
             {suggestedQuestions.length > 0 ? (
-              <div className="space-y-3 border-t border-border pt-5">
-                <p className="text-sm font-medium tracking-normal text-text">Suggested questions</p>
+              <div className="space-y-2 border-t border-border pt-3 shrink-0">
+                <p className="text-xs font-semibold uppercase tracking-wider text-muted">Suggested questions</p>
                 <div className="flex flex-wrap gap-2">
                   {suggestedQuestions.map((question) => (
                     <button
-                      className="rounded-full border border-border bg-surface-raised px-3 py-2 text-left text-sm leading-5 text-muted transition-colors hover:border-accent/35 hover:text-text"
+                      className="rounded-full border border-border bg-surface-raised px-3 py-1.5 text-left text-xs leading-5 text-muted transition-colors hover:border-accent/35 hover:text-text"
                       key={question}
                       onClick={() => setDraft(question)}
                       type="button"
@@ -530,9 +534,9 @@ export const ProjectChatPage = () => {
               </div>
             ) : null}
 
-            <form className="space-y-3 border-t border-border pt-5" onSubmit={handleSubmit}>
+            <form className="space-y-3 border-t border-border pt-3 shrink-0" onSubmit={handleSubmit}>
               <Textarea
-                className="min-h-24 resize-none"
+                className="min-h-20 resize-none"
                 disabled={isSending}
                 onChange={(event) => setDraft(event.target.value)}
                 onKeyDown={handleTextareaKeyDown}
@@ -540,11 +544,11 @@ export const ProjectChatPage = () => {
                 value={draft}
               />
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                <p className="text-sm text-muted">
+                <p className="text-xs text-muted">
                   Connected to {project.answers.length} saved answers and{' '}
                   {contextDocuments.length || project.documents.length} recent documents.
                 </p>
-                <Button disabled={!draft.trim()} isLoading={isSending} type="submit">
+                <Button disabled={!draft.trim()} isLoading={isSending} type="submit" size="sm">
                   Send
                 </Button>
               </div>
@@ -552,7 +556,7 @@ export const ProjectChatPage = () => {
           </CardContent>
         </Card>
 
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start">
+        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Project memory</CardTitle>

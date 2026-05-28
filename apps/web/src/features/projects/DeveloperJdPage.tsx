@@ -289,8 +289,8 @@ export const DeveloperJdPage = () => {
         </Surface>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="min-w-0">
+      <div className="grid gap-6 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-8">
           {selectedDocument?.content ? (
             <ReportCard
               actions={
@@ -325,20 +325,66 @@ export const DeveloperJdPage = () => {
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
           ) : (
-            <EmptyState
-              action={
+            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
+              <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-text">Expected Developer Brief & JD Output</h3>
+                  <p className="text-sm text-muted mt-1">A ready-to-publish developer brief tailored to your project architecture and timeline.</p>
+                </div>
                 <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
                   Create developer brief
                 </Button>
-              }
-              className="min-h-[28rem]"
-              description="Create your first developer brief to get job-post copy, must-have skills, interview questions, a test task, red flags, and handoff guidance."
-              title="No developer brief yet"
-            />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Job Posting Copy & Intro</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Sleek, compelling position summary showing project context, candidate goals, and company mission.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Tech Stack & Required Skills</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Precise mapping of must-have tech stack skills, development workflows, and preferred background.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Interview Screening Questions</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Custom questions to ask candidates during phone calls or technical evaluations with expected strong signals.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Practical Coding Test Task</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    A short, relevant, and objective coding challenge to assess candidate proficiency and communication style.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
+                <h4 className="text-sm font-semibold text-text">Pro Tip: Brief Accuracy</h4>
+                <p className="text-sm text-secondary mt-1 leading-relaxed">
+                  Make sure your tech stack choice has been saved in the Tech Stack Advisor before generating the brief. This aligns technical screening closely with your real dependencies.
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
-        <aside className="space-y-5">
+        <aside className="space-y-5 xl:col-span-4">
           <Surface tone="soft">
             <BriefcaseBusiness className="h-5 w-5 text-accent" />
             <p className="mt-3 text-sm font-semibold text-text">Hiring context</p>

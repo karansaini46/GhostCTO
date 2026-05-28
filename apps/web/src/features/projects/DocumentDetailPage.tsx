@@ -262,35 +262,41 @@ export const DocumentDetailPage = () => {
         </Card>
       ) : null}
 
-      <DocumentFeedbackPanel
-        accessToken={accessToken}
-        document={documentRecord}
-        onFeedbackSaved={handleFeedbackSaved}
-        projectId={project.id}
-      />
+      <div className="grid gap-6 xl:grid-cols-12">
+        <div className="space-y-6 xl:col-span-8">
+          <ReportCard
+            meta={
+              <>
+                <Badge>{getDocumentTypeLabel(documentRecord.type)}</Badge>
+                <Badge variant="accent">v{documentRecord.version}</Badge>
+                <Badge>{formatLabel(documentRecord.status)}</Badge>
+                <Badge>{formatDateTime(documentRecord.createdAt)}</Badge>
+              </>
+            }
+            subtitle={
+              documentRecord.completedAt
+                ? `Completed ${formatDateTime(documentRecord.completedAt)}`
+                : 'Saved project document.'
+            }
+            title={documentRecord.title}
+          >
+            {reportContent ? (
+              <MarkdownReport content={reportContent} />
+            ) : (
+              <p className="text-sm leading-6 text-secondary">No content saved for this document.</p>
+            )}
+          </ReportCard>
+        </div>
 
-      <ReportCard
-        meta={
-          <>
-            <Badge>{getDocumentTypeLabel(documentRecord.type)}</Badge>
-            <Badge variant="accent">v{documentRecord.version}</Badge>
-            <Badge>{formatLabel(documentRecord.status)}</Badge>
-            <Badge>{formatDateTime(documentRecord.createdAt)}</Badge>
-          </>
-        }
-        subtitle={
-          documentRecord.completedAt
-            ? `Completed ${formatDateTime(documentRecord.completedAt)}`
-            : 'Saved project document.'
-        }
-        title={documentRecord.title}
-      >
-        {reportContent ? (
-          <MarkdownReport content={reportContent} />
-        ) : (
-          <p className="text-sm leading-6 text-secondary">No content saved for this document.</p>
-        )}
-      </ReportCard>
+        <div className="space-y-6 xl:col-span-4">
+          <DocumentFeedbackPanel
+            accessToken={accessToken}
+            document={documentRecord}
+            onFeedbackSaved={handleFeedbackSaved}
+            projectId={project.id}
+          />
+        </div>
+      </div>
     </div>
   );
 };

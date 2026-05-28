@@ -289,8 +289,8 @@ export const RoadmapPage = () => {
         </Surface>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="min-w-0">
+      <div className="grid gap-6 xl:grid-cols-12">
+        <div className="min-w-0 xl:col-span-8">
           {selectedDocument?.content ? (
             <ReportCard
               actions={
@@ -325,20 +325,66 @@ export const RoadmapPage = () => {
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
           ) : (
-            <EmptyState
-              action={
+            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
+              <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                <div>
+                  <h3 className="text-lg font-semibold text-text">Expected Roadmap & Milestones</h3>
+                  <p className="text-sm text-muted mt-1">A detailed, founder-friendly execution roadmap based on your project context.</p>
+                </div>
                 <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
                   Generate roadmap
                 </Button>
-              }
-              className="min-h-[28rem]"
-              description="Generate your first technical roadmap to see the MVP, later phases, risks, and developer handoff in one shareable document."
-              title="No roadmap yet"
-            />
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">MVP Scope (Phase 1)</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Identifies core features to build first to test product-market fit, minimizing initial cost and complexity.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Phase 2 & Later Milestones</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Outline of subsequent updates, third-party integrations, scalability updates, and optimization phases.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Architecture Recommendations</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Clear guidance on frontend/backend hosting, database strategies, storage solutions, and auth systems.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Risk Assessment & Mitigation</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Checks for single points of failure, security concerns, timeline bottlenecks, and agency dependency risks.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
+                <h4 className="text-sm font-semibold text-text">Pro Tip: Project Context Alignment</h4>
+                <p className="text-sm text-secondary mt-1 leading-relaxed">
+                  Make sure your project details (stage, budget, timelines) are updated under project settings. The generator uses them directly to tailor the roadmap difficulty and complexity.
+                </p>
+              </div>
+            </div>
           )}
         </div>
 
-        <aside className="space-y-5">
+        <aside className="space-y-5 xl:col-span-4">
           <Surface tone="soft">
             <ScrollText className="h-5 w-5 text-accent" />
             <p className="mt-3 text-sm font-semibold text-text">Project context</p>

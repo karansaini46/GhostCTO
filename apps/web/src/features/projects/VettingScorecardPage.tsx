@@ -619,8 +619,8 @@ export const VettingScorecardPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[430px_minmax(0,1fr)]">
-        <div className="space-y-6">
+      <div className="grid gap-6 xl:grid-cols-12">
+        <div className="space-y-6 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Candidate input</CardTitle>
@@ -631,20 +631,22 @@ export const VettingScorecardPage = () => {
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={handleGenerate}>
-                <Input
-                  error={formErrors.subjectName}
-                  label="Name"
-                  onChange={(event) => updateFormField('subjectName', event.target.value)}
-                  placeholder="Agency or developer name"
-                  value={formState.subjectName}
-                />
-                <Input
-                  error={formErrors.websiteUrl}
-                  label="Website or profile URL"
-                  onChange={(event) => updateFormField('websiteUrl', event.target.value)}
-                  placeholder="https://example.com/profile"
-                  value={formState.websiteUrl}
-                />
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input
+                    error={formErrors.subjectName}
+                    label="Name"
+                    onChange={(event) => updateFormField('subjectName', event.target.value)}
+                    placeholder="Agency or developer name"
+                    value={formState.subjectName}
+                  />
+                  <Input
+                    error={formErrors.websiteUrl}
+                    label="Website or profile URL"
+                    onChange={(event) => updateFormField('websiteUrl', event.target.value)}
+                    placeholder="https://example.com/profile"
+                    value={formState.websiteUrl}
+                  />
+                </div>
                 <Textarea
                   className="min-h-[220px]"
                   error={formErrors.portfolioText}
@@ -780,7 +782,7 @@ export const VettingScorecardPage = () => {
           </Card>
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-6 xl:col-span-8">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -815,13 +817,14 @@ export const VettingScorecardPage = () => {
 
           {currentOutput ? (
             <div className="space-y-6">
+              {/* Recommendation Banner */}
               <div
                 className={`rounded-lg border p-5 ${recommendationStyles[currentOutput.finalRecommendation]}`}
               >
                 <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                   <div>
                     <p className="text-xs uppercase tracking-normal opacity-75">
-                      Final recommendation
+                      Final Recommendation
                     </p>
                     <h2 className="mt-2 text-3xl font-semibold tracking-normal">
                       {recommendationLabels[currentOutput.finalRecommendation]}
@@ -830,16 +833,50 @@ export const VettingScorecardPage = () => {
                       {currentOutput.recommendation}
                     </p>
                   </div>
-                  <div className="grid min-w-56 gap-2 sm:grid-cols-2 lg:grid-cols-1">
-                    <div className="rounded-md border border-current/20 bg-background/20 p-3">
-                      <p className="text-xs uppercase tracking-normal opacity-75">Overall score</p>
-                      <p className="mt-1 text-3xl font-semibold">{currentOutput.overallScore}/10</p>
-                    </div>
-                    <div className="rounded-md border border-current/20 bg-background/20 p-3">
-                      <p className="text-xs uppercase tracking-normal opacity-75">Red flags</p>
-                      <p className="mt-1 text-3xl font-semibold">{currentOutput.redFlags.length}</p>
-                    </div>
+                  <div className="shrink-0 rounded-md border border-current/20 bg-background/20 p-4 text-center">
+                    <p className="text-xs uppercase tracking-normal opacity-75">Overall Score</p>
+                    <p className="mt-1 text-3xl font-black">{currentOutput.overallScore}<span className="text-sm font-normal opacity-75">/10</span></p>
                   </div>
+                </div>
+              </div>
+
+              {/* 4 Scorecard category breakdown cards */}
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">Technical Depth</p>
+                    <Badge>{currentOutput.technicalDepthScore.score}/10</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed line-clamp-3 hover:line-clamp-none transition-all duration-300">
+                    {currentOutput.technicalDepthScore.reasoning}
+                  </p>
+                </div>
+                <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">Portfolio Proof</p>
+                    <Badge>{currentOutput.portfolioProofScore.score}/10</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed line-clamp-3 hover:line-clamp-none transition-all duration-300">
+                    {currentOutput.portfolioProofScore.reasoning}
+                  </p>
+                </div>
+                <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">Comm Clarity</p>
+                    <Badge>{currentOutput.communicationClarityScore.score}/10</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed line-clamp-3 hover:line-clamp-none transition-all duration-300">
+                    {currentOutput.communicationClarityScore.reasoning}
+                  </p>
+                </div>
+                <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm">
+                  <div className="flex items-center justify-between">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">Pricing Risk</p>
+                    <Badge>{currentOutput.pricingRiskScore.score}/10</Badge>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed line-clamp-3 hover:line-clamp-none transition-all duration-300">
+                    {currentOutput.pricingRiskScore.reasoning}
+                  </p>
                 </div>
               </div>
 
@@ -852,39 +889,7 @@ export const VettingScorecardPage = () => {
                 />
               ) : null}
 
-              <Card>
-                <CardHeader>
-                  <CardTitle>Scorecard</CardTitle>
-                  <CardDescription>{currentOutput.overallScoreReasoning}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 lg:grid-cols-2">
-                  <ScoreBlock label="Technical depth" section={currentOutput.technicalDepthScore} />
-                  <ScoreBlock label="Portfolio proof" section={currentOutput.portfolioProofScore} />
-                  <ScoreBlock
-                    label="Communication clarity"
-                    section={currentOutput.communicationClarityScore}
-                  />
-                  <ScoreBlock label="Pricing risk" section={currentOutput.pricingRiskScore} />
-                </CardContent>
-              </Card>
-
-              <Card className="border-danger/40 bg-danger/5">
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Red flags</CardTitle>
-                      <CardDescription>
-                        Treat these as blockers or negotiation points before hiring.
-                      </CardDescription>
-                    </div>
-                    <Badge variant="danger">{currentOutput.redFlags.length} flagged</Badge>
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <FlagList items={currentOutput.redFlags} tone="danger" />
-                </CardContent>
-              </Card>
-
+              {/* Exact Next Steps (Full Width) */}
               <Card className="border-accent/30 bg-accent/5">
                 <CardHeader>
                   <div className="flex flex-wrap items-start justify-between gap-3">
@@ -901,10 +906,10 @@ export const VettingScorecardPage = () => {
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="grid gap-3">
+                <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
                   {currentOutput.nextSteps.map((step, index) => (
                     <div
-                      className="rounded-md border border-border bg-surface p-4"
+                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
                       key={`${step.action}-${index}`}
                     >
                       <div className="flex gap-3">
@@ -912,7 +917,7 @@ export const VettingScorecardPage = () => {
                         <div className="min-w-0 flex-1">
                           <p className="text-sm font-semibold leading-6 text-text">{step.action}</p>
                           {step.reason ? (
-                            <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p>
+                            <p className="mt-2 text-xs leading-5 text-muted">{step.reason}</p>
                           ) : null}
                         </div>
                       </div>
@@ -921,10 +926,123 @@ export const VettingScorecardPage = () => {
                 </CardContent>
               </Card>
 
+              {/* Side-by-Side Grid 1: Red Flags (Left) & Green Flags/Strengths (Right) */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card className="border-danger/40 bg-danger/5">
+                  <CardHeader>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <CardTitle>Red flags</CardTitle>
+                        <CardDescription>
+                          Blockers or negotiation points before hiring.
+                        </CardDescription>
+                      </div>
+                      <Badge variant="danger">{currentOutput.redFlags.length} flagged</Badge>
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <FlagList items={currentOutput.redFlags} tone="danger" />
+                  </CardContent>
+                </Card>
+
+                <Card className="border-success/30 bg-success/5">
+                  <CardHeader>
+                    <div>
+                      <CardTitle>Strengths & Green Flags</CardTitle>
+                      <CardDescription>Positive signals that are worth preserving.</CardDescription>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="space-y-4">
+                    <div className="grid gap-2">
+                      {currentOutput.strengths.map((strength) => (
+                        <div
+                          className="rounded-md border border-success/20 bg-success/15 px-3 py-2 text-sm leading-6 text-text"
+                          key={strength}
+                        >
+                          {strength}
+                        </div>
+                      ))}
+                    </div>
+                    <FlagList items={currentOutput.greenFlags} tone="success" />
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Side-by-Side Grid 2: Proof requests (Left) & Interview Questions (Right) */}
+              <div className="grid gap-6 lg:grid-cols-2">
+                <Card className="border-warning/40 bg-warning/5">
+                  <CardHeader>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <CardTitle>Proof to request</CardTitle>
+                        <CardDescription>
+                          Evidence to check before hiring.
+                        </CardDescription>
+                      </div>
+                      <CopyButton
+                        label="Proof requests"
+                        onCopied={handleCopied}
+                        value={buildProofText(currentOutput.missingProof)}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent>
+                    <FlagList items={currentOutput.missingProof} tone="warning" />
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <CardTitle>Questions to ask</CardTitle>
+                        <CardDescription>
+                          Test communication and expertise.
+                        </CardDescription>
+                      </div>
+                      <CopyButton
+                        label="Questions"
+                        onCopied={handleCopied}
+                        value={buildQuestionsText(currentOutput)}
+                      />
+                    </div>
+                  </CardHeader>
+                  <CardContent className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
+                    {currentOutput.interviewQuestions.map((item, index) => (
+                      <div
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                        key={item.question}
+                      >
+                        <div className="flex flex-wrap items-start gap-3">
+                          <Badge variant="accent">{index + 1}</Badge>
+                          <div className="min-w-0 flex-1">
+                            <p className="text-sm font-semibold leading-6 text-text">
+                              {item.question}
+                            </p>
+                            <p className="mt-2 text-xs leading-5 text-muted">{item.reason}</p>
+                            <div className="mt-3 rounded-md border border-border bg-surface p-3">
+                              <p className="text-[10px] font-semibold uppercase tracking-[0.14em] text-muted">
+                                Strong answer signals
+                              </p>
+                              <ul className="mt-1.5 list-disc space-y-1 pl-4 text-xs leading-5 text-text">
+                                {item.strongAnswerSignals.map((signal) => (
+                                  <li key={signal}>{signal}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+              </div>
+
+              {/* Detailed scoring behind the recommendation & concern summary */}
               <div className="grid gap-6 lg:grid-cols-2">
                 <Card>
                   <CardHeader>
-                    <CardTitle>Criteria scores</CardTitle>
+                    <CardTitle>Criteria Scores</CardTitle>
                     <CardDescription>Detailed scoring behind the recommendation.</CardDescription>
                   </CardHeader>
                   <CardContent className="grid gap-3">
@@ -941,108 +1059,20 @@ export const VettingScorecardPage = () => {
 
                 <Card>
                   <CardHeader>
-                    <CardTitle>Strengths</CardTitle>
-                    <CardDescription>Positive signals that are worth preserving.</CardDescription>
+                    <CardTitle>Concern summary & risks</CardTitle>
+                    <CardDescription>{currentOutput.concernSummary}</CardDescription>
                   </CardHeader>
-                  <CardContent className="space-y-4">
-                    <div className="grid gap-2">
-                      {currentOutput.strengths.map((strength) => (
-                        <div
-                          className="rounded-md border border-success/30 bg-success/10 px-3 py-2 text-sm leading-6 text-text"
-                          key={strength}
-                        >
-                          {strength}
-                        </div>
-                      ))}
-                    </div>
-                    <FlagList items={currentOutput.greenFlags} tone="success" />
+                  <CardContent className="grid gap-4">
+                    {currentOutput.risks.map((risk) => (
+                      <DetailBlock
+                        key={risk.risk}
+                        label={risk.risk}
+                        value={`Impact: ${risk.impact}\nMitigation: ${risk.mitigation}`}
+                      />
+                    ))}
                   </CardContent>
                 </Card>
               </div>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Questions to ask before hiring</CardTitle>
-                      <CardDescription>
-                        Use these to test judgment, communication, and proof before making a
-                        decision.
-                      </CardDescription>
-                    </div>
-                    <CopyButton
-                      label="Questions"
-                      onCopied={handleCopied}
-                      value={buildQuestionsText(currentOutput)}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  {currentOutput.interviewQuestions.map((item, index) => (
-                    <div
-                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                      key={item.question}
-                    >
-                      <div className="flex flex-wrap items-start gap-3">
-                        <Badge variant="accent">{index + 1}</Badge>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold leading-6 text-text">
-                            {item.question}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-muted">{item.reason}</p>
-                          <div className="mt-3 rounded-md border border-border bg-surface p-3">
-                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                              Strong answer signals
-                            </p>
-                            <ul className="mt-2 list-disc space-y-2 pl-5 text-sm leading-6 text-text">
-                              {item.strongAnswerSignals.map((signal) => (
-                                <li key={signal}>{signal}</li>
-                              ))}
-                            </ul>
-                          </div>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card className="border-warning/40 bg-warning/5">
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Proof to request</CardTitle>
-                      <CardDescription>
-                        Ask for this evidence before hiring or increasing commitment.
-                      </CardDescription>
-                    </div>
-                    <CopyButton
-                      label="Proof requests"
-                      onCopied={handleCopied}
-                      value={buildProofText(currentOutput.missingProof)}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <FlagList items={currentOutput.missingProof} tone="warning" />
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Concern summary</CardTitle>
-                  <CardDescription>{currentOutput.concernSummary}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 lg:grid-cols-2">
-                  {currentOutput.risks.map((risk) => (
-                    <DetailBlock
-                      key={risk.risk}
-                      label={risk.risk}
-                      value={`Impact: ${risk.impact}\nMitigation: ${risk.mitigation}`}
-                    />
-                  ))}
-                </CardContent>
-              </Card>
             </div>
           ) : selectedDocument?.content ? (
             <Card>
@@ -1059,10 +1089,57 @@ export const VettingScorecardPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <EmptyState
-              description="Paste a portfolio, proposal, and founder concern to get a scorecard, red flags, proof requests, questions, and exact next steps."
-              title="No scorecard generated yet"
-            />
+            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
+              <div className="border-b border-border pb-4">
+                <h3 className="text-lg font-semibold text-text">Expected Scorecard & Vetting Criteria</h3>
+                <p className="text-sm text-muted mt-1">Once you paste a candidate's portfolio, proposal, and founder concern on the left, we will analyze:</p>
+              </div>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Technical Depth</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Evaluates developer capability, architectural knowledge, and stack proficiency, highlighting risks of generic or exaggerated resumes.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Portfolio Proof & Case Studies</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Audits past projects for concrete proof of claims, flagging vague descriptions, template designs, or lack of production delivery.
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Red Flags & Blind Spots</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Lists critical risks (e.g. outsourced teams, lack of testing, weird payment milestones, or refusal to do code handover).
+                  </p>
+                </div>
+                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
+                  <div className="flex items-center gap-2 text-accent font-semibold">
+                    <span className="h-2 w-2 rounded-full bg-accent" />
+                    <span className="text-sm">Interview Questions & Proof Checklist</span>
+                  </div>
+                  <p className="mt-2 text-xs text-muted leading-relaxed">
+                    Provides exact custom questions with expected answers to test the developer's capability and integrity during meetings.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
+                <h4 className="text-sm font-semibold text-text">Pro Tip: Vague Portfolios</h4>
+                <p className="text-sm text-secondary mt-1 leading-relaxed">
+                  Look out for developers who present huge lists of logos without detailing their specific role. Paste the full descriptions to separate actual work from visual embellishment.
+                </p>
+              </div>
+            </div>
           )}
         </div>
       </div>
