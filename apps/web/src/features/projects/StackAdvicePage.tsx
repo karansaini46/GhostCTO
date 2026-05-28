@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
   EmptyState,
+  ErrorState,
   LoadingState,
   PageHeader,
   Select,
@@ -354,7 +355,8 @@ export const StackAdvicePage = () => {
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [activeOutput, setActiveOutput] = useState<StackAdviceOutput | null>(null);
   const [constraintState, setConstraintState] = useState<StackAdviceConstraintState | null>(null);
-  const [error, setError] = useState<string | null>(null);
+  const [loadError, setLoadError] = useState<string | null>(null);
+  const [generationError, setGenerationError] = useState<string | null>(null);
   const [historyError, setHistoryError] = useState<string | null>(null);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
@@ -368,7 +370,8 @@ export const StackAdvicePage = () => {
     }
 
     setIsLoading(true);
-    setError(null);
+    setLoadError(null);
+    setGenerationError(null);
     setHistoryError(null);
     setLimitMessage(null);
 
@@ -382,7 +385,7 @@ export const StackAdvicePage = () => {
       setDocuments(documentsResponse.documents);
       setConstraintState(defaultConstraintState(projectResponse.project));
     } catch {
-      setError('Unable to load the stack advisor workspace.');
+      setLoadError('Unable to load the stack advisor workspace.');
     } finally {
       setIsLoading(false);
     }
@@ -454,7 +457,7 @@ export const StackAdvicePage = () => {
     }
 
     setIsGenerating(true);
-    setError(null);
+    setGenerationError(null);
     setLimitMessage(null);
 
     try {
@@ -473,7 +476,7 @@ export const StackAdvicePage = () => {
         'Unable to generate stack advice right now.',
       );
 
-      setError(message);
+      setGenerationError(message);
       setLimitMessage(isGenerationLimitError(requestError) ? message : null);
     } finally {
       setIsGenerating(false);
@@ -504,32 +507,28 @@ export const StackAdvicePage = () => {
     return <LoadingState label="Loading stack advisor" />;
   }
 
-  if (error || !project || !constraintState) {
+  if (loadError || !project || !constraintState) {
     return (
       <div className="space-y-6">
         <PageHeader
           actions={
             <Button onClick={() => navigate(`/projects/${id ?? ''}`)}>Back to project</Button>
           }
-          description={error ?? 'The stack advisor workspace could not be loaded.'}
+          description={loadError ?? 'The stack advisor workspace could not be loaded.'}
           eyebrow="Project workspace"
           title="Stack Advisor"
         />
-        {limitMessage ? (
-          <GenerationLimitCallout message={limitMessage} />
-        ) : (
-          <Card className="border-danger/35 bg-danger/5">
-            <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-              <p className="text-sm leading-6 text-muted">
-                The workspace may be unavailable, or your account may not have access to the
-                project.
-              </p>
-              <Button onClick={loadWorkspace} variant="secondary">
-                Try again
-              </Button>
-            </CardContent>
-          </Card>
-        )}
+        <Card className="border-danger/35 bg-danger/5">
+          <CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <p className="text-sm leading-6 text-muted">
+              The workspace may be unavailable, or your account may not have access to the
+              project.
+            </p>
+            <Button onClick={loadWorkspace} variant="secondary">
+              Try again
+            </Button>
+          </CardContent>
+        </Card>
       </div>
     );
   }
@@ -555,6 +554,19 @@ export const StackAdvicePage = () => {
         eyebrow="Project workspace"
         title="Stack Advisor"
       />
+
+      {generationError && !limitMessage ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setGenerationError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Your constraints have been preserved. Please check the error details and try again."
+          title={generationError}
+        />
+      ) : null}
+      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
         <div className="space-y-6">
