@@ -294,8 +294,8 @@ export const RoadmapPage = () => {
       ) : null}
 
       <ModulePageShell>
-        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
-          {selectedDocument?.content ? (
+        {selectedDocument?.content ? (
+          <ModuleOutputPanel colSpan="col-span-12">
             <ReportCard
               actions={
                 <>
@@ -328,7 +328,45 @@ export const RoadmapPage = () => {
               {exportError ? <ErrorState className="mb-6" title={exportError} /> : null}
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
-          ) : (
+          </ModuleOutputPanel>
+        ) : null}
+
+        <ModuleInputPanel colSpan={selectedDocument?.content ? 'col-span-12' : 'col-span-12 xl:col-span-4'}>
+          <ProjectContextCard project={project} />
+
+          <Surface tone="default">
+            <SectionHeader
+              description="Older versions stay available when you regenerate."
+              title="History"
+            />
+            <div className="mt-4 space-y-2">
+              {documents.length > 0 ? (
+                documents.map((document) => (
+                  <button
+                    className={
+                      document.id === selectedDocument?.id
+                        ? 'w-full rounded-md border border-accent bg-accent-soft p-3 text-left text-sm font-semibold text-text'
+                        : 'w-full rounded-md border border-subtle bg-surface-card p-3 text-left text-sm font-semibold text-secondary transition-colors hover:border-accent/35 hover:text-text'
+                    }
+                    key={document.id}
+                    onClick={() => setSelectedDocumentId(document.id)}
+                    type="button"
+                  >
+                    <span className="block">{document.title}</span>
+                    <span className="mt-1 block text-xs text-muted">
+                      v{document.version} · {formatDateTime(document.createdAt)}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-sm leading-6 text-secondary">No saved roadmap versions yet.</p>
+              )}
+            </div>
+          </Surface>
+        </ModuleInputPanel>
+
+        {!selectedDocument?.content ? (
+          <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
             <HelpfulEmptyState
               action={
                 <div className="flex items-center justify-between gap-4">
@@ -371,42 +409,8 @@ export const RoadmapPage = () => {
                 'Risk Assessment: Mitigation tactics for team roles, timeline delays, and custom integrations',
               ]}
             />
-          )}
-        </ModuleOutputPanel>
-
-        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
-          <ProjectContextCard project={project} />
-
-          <Surface tone="default">
-            <SectionHeader
-              description="Older versions stay available when you regenerate."
-              title="History"
-            />
-            <div className="mt-4 space-y-2">
-              {documents.length > 0 ? (
-                documents.map((document) => (
-                  <button
-                    className={
-                      document.id === selectedDocument?.id
-                        ? 'w-full rounded-md border border-accent bg-accent-soft p-3 text-left text-sm font-semibold text-text'
-                        : 'w-full rounded-md border border-subtle bg-surface-card p-3 text-left text-sm font-semibold text-secondary transition-colors hover:border-accent/35 hover:text-text'
-                    }
-                    key={document.id}
-                    onClick={() => setSelectedDocumentId(document.id)}
-                    type="button"
-                  >
-                    <span className="block">{document.title}</span>
-                    <span className="mt-1 block text-xs text-muted">
-                      v{document.version} · {formatDateTime(document.createdAt)}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="text-sm leading-6 text-secondary">No saved roadmap versions yet.</p>
-              )}
-            </div>
-          </Surface>
-        </ModuleInputPanel>
+          </ModuleOutputPanel>
+        ) : null}
       </ModulePageShell>
     </div>
   );

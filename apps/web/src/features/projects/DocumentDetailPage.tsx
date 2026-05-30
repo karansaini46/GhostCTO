@@ -262,8 +262,8 @@ export const DocumentDetailPage = () => {
         </Card>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="space-y-6 xl:col-span-8">
+      <div className="w-full max-w-[1100px] mx-auto flex flex-col gap-6">
+        <div className="w-full">
           <ReportCard
             meta={
               <>
@@ -288,7 +288,7 @@ export const DocumentDetailPage = () => {
           </ReportCard>
         </div>
 
-        <div className="space-y-6 xl:col-span-4">
+        <div className="w-full">
           <DocumentFeedbackPanel
             accessToken={accessToken}
             document={documentRecord}

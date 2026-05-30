@@ -294,7 +294,44 @@ export const DeveloperJdPage = () => {
       ) : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+        {selectedDocument?.content ? (
+          <ModuleOutputPanel colSpan="col-span-12">
+            <ReportCard
+              actions={
+                <>
+                  <CopyButton
+                    disabled={!selectedDocument.content}
+                    size="sm"
+                    value={selectedDocument.content}
+                  />
+                  <ExportButton
+                    disabled={!canExportPdf}
+                    isLoading={isExporting}
+                    label="Export PDF"
+                    onClick={handleExportPdf}
+                    size="sm"
+                  />
+                </>
+              }
+              meta={
+                <>
+                  <Badge>v{selectedDocument.version}</Badge>
+                  <Badge>{selectedDocument.status.toLowerCase()}</Badge>
+                  <Badge>
+                    {formatDateTime(selectedDocument.completedAt ?? selectedDocument.updatedAt)}
+                  </Badge>
+                </>
+              }
+              subtitle={selectedDocument.summary ?? 'A saved hiring document for this project.'}
+              title={selectedDocument.title}
+            >
+              {exportError ? <ErrorState className="mb-6" title={exportError} /> : null}
+              <MarkdownReport content={selectedDocument.content} />
+            </ReportCard>
+          </ModuleOutputPanel>
+        ) : null}
+
+        <ModuleInputPanel colSpan={selectedDocument?.content ? 'col-span-12' : 'col-span-12 xl:col-span-4'}>
           <ProjectContextCard project={project} />
 
           <Surface tone="default">
@@ -328,41 +365,8 @@ export const DeveloperJdPage = () => {
           </Surface>
         </ModuleInputPanel>
 
-        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
-          {selectedDocument?.content ? (
-            <ReportCard
-              actions={
-                <>
-                  <CopyButton
-                    disabled={!selectedDocument.content}
-                    size="sm"
-                    value={selectedDocument.content}
-                  />
-                  <ExportButton
-                    disabled={!canExportPdf}
-                    isLoading={isExporting}
-                    label="Export PDF"
-                    onClick={handleExportPdf}
-                    size="sm"
-                  />
-                </>
-              }
-              meta={
-                <>
-                  <Badge>v{selectedDocument.version}</Badge>
-                  <Badge>{selectedDocument.status.toLowerCase()}</Badge>
-                  <Badge>
-                    {formatDateTime(selectedDocument.completedAt ?? selectedDocument.updatedAt)}
-                  </Badge>
-                </>
-              }
-              subtitle={selectedDocument.summary ?? 'A saved hiring document for this project.'}
-              title={selectedDocument.title}
-            >
-              {exportError ? <ErrorState className="mb-6" title={exportError} /> : null}
-              <MarkdownReport content={selectedDocument.content} />
-            </ReportCard>
-          ) : (
+        {!selectedDocument?.content ? (
+          <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
             <HelpfulEmptyState
               action={
                 <div className="flex items-center justify-between gap-4">
@@ -405,8 +409,8 @@ export const DeveloperJdPage = () => {
                 'Practical Coding Task: Short, relevant coding challenge to assess proficiency',
               ]}
             />
-          )}
-        </ModuleOutputPanel>
+          </ModuleOutputPanel>
+        ) : null}
       </ModulePageShell>
     </div>
   );

@@ -540,6 +540,8 @@ const CodeAuditPage = () => {
     );
   }
 
+  const hasOutput = Boolean(activeAudit || isGenerating);
+
   return (
     <div className="space-y-6">
       <PageHeader
@@ -561,7 +563,7 @@ const CodeAuditPage = () => {
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+        <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
           <Card>
         <CardHeader>
           <CardTitle>Audit source</CardTitle>
@@ -713,7 +715,8 @@ const CodeAuditPage = () => {
       </Card>
     </ModuleInputPanel>
 
-    <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+    {hasOutput ? (
+      <ModuleOutputPanel colSpan="col-span-12">
       {activeAudit ? (
         <div className="space-y-6">
           {activeDocument ? (
@@ -725,7 +728,7 @@ const CodeAuditPage = () => {
             />
           ) : null}
 
-          <div className="grid gap-4 lg:grid-cols-[1.6fr_1fr]">
+          <div className="flex flex-col gap-4">
             <Card>
               <CardHeader>
                 <div className="flex flex-wrap items-start justify-between gap-3">
@@ -778,7 +781,7 @@ const CodeAuditPage = () => {
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
-                <div className="grid gap-3 sm:grid-cols-2">
+                <div className="flex flex-col gap-3">
                   {severityOrder.map((severity) => {
                     const count = getSeverityItems(activeAudit.findings, severity).length;
 
@@ -836,7 +839,7 @@ const CodeAuditPage = () => {
             </Card>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="flex flex-col gap-4">
             <FindingGroup
               items={severityGroups.find(({ severity }) => severity === 'critical')?.items ?? []}
               subtitle="Stop-the-line issues that should be resolved before more budget goes in."
@@ -861,7 +864,7 @@ const CodeAuditPage = () => {
               title="Low"
               tone="success"
             />
-            <Card className="xl:col-span-2">
+            <Card>
               <CardHeader>
                 <CardTitle>Good signs</CardTitle>
                 <CardDescription>Areas that look reasonable and should be kept.</CardDescription>
@@ -894,7 +897,7 @@ const CodeAuditPage = () => {
             </Card>
           </div>
 
-          <div className="grid gap-4 xl:grid-cols-2">
+          <div className="flex flex-col gap-4">
             <Card>
               <CardHeader>
                 <div className="flex items-center justify-between gap-3">
@@ -1008,7 +1011,7 @@ const CodeAuditPage = () => {
             <CardContent className="space-y-3">
               {activeDocument ? (
                 <>
-                  <div className="grid gap-3 sm:grid-cols-3">
+                  <div className="flex flex-col gap-3">
                     <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3">
                       <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
                         Document type
@@ -1050,49 +1053,56 @@ const CodeAuditPage = () => {
           </Card>
         </div>
       ) : (
+        null
+      )}
+    </ModuleOutputPanel>
+    ) : null}
+
+    {!hasOutput ? (
+      <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
         <HelpfulEmptyState
-              action={
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-muted">Ready to run an audit?</p>
-                  <Button isLoading={isGenerating} onClick={() => handleSubmit()}>
-                    Run audit
-                  </Button>
-                </div>
-              }
-              description="An advisory technical scan identifying security gaps, scalability limits, and setup concerns."
-              previewSections={[
-                {
-                  desc: 'A high-level overview highlighting key codebase strengths, critical warnings, and next steps.',
-                  title: 'Executive Summary',
-                },
-                {
-                  desc: 'File structure stats, primary languages, dependency health indicators, and setup ease.',
-                  title: 'Audit Snapshot',
-                },
-                {
-                  desc: 'Severe, High, Medium, and Low severity issues with evidence snippets and developer remedies.',
-                  title: 'Vulnerability Findings',
-                },
-                {
-                  desc: 'Copy-pasteable checklist of prioritized action items you can hand to developers to patch the code.',
-                  title: 'Remediation Actions',
-                },
-              ]}
-              title="Expected Code Audit Output"
-              whatItDoes="Reviews your public GitHub repository or pasted source code, pointing out technical debt, configuration errors, security holes, and structural risks in plain co-founder English."
-              whatToProvide={[
-                'Public GitHub repository URL (private repos not supported)',
-                'Or pasted code snippets of your main controller, config, or routing files',
-              ]}
-              whatYouGet={[
-                'Vulnerability Audit: Line-by-line flags for secrets leakage, bad authentication, SQLi risk',
-                'Scalability & Hygiene Checks: Database queries layout, indexing gaps, hardcoding warnings',
-                'Actionable Remediation: Direct instructions on how to patch the problems',
-                'Developer Questions: Targeted questions to ask your team to verify setup safety',
-              ]}
-            />
-          )}
-        </ModuleOutputPanel>
+          action={
+            <div className="flex items-center justify-between gap-4">
+              <p className="text-sm text-muted">Ready to run an audit?</p>
+              <Button isLoading={isGenerating} onClick={() => handleSubmit()}>
+                Run audit
+              </Button>
+            </div>
+          }
+          description="An advisory technical scan identifying security gaps, scalability limits, and setup concerns."
+          previewSections={[
+            {
+              desc: 'A high-level overview highlighting key codebase strengths, critical warnings, and next steps.',
+              title: 'Executive Summary',
+            },
+            {
+              desc: 'File structure stats, primary languages, dependency health indicators, and setup ease.',
+              title: 'Audit Snapshot',
+            },
+            {
+              desc: 'Severe, High, Medium, and Low severity issues with evidence snippets and developer remedies.',
+              title: 'Vulnerability Findings',
+            },
+            {
+              desc: 'Copy-pasteable checklist of prioritized action items you can hand to developers to patch the code.',
+              title: 'Remediation Actions',
+            },
+          ]}
+          title="Expected Code Audit Output"
+          whatItDoes="Reviews your public GitHub repository or pasted source code, pointing out technical debt, configuration errors, security holes, and structural risks in plain co-founder English."
+          whatToProvide={[
+            'Public GitHub repository URL (private repos not supported)',
+            'Or pasted code snippets of your main controller, config, or routing files',
+          ]}
+          whatYouGet={[
+            'Vulnerability Audit: Line-by-line flags for secrets leakage, bad authentication, SQLi risk',
+            'Scalability & Hygiene Checks: Database queries layout, indexing gaps, hardcoding warnings',
+            'Actionable Remediation: Direct instructions on how to patch the problems',
+            'Developer Questions: Targeted questions to ask your team to verify setup safety',
+          ]}
+        />
+      </ModuleOutputPanel>
+    ) : null}
       </ModulePageShell>
     </div>
   );

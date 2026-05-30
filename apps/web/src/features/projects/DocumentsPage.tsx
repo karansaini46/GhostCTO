@@ -184,8 +184,8 @@ export const DocumentsPage = () => {
         <CardContent className="space-y-5">
           {documents.length > 0 ? (
             <>
-              <div className="grid gap-4 sm:grid-cols-4">
-                <div className="sm:col-span-3">
+              <div className="flex flex-col gap-4">
+                <div className="w-full">
                   <Input
                     label="Search documents"
                     onChange={(event) => setQuery(event.target.value)}
@@ -193,7 +193,7 @@ export const DocumentsPage = () => {
                     value={query}
                   />
                 </div>
-                <div className="sm:col-span-1">
+                <div className="w-full">
                   <Select
                     label="Document type"
                     onChange={(event) => setTypeFilter(event.target.value)}
@@ -218,7 +218,7 @@ export const DocumentsPage = () => {
                         </h2>
                         <Badge>{typeDocuments.length} saved</Badge>
                       </div>
-                      <div className="grid gap-4 sm:grid-cols-2">
+                      <div className="flex flex-col gap-4">
                         {typeDocuments.map((document) => (
                           <Link
                             className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm transition-all duration-200 ease-soft hover:border-accent/35 hover:shadow-soft flex flex-col justify-between"

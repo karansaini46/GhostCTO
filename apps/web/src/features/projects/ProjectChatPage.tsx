@@ -441,7 +441,7 @@ export const ProjectChatPage = () => {
       />
 
       <ModulePageShell>
-        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+        <ModuleOutputPanel colSpan="col-span-12">
           <Card className="min-w-0">
           <CardHeader className="border-b border-border pb-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
@@ -561,7 +561,7 @@ export const ProjectChatPage = () => {
         </Card>
       </ModuleOutputPanel>
 
-      <ModuleInputPanel className="space-y-4 xl:sticky xl:top-24 xl:self-start" colSpan="col-span-12 xl:col-span-4">
+      <ModuleInputPanel className="space-y-4" colSpan="col-span-12">
           <Card>
             <CardHeader>
               <CardTitle>Project memory</CardTitle>

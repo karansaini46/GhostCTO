@@ -573,6 +573,8 @@ export const VettingScorecardPage = () => {
     );
   }
 
+  const hasOutput = Boolean(currentOutput || isGenerating || selectedDocument?.content);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -624,7 +626,7 @@ export const VettingScorecardPage = () => {
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+        <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
           <Card>
             <CardHeader>
               <CardTitle>Candidate input</CardTitle>
@@ -786,7 +788,8 @@ export const VettingScorecardPage = () => {
           </Card>
         </ModuleInputPanel>
 
-        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+        {hasOutput ? (
+          <ModuleOutputPanel colSpan="col-span-12">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -845,7 +848,7 @@ export const VettingScorecardPage = () => {
               </div>
 
               {/* 4 Scorecard category breakdown cards */}
-              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="flex flex-col gap-4">
                 <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm">
                   <div className="flex items-center justify-between">
                     <p className="text-xs uppercase tracking-wider text-muted font-semibold">Technical Depth</p>
@@ -910,7 +913,7 @@ export const VettingScorecardPage = () => {
                     />
                   </div>
                 </CardHeader>
-                <CardContent className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                <CardContent className="flex flex-col gap-3">
                   {currentOutput.nextSteps.map((step, index) => (
                     <div
                       className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
@@ -931,7 +934,7 @@ export const VettingScorecardPage = () => {
               </Card>
 
               {/* Side-by-Side Grid 1: Red Flags (Left) & Green Flags/Strengths (Right) */}
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="flex flex-col gap-6">
                 <Card className="border-danger/40 bg-danger/5">
                   <CardHeader>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -957,7 +960,7 @@ export const VettingScorecardPage = () => {
                     </div>
                   </CardHeader>
                   <CardContent className="space-y-4">
-                    <div className="grid gap-2">
+                    <div className="flex flex-col gap-2">
                       {currentOutput.strengths.map((strength) => (
                         <div
                           className="rounded-md border border-success/20 bg-success/15 px-3 py-2 text-sm leading-6 text-text"
@@ -973,7 +976,7 @@ export const VettingScorecardPage = () => {
               </div>
 
               {/* Side-by-Side Grid 2: Proof requests (Left) & Interview Questions (Right) */}
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="flex flex-col gap-6">
                 <Card className="border-warning/40 bg-warning/5">
                   <CardHeader>
                     <div className="flex flex-wrap items-start justify-between gap-3">
@@ -1011,7 +1014,7 @@ export const VettingScorecardPage = () => {
                       />
                     </div>
                   </CardHeader>
-                  <CardContent className="grid gap-3 max-h-[500px] overflow-y-auto pr-2">
+                  <CardContent className="flex flex-col gap-3 max-h-[500px] overflow-y-auto pr-2">
                     {currentOutput.interviewQuestions.map((item, index) => (
                       <div
                         className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
@@ -1043,13 +1046,13 @@ export const VettingScorecardPage = () => {
               </div>
 
               {/* Detailed scoring behind the recommendation & concern summary */}
-              <div className="grid gap-6 lg:grid-cols-2">
+              <div className="flex flex-col gap-6">
                 <Card>
                   <CardHeader>
                     <CardTitle>Criteria Scores</CardTitle>
                     <CardDescription>Detailed scoring behind the recommendation.</CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-3">
+                  <CardContent className="flex flex-col gap-3">
                     {currentOutput.criteria.map((criterion) => (
                       <ScoreBlock
                         key={`${criterion.criterion}-${criterion.score}`}
@@ -1066,7 +1069,7 @@ export const VettingScorecardPage = () => {
                     <CardTitle>Concern summary & risks</CardTitle>
                     <CardDescription>{currentOutput.concernSummary}</CardDescription>
                   </CardHeader>
-                  <CardContent className="grid gap-4">
+                  <CardContent className="flex flex-col gap-4">
                     {currentOutput.risks.map((risk) => (
                       <DetailBlock
                         key={risk.risk}
@@ -1093,50 +1096,57 @@ export const VettingScorecardPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <HelpfulEmptyState
-              action={
-                <div className="flex items-center justify-between gap-4">
-                  <p className="text-sm text-muted">Ready to audit this candidate?</p>
-                  <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
-                    Generate scorecard
-                  </Button>
-                </div>
-              }
-              description="A systematic audit scorecard scoring technical depth, portfolio proof, and contractor risks."
-              previewSections={[
-                {
-                  desc: 'Evaluates developer capability, architectural knowledge, and stack proficiency, highlighting risks of generic or exaggerated resumes.',
-                  title: 'Technical Depth',
-                },
-                {
-                  desc: 'Audits past projects for concrete proof of claims, flagging vague descriptions, template designs, or lack of production delivery.',
-                  title: 'Portfolio Proof & Case Studies',
-                },
-                {
-                  desc: 'Lists critical risks (e.g. outsourced teams, lack of testing, weird payment milestones, or refusal to do code handover).',
-                  title: 'Red Flags & Blind Spots',
-                },
-                {
-                  desc: 'Provides exact custom questions with expected answers to test the developer\'s capability and integrity during meetings.',
-                  title: 'Interview Questions & Proof Checklist',
-                },
-              ]}
-              title="Expected Scorecard & Vetting Criteria"
-              whatItDoes="Scores developer applicants on a 1-10 scale across technical depth, portfolio proof, communication clarity, and contractor safety, providing targeted interview screening questions."
-              whatToProvide={[
-                'Pasted portfolio, resume text, website URL, or claims',
-                'Proposed candidate proposal, rates, and timeline',
-                'Your primary concern or hesitation about hiring them',
-              ]}
-              whatYouGet={[
-                'Overall Safety Rating: Consolidated risk score with a clear Hire/Caution/Pass recommendation',
-                'Technical Depth Score: Vetting of candidate claims against real engineering standards',
-                'Proof Audit: Validation of case studies to filter out fakers or agency shell operations',
-                'Interview Checklist: Custom screening questions tailored to expose their specific weaknesses',
-              ]}
-            />
+            null
           )}
         </ModuleOutputPanel>
+      ) : null}
+
+      {!hasOutput ? (
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+          <HelpfulEmptyState
+            action={
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-muted">Ready to audit this candidate?</p>
+                <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
+                  Generate scorecard
+                </Button>
+              </div>
+            }
+            description="A systematic audit scorecard scoring technical depth, portfolio proof, and contractor risks."
+            previewSections={[
+              {
+                desc: 'Evaluates developer capability, architectural knowledge, and stack proficiency, highlighting risks of generic or exaggerated resumes.',
+                title: 'Technical Depth',
+              },
+              {
+                desc: 'Audits past projects for concrete proof of claims, flagging vague descriptions, template designs, or lack of production delivery.',
+                title: 'Portfolio Proof & Case Studies',
+              },
+              {
+                desc: 'Lists critical risks (e.g. outsourced teams, lack of testing, weird payment milestones, or refusal to do code handover).',
+                title: 'Red Flags & Blind Spots',
+              },
+              {
+                desc: 'Provides exact custom questions with expected answers to test the developer\'s capability and integrity during meetings.',
+                title: 'Interview Questions & Proof Checklist',
+              },
+            ]}
+            title="Expected Scorecard & Vetting Criteria"
+            whatItDoes="Scores developer applicants on a 1-10 scale across technical depth, portfolio proof, communication clarity, and contractor safety, providing targeted interview screening questions."
+            whatToProvide={[
+              'Pasted portfolio, resume text, website URL, or claims',
+              'Proposed candidate proposal, rates, and timeline',
+              'Your primary concern or hesitation about hiring them',
+            ]}
+            whatYouGet={[
+              'Overall Safety Rating: Consolidated risk score with a clear Hire/Caution/Pass recommendation',
+              'Technical Depth Score: Vetting of candidate claims against real engineering standards',
+              'Proof Audit: Validation of case studies to filter out fakers or agency shell operations',
+              'Interview Checklist: Custom screening questions tailored to expose their specific weaknesses',
+            ]}
+          />
+        </ModuleOutputPanel>
+      ) : null}
       </ModulePageShell>
     </div>
   );
