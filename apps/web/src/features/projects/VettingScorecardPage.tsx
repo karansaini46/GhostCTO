@@ -16,6 +16,10 @@ import {
   LoadingState,
   PageHeader,
   Textarea,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
@@ -476,8 +480,8 @@ export const VettingScorecardPage = () => {
   }, []);
 
   const handleGenerate = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+    async (event?: FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
 
       if (!accessToken || !id || !formState) {
         return;
@@ -619,8 +623,8 @@ export const VettingScorecardPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="space-y-6 xl:col-span-4">
+      <ModulePageShell>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Candidate input</CardTitle>
@@ -780,9 +784,9 @@ export const VettingScorecardPage = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ModuleInputPanel>
 
-        <div className="space-y-6 xl:col-span-8">
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -1089,60 +1093,51 @@ export const VettingScorecardPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
-              <div className="border-b border-border pb-4">
-                <h3 className="text-lg font-semibold text-text">Expected Scorecard & Vetting Criteria</h3>
-                <p className="text-sm text-muted mt-1">Once you paste a candidate's portfolio, proposal, and founder concern on the left, we will analyze:</p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Technical Depth</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Evaluates developer capability, architectural knowledge, and stack proficiency, highlighting risks of generic or exaggerated resumes.
-                  </p>
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to audit this candidate?</p>
+                  <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
+                    Generate scorecard
+                  </Button>
                 </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Portfolio Proof & Case Studies</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Audits past projects for concrete proof of claims, flagging vague descriptions, template designs, or lack of production delivery.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Red Flags & Blind Spots</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Lists critical risks (e.g. outsourced teams, lack of testing, weird payment milestones, or refusal to do code handover).
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Interview Questions & Proof Checklist</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Provides exact custom questions with expected answers to test the developer's capability and integrity during meetings.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
-                <h4 className="text-sm font-semibold text-text">Pro Tip: Vague Portfolios</h4>
-                <p className="text-sm text-secondary mt-1 leading-relaxed">
-                  Look out for developers who present huge lists of logos without detailing their specific role. Paste the full descriptions to separate actual work from visual embellishment.
-                </p>
-              </div>
-            </div>
+              }
+              description="A systematic audit scorecard scoring technical depth, portfolio proof, and contractor risks."
+              previewSections={[
+                {
+                  desc: 'Evaluates developer capability, architectural knowledge, and stack proficiency, highlighting risks of generic or exaggerated resumes.',
+                  title: 'Technical Depth',
+                },
+                {
+                  desc: 'Audits past projects for concrete proof of claims, flagging vague descriptions, template designs, or lack of production delivery.',
+                  title: 'Portfolio Proof & Case Studies',
+                },
+                {
+                  desc: 'Lists critical risks (e.g. outsourced teams, lack of testing, weird payment milestones, or refusal to do code handover).',
+                  title: 'Red Flags & Blind Spots',
+                },
+                {
+                  desc: 'Provides exact custom questions with expected answers to test the developer\'s capability and integrity during meetings.',
+                  title: 'Interview Questions & Proof Checklist',
+                },
+              ]}
+              title="Expected Scorecard & Vetting Criteria"
+              whatItDoes="Scores developer applicants on a 1-10 scale across technical depth, portfolio proof, communication clarity, and contractor safety, providing targeted interview screening questions."
+              whatToProvide={[
+                'Pasted portfolio, resume text, website URL, or claims',
+                'Proposed candidate proposal, rates, and timeline',
+                'Your primary concern or hesitation about hiring them',
+              ]}
+              whatYouGet={[
+                'Overall Safety Rating: Consolidated risk score with a clear Hire/Caution/Pass recommendation',
+                'Technical Depth Score: Vetting of candidate claims against real engineering standards',
+                'Proof Audit: Validation of case studies to filter out fakers or agency shell operations',
+                'Interview Checklist: Custom screening questions tailored to expose their specific weaknesses',
+              ]}
+            />
           )}
-        </div>
-      </div>
+        </ModuleOutputPanel>
+      </ModulePageShell>
     </div>
   );
 };

@@ -1,12 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
-import { ArrowLeft, RefreshCw, ScrollText } from 'lucide-react';
+import { ArrowLeft, RefreshCw } from 'lucide-react';
 
 import {
   Badge,
   Button,
   CopyButton,
-  EmptyState,
   ErrorState,
   ExportButton,
   LoadingState,
@@ -15,6 +14,11 @@ import {
   ReportCard,
   SectionHeader,
   Surface,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
+  ProjectContextCard,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
@@ -289,8 +293,8 @@ export const RoadmapPage = () => {
         </Surface>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-8">
+      <ModulePageShell>
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
           {selectedDocument?.content ? (
             <ReportCard
               actions={
@@ -325,75 +329,53 @@ export const RoadmapPage = () => {
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
           ) : (
-            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
-              <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-text">Expected Roadmap & Milestones</h3>
-                  <p className="text-sm text-muted mt-1">A detailed, founder-friendly execution roadmap based on your project context.</p>
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to map your build path?</p>
+                  <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
+                    Generate roadmap
+                  </Button>
                 </div>
-                <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
-                  Generate roadmap
-                </Button>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">MVP Scope (Phase 1)</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Identifies core features to build first to test product-market fit, minimizing initial cost and complexity.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Phase 2 & Later Milestones</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Outline of subsequent updates, third-party integrations, scalability updates, and optimization phases.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Architecture Recommendations</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Clear guidance on frontend/backend hosting, database strategies, storage solutions, and auth systems.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Risk Assessment & Mitigation</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Checks for single points of failure, security concerns, timeline bottlenecks, and agency dependency risks.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
-                <h4 className="text-sm font-semibold text-text">Pro Tip: Project Context Alignment</h4>
-                <p className="text-sm text-secondary mt-1 leading-relaxed">
-                  Make sure your project details (stage, budget, timelines) are updated under project settings. The generator uses them directly to tailor the roadmap difficulty and complexity.
-                </p>
-              </div>
-            </div>
+              }
+              description="A detailed, founder-friendly execution roadmap based on your project context."
+              previewSections={[
+                {
+                  desc: 'Identifies core features to build first to test product-market fit, minimizing initial cost and complexity.',
+                  title: 'MVP Scope (Phase 1)',
+                },
+                {
+                  desc: 'Outline of subsequent updates, third-party integrations, scalability updates, and optimization phases.',
+                  title: 'Phase 2 & Later Milestones',
+                },
+                {
+                  desc: 'Clear guidance on frontend/backend hosting, database strategies, storage solutions, and auth systems.',
+                  title: 'Architecture Recommendations',
+                },
+                {
+                  desc: 'Checks for single points of failure, security concerns, timeline bottlenecks, and agency dependency risks.',
+                  title: 'Risk Assessment & Mitigation',
+                },
+              ]}
+              title="Expected Roadmap & Milestones"
+              whatItDoes="Turns your project context into a clear step-by-step technical delivery roadmap that is founder-friendly and developer-ready."
+              whatToProvide={[
+                'Product idea summary and target audience',
+                'Monetization model and expected stage',
+                'At least 3 core launch-critical features',
+              ]}
+              whatYouGet={[
+                'MVP Scope (Phase 1): Focus on the smallest set of features to validate your idea',
+                'Phase 2 & Later Milestones: Sequential path for scaling, analytics, and integrations',
+                'Architecture Decisions: Plain English technical recommendations for developer handoff',
+                'Risk Assessment: Mitigation tactics for team roles, timeline delays, and custom integrations',
+              ]}
+            />
           )}
-        </div>
+        </ModuleOutputPanel>
 
-        <aside className="space-y-5 xl:col-span-4">
-          <Surface tone="soft">
-            <ScrollText className="h-5 w-5 text-accent" />
-            <p className="mt-3 text-sm font-semibold text-text">Project context</p>
-            <div className="mt-3 space-y-3 text-sm leading-6 text-secondary">
-              <p>{getProjectOptionLabel.currentStage(project.currentStage)}</p>
-              <p>{getProjectOptionLabel.budgetRange(project.budgetRange)}</p>
-              <p>{getProjectOptionLabel.launchTimeline(project.launchTimeline)}</p>
-            </div>
-          </Surface>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+          <ProjectContextCard project={project} />
 
           <Surface tone="default">
             <SectionHeader
@@ -424,8 +406,8 @@ export const RoadmapPage = () => {
               )}
             </div>
           </Surface>
-        </aside>
-      </div>
+        </ModuleInputPanel>
+      </ModulePageShell>
     </div>
   );
 };

@@ -17,6 +17,10 @@ import {
   PageHeader,
   Select,
   Textarea,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
@@ -395,8 +399,8 @@ export const RateValidatorPage = () => {
   );
 
   const handleGenerate = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+    async (event?: FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
 
       if (!accessToken || !id || !formState) {
         return;
@@ -534,8 +538,8 @@ export const RateValidatorPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="space-y-6 xl:col-span-4">
+      <ModulePageShell>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Proposal input</CardTitle>
@@ -714,9 +718,9 @@ export const RateValidatorPage = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ModuleInputPanel>
 
-        <div className="space-y-6 xl:col-span-8">
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -1041,60 +1045,51 @@ export const RateValidatorPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
-              <div className="border-b border-border pb-4">
-                <h3 className="text-lg font-semibold text-text">Expected Verdict & Risk Analysis</h3>
-                <p className="text-sm text-muted mt-1">Once you paste a developer's proposal on the left, we will analyze and display:</p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Price Fairness Verdict</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Comparison of quoted developer/agency rates against market standards for the specified location and developer seniority.
-                  </p>
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to validate a proposal?</p>
+                  <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
+                    Validate proposal
+                  </Button>
                 </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Timeline Realism</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Audit of delivery timeline assumptions to ensure they are realistic for the scope, identifying optimistic or high-risk schedules.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Missing Deliverables</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Detection of critical gaps in the proposal (e.g. testing, deployment, source code handoff, design system, API docs).
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Negotiation Script</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Drafted email/message template structured to address missing items, push back on rates, or clarify scope terms professionally.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
-                <h4 className="text-sm font-semibold text-text">Pro Tip: Proposal Quality</h4>
-                <p className="text-sm text-secondary mt-1 leading-relaxed">
-                  Pasting the complete document (including milestones, terms, and notes) ensures the highest confidence assessment. Avoid summarizing the text manually.
-                </p>
-              </div>
-            </div>
+              }
+              description="An objective second-opinion audit of developer rates, timelines, deliverables, and terms."
+              previewSections={[
+                {
+                  desc: 'Comparison of quoted developer/agency rates against market standards for the specified location and developer seniority.',
+                  title: 'Price Fairness Verdict',
+                },
+                {
+                  desc: 'Audit of delivery timeline assumptions to ensure they are realistic for the scope, identifying optimistic or high-risk schedules.',
+                  title: 'Timeline Realism',
+                },
+                {
+                  desc: 'Detection of critical gaps in the proposal (e.g. testing, deployment, source code handoff, design system, API docs).',
+                  title: 'Missing Deliverables',
+                },
+                {
+                  desc: 'Drafted email/message template structured to address missing items, push back on rates, or clarify scope terms professionally.',
+                  title: 'Negotiation Script',
+                },
+              ]}
+              title="Expected Proposal Audit Output"
+              whatItDoes="Analyzes a vendor or freelancer quote to see if rates match market expectations, highlights timeline risks, lists missing items, and provides negotiation text."
+              whatToProvide={[
+                'Raw quote or proposal text pasted in the input',
+                'Hiring market/country (e.g. India, USA, Eastern Europe)',
+                'Timeline details or target deadlines',
+              ]}
+              whatYouGet={[
+                'Fairness Verdict: Market standard comparison for the role seniority and region',
+                'Timeline Audit: Risk factors and realism scoring of delivery commitments',
+                'Gap Analysis: Highlights missing deliverables like tests, handoff, or support',
+                'Negotiation Copy: Ready-to-send script to push back on terms or rates',
+              ]}
+            />
           )}
-        </div>
-      </div>
+        </ModuleOutputPanel>
+      </ModulePageShell>
     </div>
   );
 };

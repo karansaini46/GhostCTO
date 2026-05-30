@@ -19,6 +19,10 @@ import {
   Tabs,
   Textarea,
   type TabItem,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
@@ -998,8 +1002,8 @@ export const TechnicalSpecPage = () => {
   );
 
   const handleGenerate = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+    async (event?: FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
 
       if (!accessToken || !id) {
         return;
@@ -1180,8 +1184,8 @@ export const TechnicalSpecPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="space-y-6 xl:col-span-4">
+      <ModulePageShell>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Feature inputs</CardTitle>
@@ -1372,9 +1376,9 @@ export const TechnicalSpecPage = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ModuleInputPanel>
 
-        <div className="space-y-6 xl:col-span-8">
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -1493,60 +1497,51 @@ export const TechnicalSpecPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
-              <div className="border-b border-border pb-4">
-                <h3 className="text-lg font-semibold text-text">Expected Spec Sections & Output</h3>
-                <p className="text-sm text-muted mt-1">Provide feature inputs on the left to generate a comprehensive technical specification covering:</p>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Feature Overview & Goals</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Clear definition of the problem, targeted user outcome, project priorities, and what lies outside the project scope.
-                  </p>
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to write a comprehensive spec?</p>
+                  <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
+                    Create technical spec
+                  </Button>
                 </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">User Stories & Flows</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Step-by-step breakdown of user interactions, success scenarios, and error boundaries for each user role.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">API Endpoints Schema</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    HTTP endpoints, payload formats, error responses, authentication scopes, and copy-pasteable request/response JSON examples.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Database & Migration Plan</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Proposed entity fields, relationships, actor permissions, and background jobs or events triggered by operations.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
-                <h4 className="text-sm font-semibold text-text">Pro Tip: Specification Precision</h4>
-                <p className="text-sm text-secondary mt-1 leading-relaxed">
-                  Include edge cases (e.g. what happens if internet disconnects, or if a field is empty) under user outcome to ensure the generated spec covers all engineering blindspots.
-                </p>
-              </div>
-            </div>
+              }
+              description="A detailed, developer-ready blueprint that translates founder features into code instructions."
+              previewSections={[
+                {
+                  desc: 'Clear definition of the problem, targeted user outcome, project priorities, and what lies outside the project scope.',
+                  title: 'Feature Overview & Goals',
+                },
+                {
+                  desc: 'Step-by-step breakdown of user interactions, success scenarios, and error boundaries for each user role.',
+                  title: 'User Stories & Flows',
+                },
+                {
+                  desc: 'HTTP endpoints, payload formats, error responses, authentication scopes, and copy-pasteable request/response JSON examples.',
+                  title: 'API Endpoints Schema',
+                },
+                {
+                  desc: 'Proposed entity fields, relationships, actor permissions, and background jobs or events triggered by operations.',
+                  title: 'Database & Migration Plan',
+                },
+              ]}
+              title="Expected Spec Sections & Output"
+              whatItDoes="A clear technical spec prevents developers from building the wrong thing by locking the outcome, rules, API shape, database changes, edge cases, and tests before work starts."
+              whatToProvide={[
+                'Feature name and targeted user outcome description',
+                'Roles involved, business rules, constraints, and success examples',
+                'At least 3 core inputs defined on the feature form',
+              ]}
+              whatYouGet={[
+                'Detailed User Outcome: Complete breakdown of goals and anti-goals',
+                'User Roles & Permissions: Access boundaries and authorization rules',
+                'API & Data Schemas: JSON request/responses and entity relationships',
+                'Edge Cases & Error States: Failure path mitigations for robust engineering',
+              ]}
+            />
           )}
-        </div>
-      </div>
+        </ModuleOutputPanel>
+      </ModulePageShell>
     </div>
   );
 };

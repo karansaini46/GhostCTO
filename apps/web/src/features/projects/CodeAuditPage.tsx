@@ -16,6 +16,10 @@ import {
   LoadingState,
   PageHeader,
   Textarea,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
@@ -363,6 +367,7 @@ const CodeAuditPage = () => {
   const [documents, setDocuments] = useState<ProjectDocument[]>([]);
   const [generatedDocument, setGeneratedDocument] = useState<ProjectDocument | null>(null);
   const [generatedAudit, setGeneratedAudit] = useState<CodeAuditOutput | null>(null);
+  const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [copyLabel, setCopyLabel] = useState<string | null>(null);
   const [formState, setFormState] = useState<FormState>(initialFormState);
@@ -413,8 +418,16 @@ const CodeAuditPage = () => {
     [documents],
   );
 
-  const activeDocument = generatedDocument ?? historyDocuments[0]?.document ?? null;
-  const activeAudit = generatedAudit ?? historyDocuments[0]?.audit ?? null;
+  const activeDocument =
+    documents.find((doc) => doc.id === selectedDocumentId) ??
+    generatedDocument ??
+    historyDocuments[0]?.document ??
+    null;
+
+  const activeAudit = useMemo(() => {
+    if (!activeDocument) return null;
+    return getDocumentCodeAudit(activeDocument);
+  }, [activeDocument]);
   const severityGroups = useMemo(
     () =>
       severityOrder.map((severity) => ({
@@ -431,8 +444,8 @@ const CodeAuditPage = () => {
     }, 1800);
   }, []);
 
-  const handleSubmit = async (event: FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
+  const handleSubmit = async (event?: FormEvent<HTMLFormElement>) => {
+    event?.preventDefault();
 
     if (!accessToken || !id) {
       return;
@@ -547,7 +560,9 @@ const CodeAuditPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <Card>
+      <ModulePageShell>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+          <Card>
         <CardHeader>
           <CardTitle>Audit source</CardTitle>
           <CardDescription>
@@ -657,6 +672,48 @@ const CodeAuditPage = () => {
         </CardContent>
       </Card>
 
+      <Card>
+        <CardHeader>
+          <CardTitle>Saved history</CardTitle>
+          <CardDescription>Recent code audits for this project.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {historyDocuments.length > 0 ? (
+            historyDocuments.map(({ document, audit }) => {
+              const isActive = document.id === activeDocument?.id;
+              return (
+                <div
+                  className={`rounded-panel border p-3 shadow-sm transition-colors cursor-pointer text-left ${
+                    isActive
+                      ? 'border-accent/40 bg-accent/10'
+                      : 'border-subtle bg-surface-card hover:border-accent/35'
+                  }`}
+                  key={document.id}
+                  onClick={() => setSelectedDocumentId(document.id)}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-text">{document.title}</p>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                        {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
+                      </p>
+                    </div>
+                    <Badge variant={riskTone[audit.overviewRiskLevel]}>
+                      {audit.overviewRiskLevel.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted">{audit.executiveSummary}</p>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm leading-6 text-muted">No saved audits yet.</p>
+          )}
+        </CardContent>
+      </Card>
+    </ModuleInputPanel>
+
+    <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
       {activeAudit ? (
         <div className="space-y-6">
           {activeDocument ? (
@@ -991,45 +1048,52 @@ const CodeAuditPage = () => {
               )}
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Saved history</CardTitle>
-              <CardDescription>Recent code audits for this project.</CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-3">
-              {historyDocuments.length > 0 ? (
-                historyDocuments.map(({ document, audit }) => (
-                  <div
-                    className="rounded-panel border border-subtle bg-surface-card shadow-sm p-3"
-                    key={document.id}
-                  >
-                    <div className="flex flex-wrap items-center justify-between gap-3">
-                      <div>
-                        <p className="text-sm font-medium text-text">{document.title}</p>
-                        <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                          {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
-                        </p>
-                      </div>
-                      <Badge variant={riskTone[audit.overviewRiskLevel]}>
-                        {audit.overviewRiskLevel.toUpperCase()}
-                      </Badge>
-                    </div>
-                    <p className="mt-2 text-sm leading-6 text-muted">{audit.executiveSummary}</p>
-                  </div>
-                ))
-              ) : (
-                <p className="text-sm leading-6 text-muted">No saved audits yet.</p>
-              )}
-            </CardContent>
-          </Card>
         </div>
       ) : (
-        <EmptyState
-          description="Paste a repository URL or code snippet to generate a founder-friendly code review."
-          title="No audit generated yet"
-        />
-      )}
+        <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to run an audit?</p>
+                  <Button isLoading={isGenerating} onClick={() => handleSubmit()}>
+                    Run audit
+                  </Button>
+                </div>
+              }
+              description="An advisory technical scan identifying security gaps, scalability limits, and setup concerns."
+              previewSections={[
+                {
+                  desc: 'A high-level overview highlighting key codebase strengths, critical warnings, and next steps.',
+                  title: 'Executive Summary',
+                },
+                {
+                  desc: 'File structure stats, primary languages, dependency health indicators, and setup ease.',
+                  title: 'Audit Snapshot',
+                },
+                {
+                  desc: 'Severe, High, Medium, and Low severity issues with evidence snippets and developer remedies.',
+                  title: 'Vulnerability Findings',
+                },
+                {
+                  desc: 'Copy-pasteable checklist of prioritized action items you can hand to developers to patch the code.',
+                  title: 'Remediation Actions',
+                },
+              ]}
+              title="Expected Code Audit Output"
+              whatItDoes="Reviews your public GitHub repository or pasted source code, pointing out technical debt, configuration errors, security holes, and structural risks in plain co-founder English."
+              whatToProvide={[
+                'Public GitHub repository URL (private repos not supported)',
+                'Or pasted code snippets of your main controller, config, or routing files',
+              ]}
+              whatYouGet={[
+                'Vulnerability Audit: Line-by-line flags for secrets leakage, bad authentication, SQLi risk',
+                'Scalability & Hygiene Checks: Database queries layout, indexing gaps, hardcoding warnings',
+                'Actionable Remediation: Direct instructions on how to patch the problems',
+                'Developer Questions: Targeted questions to ask your team to verify setup safety',
+              ]}
+            />
+          )}
+        </ModuleOutputPanel>
+      </ModulePageShell>
     </div>
   );
 };

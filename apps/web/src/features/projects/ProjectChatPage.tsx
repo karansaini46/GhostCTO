@@ -13,6 +13,9 @@ import {
   LoadingState,
   PageHeader,
   Textarea,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
 } from '../../components/ui';
 import { cn } from '../../lib/cn';
 import { ApiError } from '../../lib/api';
@@ -437,8 +440,9 @@ export const ProjectChatPage = () => {
         title="Talk through the next technical decision"
       />
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <Card className="min-w-0 xl:col-span-8">
+      <ModulePageShell>
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+          <Card className="min-w-0">
           <CardHeader className="border-b border-border pb-5">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
               <div>
@@ -555,8 +559,9 @@ export const ProjectChatPage = () => {
             </form>
           </CardContent>
         </Card>
+      </ModuleOutputPanel>
 
-        <aside className="space-y-4 xl:sticky xl:top-24 xl:self-start xl:col-span-4">
+      <ModuleInputPanel className="space-y-4 xl:sticky xl:top-24 xl:self-start" colSpan="col-span-12 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Project memory</CardTitle>
@@ -624,8 +629,8 @@ export const ProjectChatPage = () => {
               </div>
             </CardContent>
           </Card>
-        </aside>
-      </div>
+        </ModuleInputPanel>
+      </ModulePageShell>
     </div>
   );
 };

@@ -6,7 +6,6 @@ import {
   Badge,
   Button,
   CopyButton,
-  EmptyState,
   ErrorState,
   ExportButton,
   LoadingState,
@@ -15,6 +14,11 @@ import {
   ReportCard,
   SectionHeader,
   Surface,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
+  ProjectContextCard,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
@@ -289,8 +293,42 @@ export const DeveloperJdPage = () => {
         </Surface>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-12">
-        <div className="min-w-0 xl:col-span-8">
+      <ModulePageShell>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+          <ProjectContextCard project={project} />
+
+          <Surface tone="default">
+            <SectionHeader
+              description="Older versions stay available when you regenerate."
+              title="History"
+            />
+            <div className="mt-4 space-y-2">
+              {documents.length > 0 ? (
+                documents.map((document) => (
+                  <button
+                    className={
+                      document.id === selectedDocument?.id
+                        ? 'w-full rounded-md border border-accent bg-accent-soft p-3 text-left text-sm font-semibold text-text'
+                        : 'w-full rounded-md border border-subtle bg-surface-card p-3 text-left text-sm font-semibold text-secondary transition-colors hover:border-accent/35 hover:text-text'
+                    }
+                    key={document.id}
+                    onClick={() => setSelectedDocumentId(document.id)}
+                    type="button"
+                  >
+                    <span className="block">{document.title}</span>
+                    <span className="mt-1 block text-xs text-muted">
+                      v{document.version} · {formatDateTime(document.createdAt)}
+                    </span>
+                  </button>
+                ))
+              ) : (
+                <p className="text-sm leading-6 text-secondary">No saved brief versions yet.</p>
+              )}
+            </div>
+          </Surface>
+        </ModuleInputPanel>
+
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
           {selectedDocument?.content ? (
             <ReportCard
               actions={
@@ -325,107 +363,51 @@ export const DeveloperJdPage = () => {
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
           ) : (
-            <div className="rounded-lg border border-subtle bg-surface-card p-6 shadow-sm space-y-6">
-              <div className="border-b border-border pb-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div>
-                  <h3 className="text-lg font-semibold text-text">Expected Developer Brief & JD Output</h3>
-                  <p className="text-sm text-muted mt-1">A ready-to-publish developer brief tailored to your project architecture and timeline.</p>
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to brief a developer?</p>
+                  <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
+                    Create developer brief
+                  </Button>
                 </div>
-                <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
-                  Create developer brief
-                </Button>
-              </div>
-              <div className="grid gap-4 sm:grid-cols-2">
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Job Posting Copy & Intro</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Sleek, compelling position summary showing project context, candidate goals, and company mission.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Tech Stack & Required Skills</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Precise mapping of must-have tech stack skills, development workflows, and preferred background.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Interview Screening Questions</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    Custom questions to ask candidates during phone calls or technical evaluations with expected strong signals.
-                  </p>
-                </div>
-                <div className="rounded-panel border border-dashed border-border p-4 bg-surface/50">
-                  <div className="flex items-center gap-2 text-accent font-semibold">
-                    <span className="h-2 w-2 rounded-full bg-accent" />
-                    <span className="text-sm">Practical Coding Test Task</span>
-                  </div>
-                  <p className="mt-2 text-xs text-muted leading-relaxed">
-                    A short, relevant, and objective coding challenge to assess candidate proficiency and communication style.
-                  </p>
-                </div>
-              </div>
-
-              <div className="rounded-panel border border-subtle bg-accent-soft p-4">
-                <h4 className="text-sm font-semibold text-text">Pro Tip: Brief Accuracy</h4>
-                <p className="text-sm text-secondary mt-1 leading-relaxed">
-                  Make sure your tech stack choice has been saved in the Tech Stack Advisor before generating the brief. This aligns technical screening closely with your real dependencies.
-                </p>
-              </div>
-            </div>
-          )}
-        </div>
-
-        <aside className="space-y-5 xl:col-span-4">
-          <Surface tone="soft">
-            <BriefcaseBusiness className="h-5 w-5 text-accent" />
-            <p className="mt-3 text-sm font-semibold text-text">Hiring context</p>
-            <div className="mt-3 space-y-3 text-sm leading-6 text-secondary">
-              <p>{getProjectOptionLabel.currentStage(project.currentStage)}</p>
-              <p>{getProjectOptionLabel.budgetRange(project.budgetRange)}</p>
-              <p>{getProjectOptionLabel.founderTechnicalLevel(project.founderTechnicalLevel)}</p>
-            </div>
-          </Surface>
-
-          <Surface tone="default">
-            <SectionHeader
-              description="Older versions stay available when you regenerate."
-              title="History"
+              }
+              description="A ready-to-publish developer brief tailored to your project architecture and timeline."
+              previewSections={[
+                {
+                  desc: 'Sleek, compelling position summary showing project context, candidate goals, and company mission.',
+                  title: 'Job Posting Copy & Intro',
+                },
+                {
+                  desc: 'Precise mapping of must-have tech stack skills, development workflows, and preferred background.',
+                  title: 'Tech Stack & Required Skills',
+                },
+                {
+                  desc: 'Custom questions to ask candidates during phone calls or technical evaluations with expected strong signals.',
+                  title: 'Interview Screening Questions',
+                },
+                {
+                  desc: 'A short, relevant, and objective coding challenge to assess candidate proficiency and communication style.',
+                  title: 'Practical Coding Test Task',
+                },
+              ]}
+              title="Expected Developer Brief & JD Output"
+              whatItDoes="Turns the saved project context into a professional hiring brief with role scope, must-have skills, screening questions, a test task, and agency red flags."
+              whatToProvide={[
+                'Product idea summary and target audience',
+                'Hiring context (stage, budget, timelines)',
+                'A saved tech stack recommendation from Stack Advisor',
+              ]}
+              whatYouGet={[
+                'Job Posting Copy: Compelling intro showing project context and goals',
+                'Tech Stack Skills: Precise mapping of must-have skills and preferred backgrounds',
+                'Screening Questions: Custom questions to ask during phone calls',
+                'Practical Coding Task: Short, relevant coding challenge to assess proficiency',
+              ]}
             />
-            <div className="mt-4 space-y-2">
-              {documents.length > 0 ? (
-                documents.map((document) => (
-                  <button
-                    className={
-                      document.id === selectedDocument?.id
-                        ? 'w-full rounded-md border border-accent bg-accent-soft p-3 text-left text-sm font-semibold text-text'
-                        : 'w-full rounded-md border border-subtle bg-surface-card p-3 text-left text-sm font-semibold text-secondary transition-colors hover:border-accent/35 hover:text-text'
-                    }
-                    key={document.id}
-                    onClick={() => setSelectedDocumentId(document.id)}
-                    type="button"
-                  >
-                    <span className="block">{document.title}</span>
-                    <span className="mt-1 block text-xs text-muted">
-                      v{document.version} · {formatDateTime(document.createdAt)}
-                    </span>
-                  </button>
-                ))
-              ) : (
-                <p className="text-sm leading-6 text-secondary">No saved brief versions yet.</p>
-              )}
-            </div>
-          </Surface>
-        </aside>
-      </div>
+          )}
+        </ModuleOutputPanel>
+      </ModulePageShell>
     </div>
   );
 };
