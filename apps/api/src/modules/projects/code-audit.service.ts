@@ -164,7 +164,20 @@ const buildCodeAuditPrompt = (
     'Every finding must include severity, explanation, evidence, and a suggested fix.',
     'The findings array must be sorted by priority from highest to lowest: p0 first, then p1, then p2, and then p3.',
     'You must include at least one highest-priority finding (priority: \'p0\') in the findings array, even if the codebase has no severe issues (classify the most important finding as p0).',
-    'Each of the arrays criticalRisks, rushedWorkSignals, scalabilityIssues, securityIssues, and maintainabilityIssues must contain at least 1 finding. If a category has no major issues, include a low-severity or informational finding/best-practice recommendation for that category so that the list is never empty.',
+    'To pass schema validation, you must strictly satisfy the following array length constraints (use general coding best practices, minor observations, or informational items as fillers if you do not have enough real issues to report):',
+    '- findings: between 4 and 16 items (must include at least one p0 item, and be sorted from p0 down to p3)',
+    '- criticalRisks: between 1 and 8 items',
+    '- rushedWorkSignals: between 1 and 8 items',
+    '- scalabilityIssues: between 1 and 8 items',
+    '- securityIssues: between 1 and 8 items',
+    '- maintainabilityIssues: between 1 and 8 items',
+    '- acceptableAreas: between 2 and 10 items',
+    '- recommendedNextActions: between 3 and 10 items',
+    '- questionsForDeveloper: between 3 and 12 items',
+    '- assumptions: between 1 and 6 items',
+    '- cards: between 2 and 8 items',
+    '- nextSteps: between 2 and 8 items',
+    '- risks: between 1 and 6 items',
   ];
 
   const task = input.repoUrl
