@@ -162,6 +162,9 @@ const buildCodeAuditPrompt = (
     'Do not claim full security certification, a complete penetration test, or certainty that the code is safe.',
     'Use direct, founder-friendly language and clearly separate facts, assumptions, and recommendations.',
     'Every finding must include severity, explanation, evidence, and a suggested fix.',
+    'The findings array must be sorted by priority from highest to lowest: p0 first, then p1, then p2, and then p3.',
+    'You must include at least one highest-priority finding (priority: \'p0\') in the findings array, even if the codebase has no severe issues (classify the most important finding as p0).',
+    'Each of the arrays criticalRisks, rushedWorkSignals, scalabilityIssues, securityIssues, and maintainabilityIssues must contain at least 1 finding. If a category has no major issues, include a low-severity or informational finding/best-practice recommendation for that category so that the list is never empty.',
   ];
 
   const task = input.repoUrl
