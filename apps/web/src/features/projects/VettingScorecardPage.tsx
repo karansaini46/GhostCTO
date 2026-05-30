@@ -626,167 +626,6 @@ export const VettingScorecardPage = () => {
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Candidate input</CardTitle>
-              <CardDescription>
-                Paste the available proof, proposal, and your concern so the scorecard can stay
-                grounded.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-4" onSubmit={handleGenerate}>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    error={formErrors.subjectName}
-                    label="Name"
-                    onChange={(event) => updateFormField('subjectName', event.target.value)}
-                    placeholder="Agency or developer name"
-                    value={formState.subjectName}
-                  />
-                  <Input
-                    error={formErrors.websiteUrl}
-                    label="Website or profile URL"
-                    onChange={(event) => updateFormField('websiteUrl', event.target.value)}
-                    placeholder="https://example.com/profile"
-                    value={formState.websiteUrl}
-                  />
-                </div>
-                <Textarea
-                  className="min-h-[220px]"
-                  error={formErrors.portfolioText}
-                  label="Pasted portfolio"
-                  onChange={(event) => updateFormField('portfolioText', event.target.value)}
-                  placeholder="Paste case studies, profile text, project descriptions, testimonials, links copied as text, technology claims, or relevant background."
-                  value={formState.portfolioText}
-                />
-                <Textarea
-                  className="min-h-[240px]"
-                  error={formErrors.proposalText}
-                  label="Pasted proposal"
-                  onChange={(event) => updateFormField('proposalText', event.target.value)}
-                  placeholder="Paste the proposal, scope, pricing, milestones, timeline, assumptions, payment terms, and deliverables."
-                  value={formState.proposalText}
-                />
-                <Textarea
-                  className="min-h-[140px]"
-                  error={formErrors.founderConcern}
-                  label="Founder concern"
-                  onChange={(event) => updateFormField('founderConcern', event.target.value)}
-                  placeholder="What are you worried about before hiring them?"
-                  value={formState.founderConcern}
-                />
-                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <Button onClick={resetForm} type="button" variant="ghost">
-                    Reset
-                  </Button>
-                  <Button isLoading={isGenerating} type="submit">
-                    Generate scorecard
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Project context</CardTitle>
-              <CardDescription>Saved details used to judge fit and risk.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <DetailBlock label="Project" value={project.name} />
-              <DetailBlock
-                label="Budget"
-                value={getProjectOptionLabel.budgetRange(project.budgetRange)}
-              />
-              <DetailBlock
-                label="Launch timeline"
-                value={getProjectOptionLabel.launchTimeline(project.launchTimeline)}
-              />
-              <DetailBlock
-                label="Must-have features"
-                value={
-                  project.mustHaveFeatures.length
-                    ? formatBullets(project.mustHaveFeatures)
-                    : 'Not set'
-                }
-              />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Saved scorecards</CardTitle>
-              <CardDescription>
-                Previous agency and developer reviews for this project.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              {historyDocuments.length > 0 ? (
-                <div className="grid gap-3">
-                  {historyDocuments.map((document) => {
-                    const output = getDocumentScorecard(document);
-                    const request = getDocumentRequest(document);
-                    const isSelected = document.id === selectedDocumentId;
-
-                    return (
-                      <div
-                        className={`rounded-md border p-4 transition-colors ${
-                          isSelected
-                            ? 'border-accent/40 bg-accent/10'
-                            : 'border-border bg-surface-raised'
-                        }`}
-                        key={document.id}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-sm font-semibold text-text">
-                                {request?.subjectName ?? document.title}
-                              </h3>
-                              {output ? (
-                                <Badge variant={recommendationTone[output.finalRecommendation]}>
-                                  {recommendationLabels[output.finalRecommendation]}
-                                </Badge>
-                              ) : (
-                                <Badge variant={isSelected ? 'accent' : 'neutral'}>
-                                  {isSelected ? 'Active' : 'Saved'}
-                                </Badge>
-                              )}
-                            </div>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                              {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
-                            </p>
-                          </div>
-                          <Button
-                            onClick={() => handleSelectDocument(document)}
-                            size="sm"
-                            variant="secondary"
-                          >
-                            Open
-                          </Button>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-muted">
-                          {document.summary ?? 'No summary available.'}
-                        </p>
-                        <div className="mt-3 flex flex-wrap gap-2">
-                          {output ? <Badge>{output.overallScore}/10</Badge> : null}
-                          {request?.websiteUrl ? <Badge>{request.websiteUrl}</Badge> : null}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <EmptyState
-                  description="Paste the first portfolio and proposal to create a saved hiring scorecard."
-                  title="No scorecards yet"
-                />
-              )}
-            </CardContent>
-          </Card>
-        </ModuleInputPanel>
 
         {hasOutput ? (
           <ModuleOutputPanel colSpan="col-span-12">
@@ -1100,6 +939,168 @@ export const VettingScorecardPage = () => {
           )}
         </ModuleOutputPanel>
       ) : null}
+
+      <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Candidate input</CardTitle>
+            <CardDescription>
+              Paste the available proof, proposal, and your concern so the scorecard can stay
+              grounded.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid gap-4" onSubmit={handleGenerate}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  error={formErrors.subjectName}
+                  label="Name"
+                  onChange={(event) => updateFormField('subjectName', event.target.value)}
+                  placeholder="Agency or developer name"
+                  value={formState.subjectName}
+                />
+                <Input
+                  error={formErrors.websiteUrl}
+                  label="Website or profile URL"
+                  onChange={(event) => updateFormField('websiteUrl', event.target.value)}
+                  placeholder="https://example.com/profile"
+                  value={formState.websiteUrl}
+                />
+              </div>
+              <Textarea
+                className="min-h-[220px]"
+                error={formErrors.portfolioText}
+                label="Pasted portfolio"
+                onChange={(event) => updateFormField('portfolioText', event.target.value)}
+                placeholder="Paste case studies, profile text, project descriptions, testimonials, links copied as text, technology claims, or relevant background."
+                value={formState.portfolioText}
+              />
+              <Textarea
+                className="min-h-[240px]"
+                error={formErrors.proposalText}
+                label="Pasted proposal"
+                onChange={(event) => updateFormField('proposalText', event.target.value)}
+                placeholder="Paste the proposal, scope, pricing, milestones, timeline, assumptions, payment terms, and deliverables."
+                value={formState.proposalText}
+              />
+              <Textarea
+                className="min-h-[140px]"
+                error={formErrors.founderConcern}
+                label="Founder concern"
+                onChange={(event) => updateFormField('founderConcern', event.target.value)}
+                placeholder="What are you worried about before hiring them?"
+                value={formState.founderConcern}
+              />
+              <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <Button onClick={resetForm} type="button" variant="ghost">
+                  Reset
+                </Button>
+                <Button isLoading={isGenerating} type="submit">
+                  Generate scorecard
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Project context</CardTitle>
+            <CardDescription>Saved details used to judge fit and risk.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <DetailBlock label="Project" value={project.name} />
+            <DetailBlock
+              label="Budget"
+              value={getProjectOptionLabel.budgetRange(project.budgetRange)}
+            />
+            <DetailBlock
+              label="Launch timeline"
+              value={getProjectOptionLabel.launchTimeline(project.launchTimeline)}
+            />
+            <DetailBlock
+              label="Must-have features"
+              value={
+                project.mustHaveFeatures.length
+                  ? formatBullets(project.mustHaveFeatures)
+                  : 'Not set'
+              }
+            />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Saved scorecards</CardTitle>
+            <CardDescription>
+              Previous agency and developer reviews for this project.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {historyDocuments.length > 0 ? (
+              <div className="grid gap-3">
+                {historyDocuments.map((document) => {
+                  const output = getDocumentScorecard(document);
+                  const request = getDocumentRequest(document);
+                  const isSelected = document.id === selectedDocumentId;
+
+                  return (
+                    <div
+                      className={`rounded-md border p-4 transition-colors ${
+                        isSelected
+                          ? 'border-accent/40 bg-accent/10'
+                          : 'border-border bg-surface-raised'
+                      }`}
+                      key={document.id}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-semibold text-text">
+                              {request?.subjectName ?? document.title}
+                            </h3>
+                            {output ? (
+                              <Badge variant={recommendationTone[output.finalRecommendation]}>
+                                {recommendationLabels[output.finalRecommendation]}
+                              </Badge>
+                            ) : (
+                              <Badge variant={isSelected ? 'accent' : 'neutral'}>
+                                {isSelected ? 'Active' : 'Saved'}
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                            {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => handleSelectDocument(document)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Open
+                        </Button>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-muted">
+                        {document.summary ?? 'No summary available.'}
+                      </p>
+                      <div className="mt-3 flex flex-wrap gap-2">
+                        {output ? <Badge>{output.overallScore}/10</Badge> : null}
+                        {request?.websiteUrl ? <Badge>{request.websiteUrl}</Badge> : null}
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                description="Paste the first portfolio and proposal to create a saved hiring scorecard."
+                title="No scorecards yet"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </ModuleInputPanel>
 
       {!hasOutput ? (
         <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">

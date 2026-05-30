@@ -1187,198 +1187,6 @@ export const TechnicalSpecPage = () => {
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
-          <Card>
-            <CardHeader>
-              <CardTitle>Feature inputs</CardTitle>
-              <CardDescription>
-                Use concrete rules, roles, and examples so the spec reflects the build you actually
-                want.
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form className="grid gap-4" onSubmit={handleGenerate}>
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <Input
-                    error={formErrors.featureName}
-                    hint="Describe it to a developer."
-                    label="Feature name"
-                    onChange={(event) => updateFormField('featureName', event.target.value)}
-                    placeholder="Example: Founder onboarding checklist"
-                    value={formState.featureName}
-                  />
-                  <Select
-                    label="Priority"
-                    onChange={(event) =>
-                      updateFormField('priority', event.target.value as TechnicalSpecPriority)
-                    }
-                    value={formState.priority}
-                  >
-                    {priorityOptions.map((option) => (
-                      <option key={option.value} value={option.value}>
-                        {option.label}
-                      </option>
-                    ))}
-                  </Select>
-                </div>
-                <Textarea
-                  error={formErrors.desiredUserOutcome}
-                  hint="State who succeeds, what they can do afterward, and what problem is removed."
-                  label="Desired user outcome"
-                  onChange={(event) => updateFormField('desiredUserOutcome', event.target.value)}
-                  placeholder="Example: A founder can complete onboarding without a call and leave with enough context for the workspace to recommend the next build step."
-                  value={formState.desiredUserOutcome}
-                />
-                <Textarea
-                  error={formErrors.userRoles}
-                  hint="One role per line. Include customers, admins, founders, reviewers, or operators who touch the flow."
-                  label="User roles"
-                  onChange={(event) => updateFormField('userRoles', event.target.value)}
-                  placeholder={'Founder\nProject owner\nWorkspace admin'}
-                  value={formState.userRoles}
-                />
-                <Textarea
-                  error={formErrors.businessRules}
-                  hint="One rule per line. Include required decisions, limits, eligibility, and approval rules."
-                  label="Business rules"
-                  onChange={(event) => updateFormField('businessRules', event.target.value)}
-                  placeholder={
-                    'A founder cannot generate the spec until all required project context is complete.\nSaved specs must remain available in document history for later review.'
-                  }
-                  value={formState.businessRules}
-                />
-                <Textarea
-                  error={formErrors.constraints}
-                  hint="One constraint per line. Include budget, timeline, system, privacy, rollout, or team constraints."
-                  label="Constraints"
-                  onChange={(event) => updateFormField('constraints', event.target.value)}
-                  placeholder={
-                    'Must work with the existing authenticated project workspace.\nDo not require a new third-party service for the first release.'
-                  }
-                  value={formState.constraints}
-                />
-                <Textarea
-                  error={formErrors.examples}
-                  hint="One example per line. Use real inputs, outputs, or decisions that should shape the spec."
-                  label="Examples"
-                  onChange={(event) => updateFormField('examples', event.target.value)}
-                  placeholder={
-                    'If a founder enters only a feature title, the form should ask for more detail.\nIf a saved spec is opened later, the same structured sections should be available.'
-                  }
-                  value={formState.examples}
-                />
-                <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
-                  <p className="text-sm leading-6 text-muted">
-                    Short requests are blocked so the output has enough detail for implementation.
-                  </p>
-                  <Button isLoading={isGenerating} type="submit">
-                    Generate spec
-                  </Button>
-                </div>
-              </form>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Project context</CardTitle>
-              <CardDescription>Current project details used to anchor the spec.</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              <DetailBlock label="Project" value={project.name} />
-              <DetailBlock
-                label="Stage"
-                value={getProjectOptionLabel.currentStage(project.currentStage)}
-              />
-              <DetailBlock
-                label="Budget"
-                value={getProjectOptionLabel.budgetRange(project.budgetRange)}
-              />
-              <DetailBlock
-                label="Technical level"
-                value={getProjectOptionLabel.founderTechnicalLevel(project.founderTechnicalLevel)}
-              />
-              <DetailBlock label="Target customer" value={project.targetCustomer ?? 'Not set'} />
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Saved document history</CardTitle>
-              <CardDescription>Technical specs generated for this project.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              {historyDocuments.length > 0 ? (
-                <div className="grid gap-3">
-                  {historyDocuments.map((document) => {
-                    const isSelected = document.id === selectedDocumentId;
-
-                    return (
-                      <div
-                        className={`rounded-md border p-4 transition-colors ${
-                          isSelected
-                            ? 'border-accent/40 bg-accent/10'
-                            : 'border-border bg-surface-raised'
-                        }`}
-                        key={document.id}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="flex flex-wrap items-center gap-2">
-                              <h3 className="text-sm font-semibold text-text">{document.title}</h3>
-                              <Badge variant={isSelected ? 'accent' : 'neutral'}>
-                                {isSelected ? 'Active' : 'Saved'}
-                              </Badge>
-                            </div>
-                            <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                              {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
-                            </p>
-                          </div>
-                          <Button
-                            onClick={() => handleSelectDocument(document)}
-                            size="sm"
-                            variant="secondary"
-                          >
-                            Open
-                          </Button>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-muted">
-                          {document.summary ?? 'No summary available.'}
-                        </p>
-                        {document.content ? (
-                          <div className="mt-3 flex flex-wrap gap-2">
-                            <Button
-                              onClick={async () => {
-                                await copyText(document.content ?? '');
-                                setCopiedLabel('Saved spec');
-                              }}
-                              size="sm"
-                              variant="ghost"
-                            >
-                              Copy
-                            </Button>
-                            <Button
-                              onClick={() => exportMarkdown(document.title, document.content ?? '')}
-                              size="sm"
-                              variant="ghost"
-                            >
-                              Export
-                            </Button>
-                          </div>
-                        ) : null}
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <EmptyState
-                  description="A clear technical spec prevents developers from building the wrong thing by locking the outcome, rules, API shape, data changes, edge cases, and tests before work starts."
-                  title="No technical specs yet"
-                />
-              )}
-            </CardContent>
-          </Card>
-        </ModuleInputPanel>
 
         {hasOutput ? (
           <ModuleOutputPanel colSpan="col-span-12">
@@ -1504,6 +1312,199 @@ export const TechnicalSpecPage = () => {
           )}
         </ModuleOutputPanel>
       ) : null}
+
+      <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
+        <Card>
+          <CardHeader>
+            <CardTitle>Feature inputs</CardTitle>
+            <CardDescription>
+              Use concrete rules, roles, and examples so the spec reflects the build you actually
+              want.
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <form className="grid gap-4" onSubmit={handleGenerate}>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <Input
+                  error={formErrors.featureName}
+                  hint="Describe it to a developer."
+                  label="Feature name"
+                  onChange={(event) => updateFormField('featureName', event.target.value)}
+                  placeholder="Example: Founder onboarding checklist"
+                  value={formState.featureName}
+                />
+                <Select
+                  label="Priority"
+                  onChange={(event) =>
+                    updateFormField('priority', event.target.value as TechnicalSpecPriority)
+                  }
+                  value={formState.priority}
+                >
+                  {priorityOptions.map((option) => (
+                    <option key={option.value} value={option.value}>
+                      {option.label}
+                    </option>
+                  ))}
+                </Select>
+              </div>
+              <Textarea
+                error={formErrors.desiredUserOutcome}
+                hint="State who succeeds, what they can do afterward, and what problem is removed."
+                label="Desired user outcome"
+                onChange={(event) => updateFormField('desiredUserOutcome', event.target.value)}
+                placeholder="Example: A founder can complete onboarding without a call and leave with enough context for the workspace to recommend the next build step."
+                value={formState.desiredUserOutcome}
+              />
+              <Textarea
+                error={formErrors.userRoles}
+                hint="One role per line. Include customers, admins, founders, reviewers, or operators who touch the flow."
+                label="User roles"
+                onChange={(event) => updateFormField('userRoles', event.target.value)}
+                placeholder={'Founder\nProject owner\nWorkspace admin'}
+                value={formState.userRoles}
+              />
+              <Textarea
+                error={formErrors.businessRules}
+                hint="One rule per line. Include required decisions, limits, eligibility, and approval rules."
+                label="Business rules"
+                onChange={(event) => updateFormField('businessRules', event.target.value)}
+                placeholder={
+                  'A founder cannot generate the spec until all required project context is complete.\nSaved specs must remain available in document history for later review.'
+                }
+                value={formState.businessRules}
+              />
+              <Textarea
+                error={formErrors.constraints}
+                hint="One constraint per line. Include budget, timeline, system, privacy, rollout, or team constraints."
+                label="Constraints"
+                onChange={(event) => updateFormField('constraints', event.target.value)}
+                placeholder={
+                  'Must work with the existing authenticated project workspace.\nDo not require a new third-party service for the first release.'
+                }
+                value={formState.constraints}
+              />
+              <Textarea
+                error={formErrors.examples}
+                hint="One example per line. Use real inputs, outputs, or decisions that should shape the spec."
+                label="Examples"
+                onChange={(event) => updateFormField('examples', event.target.value)}
+                placeholder={
+                  'If a founder enters only a feature title, the form should ask for more detail.\nIf a saved spec is opened later, the same structured sections should be available.'
+                }
+                value={formState.examples}
+              />
+              <div className="flex flex-col gap-3 border-t border-border pt-4 sm:flex-row sm:items-center sm:justify-between">
+                <p className="text-sm leading-6 text-muted">
+                  Short requests are blocked so the output has enough detail for implementation.
+                </p>
+                <Button isLoading={isGenerating} type="submit">
+                  Generate spec
+                </Button>
+              </div>
+            </form>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Project context</CardTitle>
+            <CardDescription>Current project details used to anchor the spec.</CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4">
+            <DetailBlock label="Project" value={project.name} />
+            <DetailBlock
+              label="Stage"
+              value={getProjectOptionLabel.currentStage(project.currentStage)}
+            />
+            <DetailBlock
+              label="Budget"
+              value={getProjectOptionLabel.budgetRange(project.budgetRange)}
+            />
+            <DetailBlock
+              label="Technical level"
+              value={getProjectOptionLabel.founderTechnicalLevel(project.founderTechnicalLevel)}
+            />
+            <DetailBlock label="Target customer" value={project.targetCustomer ?? 'Not set'} />
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Saved document history</CardTitle>
+            <CardDescription>Technical specs generated for this project.</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {historyDocuments.length > 0 ? (
+              <div className="grid gap-3">
+                {historyDocuments.map((document) => {
+                  const isSelected = document.id === selectedDocumentId;
+
+                  return (
+                    <div
+                      className={`rounded-md border p-4 transition-colors ${
+                        isSelected
+                          ? 'border-accent/40 bg-accent/10'
+                          : 'border-border bg-surface-raised'
+                      }`}
+                      key={document.id}
+                    >
+                      <div className="flex items-start justify-between gap-3">
+                        <div>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <h3 className="text-sm font-semibold text-text">{document.title}</h3>
+                            <Badge variant={isSelected ? 'accent' : 'neutral'}>
+                              {isSelected ? 'Active' : 'Saved'}
+                            </Badge>
+                          </div>
+                          <p className="mt-2 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                            {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
+                          </p>
+                        </div>
+                        <Button
+                          onClick={() => handleSelectDocument(document)}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Open
+                        </Button>
+                      </div>
+                      <p className="mt-3 text-sm leading-6 text-muted">
+                        {document.summary ?? 'No summary available.'}
+                      </p>
+                      {document.content ? (
+                        <div className="mt-3 flex flex-wrap gap-2">
+                          <Button
+                            onClick={async () => {
+                              await copyText(document.content ?? '');
+                              setCopiedLabel('Saved spec');
+                            }}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            Copy
+                          </Button>
+                          <Button
+                            onClick={() => exportMarkdown(document.title, document.content ?? '')}
+                            size="sm"
+                            variant="ghost"
+                          >
+                            Export
+                          </Button>
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            ) : (
+              <EmptyState
+                description="A clear technical spec prevents developers from building the wrong thing by locking the outcome, rules, API shape, data changes, edge cases, and tests before work starts."
+                title="No technical specs yet"
+              />
+            )}
+          </CardContent>
+        </Card>
+      </ModuleInputPanel>
 
       {!hasOutput ? (
         <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">

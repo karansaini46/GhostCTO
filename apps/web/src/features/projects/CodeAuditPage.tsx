@@ -563,157 +563,7 @@ const CodeAuditPage = () => {
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
-          <Card>
-        <CardHeader>
-          <CardTitle>Audit source</CardTitle>
-          <CardDescription>
-            Use a public GitHub repository URL or paste the code directly.
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-4">
-          <div className="inline-flex rounded-md bg-surface p-1 border border-border">
-            <button
-              onClick={() => setFormState((current) => ({ ...current, sourceMode: 'repo' }))}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${
-                formState.sourceMode === 'repo'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'text-secondary hover:text-text'
-              }`}
-              type="button"
-            >
-              Repository URL
-            </button>
-            <button
-              onClick={() => setFormState((current) => ({ ...current, sourceMode: 'snippet' }))}
-              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${
-                formState.sourceMode === 'snippet'
-                  ? 'bg-accent text-white shadow-sm'
-                  : 'text-secondary hover:text-text'
-              }`}
-              type="button"
-            >
-              Pasted code
-            </button>
-          </div>
 
-          <form className="space-y-4" onSubmit={handleSubmit}>
-            {formState.sourceMode === 'repo' ? (
-              <div className="space-y-2">
-                <label
-                  className="text-xs font-semibold uppercase tracking-[0.14em] text-muted"
-                  htmlFor="repo-url"
-                >
-                  Public GitHub repository URL
-                </label>
-                <Input
-                  id="repo-url"
-                  placeholder="https://github.com/owner/repository"
-                  value={formState.repoUrl}
-                  onChange={(event) =>
-                    setFormState((current) => ({ ...current, repoUrl: event.target.value }))
-                  }
-                />
-                {formErrors.repoUrl ? (
-                  <p className="text-sm text-danger">{formErrors.repoUrl}</p>
-                ) : null}
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <label
-                  className="text-xs font-semibold uppercase tracking-[0.14em] text-muted"
-                  htmlFor="code-snippet"
-                >
-                  Pasted code
-                </label>
-                <Textarea
-                  id="code-snippet"
-                  className="min-h-[280px]"
-                  placeholder="Paste the code you want reviewed."
-                  value={formState.codeSnippet}
-                  onChange={(event) =>
-                    setFormState((current) => ({ ...current, codeSnippet: event.target.value }))
-                  }
-                />
-                {formErrors.codeSnippet ? (
-                  <p className="text-sm text-danger">{formErrors.codeSnippet}</p>
-                ) : null}
-              </div>
-            )}
-
-            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
-              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                Review limits
-              </p>
-              <ul className="mt-2 space-y-2 text-sm leading-6 text-text">
-                <li>
-                  Public GitHub repositories only. Private repositories are not accessible in this
-                  version.
-                </li>
-                <li>
-                  This is an advisory review, not a penetration test, certification, or code
-                  warranty.
-                </li>
-                <li>
-                  Evidence is drawn from the supplied source only. Missing context will be called
-                  out explicitly.
-                </li>
-              </ul>
-            </div>
-
-            <div className="flex flex-wrap items-center justify-between gap-3">
-              <p className="max-w-2xl text-sm leading-6 text-muted">
-                Use the result to decide whether to keep investing, slow down, or ask for a clearer
-                fix plan.
-              </p>
-              <Button isLoading={isGenerating} type="submit">
-                Run audit
-              </Button>
-            </div>
-          </form>
-        </CardContent>
-      </Card>
-
-      <Card>
-        <CardHeader>
-          <CardTitle>Saved history</CardTitle>
-          <CardDescription>Recent code audits for this project.</CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-3">
-          {historyDocuments.length > 0 ? (
-            historyDocuments.map(({ document, audit }) => {
-              const isActive = document.id === activeDocument?.id;
-              return (
-                <div
-                  className={`rounded-panel border p-3 shadow-sm transition-colors cursor-pointer text-left ${
-                    isActive
-                      ? 'border-accent/40 bg-accent/10'
-                      : 'border-subtle bg-surface-card hover:border-accent/35'
-                  }`}
-                  key={document.id}
-                  onClick={() => setSelectedDocumentId(document.id)}
-                >
-                  <div className="flex flex-wrap items-center justify-between gap-3">
-                    <div>
-                      <p className="text-sm font-medium text-text">{document.title}</p>
-                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                        {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
-                      </p>
-                    </div>
-                    <Badge variant={riskTone[audit.overviewRiskLevel]}>
-                      {audit.overviewRiskLevel.toUpperCase()}
-                    </Badge>
-                  </div>
-                  <p className="mt-2 text-sm leading-6 text-muted">{audit.executiveSummary}</p>
-                </div>
-              );
-            })
-          ) : (
-            <p className="text-sm leading-6 text-muted">No saved audits yet.</p>
-          )}
-        </CardContent>
-      </Card>
-    </ModuleInputPanel>
 
     {hasOutput ? (
       <ModuleOutputPanel colSpan="col-span-12">
@@ -1057,6 +907,158 @@ const CodeAuditPage = () => {
       )}
     </ModuleOutputPanel>
     ) : null}
+
+    <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
+      <Card>
+        <CardHeader>
+          <CardTitle>Audit source</CardTitle>
+          <CardDescription>
+            Use a public GitHub repository URL or paste the code directly.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="inline-flex rounded-md bg-surface p-1 border border-border">
+            <button
+              onClick={() => setFormState((current) => ({ ...current, sourceMode: 'repo' }))}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${
+                formState.sourceMode === 'repo'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-secondary hover:text-text'
+              }`}
+              type="button"
+            >
+              Repository URL
+            </button>
+            <button
+              onClick={() => setFormState((current) => ({ ...current, sourceMode: 'snippet' }))}
+              className={`px-4 py-1.5 text-xs font-semibold rounded-sm transition-all ${
+                formState.sourceMode === 'snippet'
+                  ? 'bg-accent text-white shadow-sm'
+                  : 'text-secondary hover:text-text'
+              }`}
+              type="button"
+            >
+              Pasted code
+            </button>
+          </div>
+
+          <form className="space-y-4" onSubmit={handleSubmit}>
+            {formState.sourceMode === 'repo' ? (
+              <div className="space-y-2">
+                <label
+                  className="text-xs font-semibold uppercase tracking-[0.14em] text-muted"
+                  htmlFor="repo-url"
+                >
+                  Public GitHub repository URL
+                </label>
+                <Input
+                  id="repo-url"
+                  placeholder="https://github.com/owner/repository"
+                  value={formState.repoUrl}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, repoUrl: event.target.value }))
+                  }
+                />
+                {formErrors.repoUrl ? (
+                  <p className="text-sm text-danger">{formErrors.repoUrl}</p>
+                ) : null}
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <label
+                  className="text-xs font-semibold uppercase tracking-[0.14em] text-muted"
+                  htmlFor="code-snippet"
+                >
+                  Pasted code
+                </label>
+                <Textarea
+                  id="code-snippet"
+                  className="min-h-[280px]"
+                  placeholder="Paste the code you want reviewed."
+                  value={formState.codeSnippet}
+                  onChange={(event) =>
+                    setFormState((current) => ({ ...current, codeSnippet: event.target.value }))
+                  }
+                />
+                {formErrors.codeSnippet ? (
+                  <p className="text-sm text-danger">{formErrors.codeSnippet}</p>
+                ) : null}
+              </div>
+            )}
+
+            <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+              <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                Review limits
+              </p>
+              <ul className="mt-2 space-y-2 text-sm leading-6 text-text">
+                <li>
+                  Public GitHub repositories only. Private repositories are not accessible in this
+                  version.
+                </li>
+                <li>
+                  This is an advisory review, not a penetration test, certification, or code
+                  warranty.
+                </li>
+                <li>
+                  Evidence is drawn from the supplied source only. Missing context will be called
+                  out explicitly.
+                </li>
+              </ul>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-between gap-3">
+              <p className="max-w-2xl text-sm leading-6 text-muted">
+                Use the result to decide whether to keep investing, slow down, or ask for a clearer
+                fix plan.
+              </p>
+              <Button isLoading={isGenerating} type="submit">
+                Run audit
+              </Button>
+            </div>
+          </form>
+        </CardContent>
+      </Card>
+
+      <Card>
+        <CardHeader>
+          <CardTitle>Saved history</CardTitle>
+          <CardDescription>Recent code audits for this project.</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {historyDocuments.length > 0 ? (
+            historyDocuments.map(({ document, audit }) => {
+              const isActive = document.id === activeDocument?.id;
+              return (
+                <div
+                  className={`rounded-panel border p-3 shadow-sm transition-colors cursor-pointer text-left ${
+                    isActive
+                      ? 'border-accent/40 bg-accent/10'
+                      : 'border-subtle bg-surface-card hover:border-accent/35'
+                  }`}
+                  key={document.id}
+                  onClick={() => setSelectedDocumentId(document.id)}
+                >
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <p className="text-sm font-medium text-text">{document.title}</p>
+                      <p className="mt-1 text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                        {formatDate(document.createdAt)} at {formatTime(document.createdAt)}
+                      </p>
+                    </div>
+                    <Badge variant={riskTone[audit.overviewRiskLevel]}>
+                      {audit.overviewRiskLevel.toUpperCase()}
+                    </Badge>
+                  </div>
+                  <p className="mt-2 text-sm leading-6 text-muted">{audit.executiveSummary}</p>
+                </div>
+              );
+            })
+          ) : (
+            <p className="text-sm leading-6 text-muted">No saved audits yet.</p>
+          )}
+        </CardContent>
+      </Card>
+    </ModuleInputPanel>
 
     {!hasOutput ? (
       <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">

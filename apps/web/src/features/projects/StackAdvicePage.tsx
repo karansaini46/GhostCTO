@@ -472,6 +472,7 @@ export const StackAdvicePage = () => {
   );
 
   const currentOutput = activeOutput ?? selectedDocumentOutput;
+  const hasOutput = Boolean(currentOutput || isGenerating);
   const developerBrief = currentOutput ? buildDeveloperBrief(currentOutput) : '';
 
   const saveCopiedLabel = useCallback((label: string) => {
@@ -641,7 +642,480 @@ export const StackAdvicePage = () => {
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
       <ModulePageShell>
-        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
+        {hasOutput ? (
+          <ModuleOutputPanel colSpan="col-span-12">
+            {isGenerating ? (
+              <Card className="border-accent/30 bg-accent/5">
+                <CardContent className="space-y-3 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-text">Generating stack advice</p>
+                    <Badge variant="accent">Working</Badge>
+                  </div>
+                  <p className="text-sm leading-6 text-muted">{stackAdviceProgress[progressIndex]}</p>
+                  <div className="grid gap-2">
+                    {stackAdviceProgress.map((step, index) => (
+                      <div
+                        className={`
+                          rounded-md border px-3 py-2 text-sm leading-6
+                          ${
+                            index === progressIndex
+                              ? 'border-accent/40 bg-accent/10 text-text'
+                              : 'border-border bg-surface-raised text-muted'
+                          }
+                        `}
+                        key={step}
+                      >
+                        {step}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {selectedDocument && currentOutput ? (
+              <DocumentFeedbackPanel
+                accessToken={accessToken}
+                document={selectedDocument}
+                onFeedbackSaved={handleFeedbackSaved}
+                projectId={project.id}
+              />
+            ) : null}
+
+            {currentOutput ? (
+              <>
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Recommendation summary</CardTitle>
+                    <CardDescription>
+                      A clear recommendation you can hand to a developer.
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
+                    <div className="flex flex-col gap-3">
+                      {topCards.map((card) => (
+                        <div
+                          className={`rounded-md border p-4 ${toneStyles[card.tone]}`}
+                          key={`${card.title}-${card.value}`}
+                        >
+                          <div className="flex items-start justify-between gap-3">
+                            <div>
+                              <p className="text-xs uppercase tracking-normal opacity-70">
+                                {card.title}
+                              </p>
+                              <p className="mt-2 text-lg font-semibold tracking-normal">
+                                {card.value}
+                              </p>
+                            </div>
+                            <CopyButton
+                              label={card.title}
+                              onCopied={saveCopiedLabel}
+                              value={buildCopyText(
+                                card.title,
+                                `${card.value}\n${card.detail ?? ''}`.trim(),
+                              )}
+                            />
+                          </div>
+                          {card.detail ? (
+                            <p className="mt-3 text-sm leading-6 opacity-90">{card.detail}</p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                      <DetailBlock label="Executive summary" value={currentOutput.executiveSummary} />
+                      <DetailBlock label="Team assumption" value={currentOutput.teamAssumption} />
+                      <DetailBlock label="Scale view" value={currentOutput.scaleView} />
+                      <DetailBlock
+                        label="Overall recommendation"
+                        value={currentOutput.recommendation}
+                      />
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <CardTitle>Layer decisions</CardTitle>
+                        <CardDescription>
+                          Recommendation cards grouped by the implementation layer.
+                        </CardDescription>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          await copyText(buildDeveloperBrief(currentOutput));
+                          saveCopiedLabel('Developer brief');
+                        }}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        Copy brief
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="grid gap-4">
+                    {currentOutput.categories.map((category) => (
+                      <div
+                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                        key={category.category}
+                      >
+                        <div className="flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
+                          <div>
+                            <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                              {getStackLayerLabel(category.category)}
+                            </p>
+                            <h3 className="mt-1 text-sm font-semibold tracking-normal text-text">
+                              {category.recommendation}
+                            </h3>
+                          </div>
+                          <div className="flex flex-wrap gap-2">
+                            <Badge variant={getCategoryTone(category.costRiskLevel)}>
+                              Cost risk: {formatLabel(category.costRiskLevel)}
+                            </Badge>
+                            <Badge variant={getComplexityTone(category.operationalComplexityLevel)}>
+                              Complexity: {formatLabel(category.operationalComplexityLevel)}
+                            </Badge>
+                            <Button
+                              onClick={async () => {
+                                const text = [
+                                  `${getStackLayerLabel(category.category)}: ${category.recommendation}`,
+                                  '',
+                                  `Why it fits: ${category.whyItFits}`,
+                                  `Why not ${category.commonAlternative}: ${category.whyNotCommonAlternative}`,
+                                  `Cost risk: ${category.costRisk}`,
+                                  `Operational complexity: ${category.operationalComplexity}`,
+                                  `Founder explanation: ${category.founderExplanation}`,
+                                ].join('\n');
+                                await copyText(text);
+                                saveCopiedLabel(getStackLayerLabel(category.category));
+                              }}
+                              size="sm"
+                              variant="ghost"
+                            >
+                              Copy
+                            </Button>
+                          </div>
+                        </div>
+                        <div className="mt-4 flex flex-col gap-4">
+                          <DetailBlock label="Why it fits" value={category.whyItFits} />
+                          <DetailBlock
+                            label={`Why not ${category.commonAlternative}`}
+                            value={category.whyNotCommonAlternative}
+                          />
+                          <DetailBlock label="Cost risk" value={category.costRisk} />
+                          <DetailBlock
+                            label="Operational complexity"
+                            value={category.operationalComplexity}
+                          />
+                          <div>
+                            <DetailBlock
+                              label="Founder explanation"
+                              value={category.founderExplanation}
+                            />
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </CardContent>
+                </Card>
+
+                <Card>
+                  <CardHeader>
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div>
+                        <CardTitle>Tradeoff table</CardTitle>
+                        <CardDescription>
+                          A compact view of the main layer decisions and tradeoffs.
+                        </CardDescription>
+                      </div>
+                      <Button
+                        onClick={async () => {
+                          const rows = currentOutput.categories
+                            .map((category) =>
+                              [
+                                getStackLayerLabel(category.category),
+                                category.recommendation,
+                                category.commonAlternative,
+                                category.costRisk,
+                                category.operationalComplexity,
+                              ].join('\t'),
+                            )
+                            .join('\n');
+                          await copyText(
+                            [
+                              'Layer\tRecommendation\tAlternative\tCost risk\tOperational complexity',
+                              rows,
+                            ].join('\n'),
+                          );
+                          saveCopiedLabel('Tradeoff table');
+                        }}
+                        size="sm"
+                        variant="secondary"
+                      >
+                        Copy table
+                      </Button>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="overflow-x-auto">
+                    <table className="min-w-full border-separate border-spacing-0">
+                      <thead>
+                        <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-muted">
+                          <th className="border-b border-border px-3 py-3 font-medium">Layer</th>
+                          <th className="border-b border-border px-3 py-3 font-medium">
+                            Recommendation
+                          </th>
+                          <th className="border-b border-border px-3 py-3 font-medium">
+                            Alternative
+                          </th>
+                          <th className="border-b border-border px-3 py-3 font-medium">Cost risk</th>
+                          <th className="border-b border-border px-3 py-3 font-medium">
+                            Operational complexity
+                          </th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {currentOutput.categories.map((category) => (
+                          <tr key={category.category}>
+                            <td className="border-b border-border px-3 py-4 align-top text-sm text-text">
+                              {getStackLayerLabel(category.category)}
+                            </td>
+                            <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-text">
+                              {category.recommendation}
+                            </td>
+                            <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-muted">
+                              {category.commonAlternative}
+                            </td>
+                            <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-muted">
+                              {category.costRisk}
+                            </td>
+                            <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-muted">
+                              {category.operationalComplexity}
+                            </td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-col gap-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>What to tell your developer</CardTitle>
+                          <CardDescription>
+                            A plain-English copy block that keeps the build direction clear.
+                          </CardDescription>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            await copyText(developerBrief);
+                            saveCopiedLabel('Developer brief');
+                          }}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <pre className="whitespace-pre-wrap rounded-panel border border-subtle bg-surface-card shadow-sm p-4 text-sm leading-6 text-text">
+                        {developerBrief}
+                      </pre>
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>Full markdown report</CardTitle>
+                          <CardDescription>
+                            The generated report can be copied in one step or scanned in place.
+                          </CardDescription>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            await copyText(currentOutput.reportMarkdown);
+                            saveCopiedLabel('Full report');
+                          }}
+                          size="sm"
+                          variant="secondary"
+                        >
+                          Copy report
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
+                        <div className="mb-4 flex flex-wrap items-center gap-2">
+                          <Badge variant="accent">Markdown</Badge>
+                          {copiedLabel ? <Badge>{copiedLabel} copied</Badge> : null}
+                        </div>
+                        <div className="whitespace-pre-wrap text-sm leading-6 text-text">
+                          {currentOutput.reportMarkdown}
+                        </div>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                <div className="flex flex-col gap-6">
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>Assumptions</CardTitle>
+                          <CardDescription>
+                            What the recommendation is assuming about the project.
+                          </CardDescription>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            const text = currentOutput.assumptions
+                              .map((assumption) =>
+                                assumption.reason
+                                  ? `- ${assumption.text} (${assumption.reason})`
+                                  : `- ${assumption.text}`,
+                              )
+                              .join('\n');
+                            await copyText(text);
+                            saveCopiedLabel('Assumptions');
+                          }}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    .                  <CardContent className="flex flex-col gap-3">
+                      {currentOutput.assumptions.map((assumption) => (
+                        <div
+                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                          key={assumption.text}
+                        >
+                          <p className="text-sm leading-6 text-text">{assumption.text}</p>
+                          {assumption.reason ? (
+                            <p className="mt-2 text-sm leading-6 text-muted">{assumption.reason}</p>
+                          ) : null}
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>Risks and next steps</CardTitle>
+                          <CardDescription>
+                            What can go wrong and what should happen next.
+                          </CardDescription>
+                        </div>
+                        <Button
+                          onClick={async () => {
+                            const text = [
+                              'Risks:',
+                              ...currentOutput.risks.map(
+                                (risk) => `- ${risk.risk}: ${risk.impact} / ${risk.mitigation}`,
+                              ),
+                              '',
+                              'Next steps:',
+                              ...currentOutput.nextSteps.map((step) =>
+                                step.reason
+                                  ? `- ${step.action} (${step.reason})`
+                                  : `- ${step.action}`,
+                              ),
+                            ].join('\n');
+                            await copyText(text);
+                            saveCopiedLabel('Risks and next steps');
+                          }}
+                          size="sm"
+                          variant="ghost"
+                        >
+                          Copy
+                        </Button>
+                      </div>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                      <div className="flex flex-col gap-3">
+                        {currentOutput.risks.map((risk) => (
+                          <div
+                            className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                            key={risk.risk}
+                          >
+                            <p className="text-sm font-medium tracking-normal text-text">
+                              {risk.risk}
+                            </p>
+                            <p className="mt-2 text-sm leading-6 text-muted">{risk.impact}</p>
+                            <p className="mt-2 text-sm leading-6 text-muted">{risk.mitigation}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <div className="flex flex-col gap-3">
+                        {currentOutput.nextSteps.map((step) => (
+                          <div
+                            className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                            key={step.action}
+                          >
+                            <p className="text-sm font-medium tracking-normal text-text">
+                              {step.action}
+                            </p>
+                            {step.reason ? (
+                              <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p>
+                            ) : null}
+                          </div>
+                        ))}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {selectedDocument ? (
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Selected document details</CardTitle>
+                      <CardDescription>
+                        {selectedDocument.summary ?? 'Saved stack advice document.'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="flex flex-col gap-4">
+                      <DetailBlock label="Document title" value={selectedDocument.title} />
+                      <DetailBlock label="Status" value={formatLabel(selectedDocument.status)} />
+                      <DetailBlock
+                        label="Created"
+                        value={`${formatDate(selectedDocument.createdAt)} at ${formatTime(selectedDocument.createdAt)}`}
+                      />
+                      <div>
+                        <DetailBlock
+                          label="Selected constraints"
+                          value={
+                            selectedOverrideSummary
+                              ? Object.entries(selectedOverrideSummary)
+                                  .map(
+                                    ([key, value]) =>
+                                      `${formatConstraintKey(key)}: ${formatConstraintValue(key, String(value))}`,
+                                  )
+                                  .join('\n')
+                              : 'No constraint overrides were saved with this document.'
+                          }
+                        />
+                      </div>
+                    </CardContent>
+                  </Card>
+                ) : null}
+              </>
+            ) : null}
+          </ModuleOutputPanel>
+        ) : null}
+
+        <ModuleInputPanel colSpan={hasOutput ? 'col-span-12' : 'col-span-12 xl:col-span-4'}>
           <Card>
             <CardHeader>
               <CardTitle>Project constraints</CardTitle>
@@ -845,8 +1319,8 @@ export const StackAdvicePage = () => {
                           <div className="mt-3">
                             <Button
                               onClick={async () => {
-                                await copyText(document.content ?? '');
-                                saveCopiedLabel('Saved report');
+                                  await copyText(document.content ?? '');
+                                  saveCopiedLabel('Saved report');
                               }}
                               size="sm"
                               variant="ghost"
@@ -869,99 +1343,16 @@ export const StackAdvicePage = () => {
           </Card>
         </ModuleInputPanel>
 
-        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
-          {isGenerating ? (
-            <Card className="border-accent/30 bg-accent/5">
-              <CardContent className="space-y-3 p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-text">Generating stack advice</p>
-                  <Badge variant="accent">Working</Badge>
-                </div>
-                <p className="text-sm leading-6 text-muted">{stackAdviceProgress[progressIndex]}</p>
-                <div className="grid gap-2">
-                  {stackAdviceProgress.map((step, index) => (
-                    <div
-                      className={`
-                        rounded-md border px-3 py-2 text-sm leading-6
-                        ${
-                          index === progressIndex
-                            ? 'border-accent/40 bg-accent/10 text-text'
-                            : 'border-border bg-surface-raised text-muted'
-                        }
-                      `}
-                      key={step}
-                    >
-                      {step}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {selectedDocument && currentOutput ? (
-            <DocumentFeedbackPanel
-              accessToken={accessToken}
-              document={selectedDocument}
-              onFeedbackSaved={handleFeedbackSaved}
-              projectId={project.id}
-            />
-          ) : null}
-
-          <Card>
-            <CardHeader>
-              <CardTitle>Recommendation summary</CardTitle>
-              <CardDescription>
-                {currentOutput
-                  ? 'A clear recommendation you can hand to a developer.'
-                  : 'Generate a recommendation to see the stack choices.'}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-              {currentOutput ? (
-                <>
-                  <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    {topCards.map((card) => (
-                      <div
-                        className={`rounded-md border p-4 ${toneStyles[card.tone]}`}
-                        key={`${card.title}-${card.value}`}
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <p className="text-xs uppercase tracking-normal opacity-70">
-                              {card.title}
-                            </p>
-                            <p className="mt-2 text-lg font-semibold tracking-normal">
-                              {card.value}
-                            </p>
-                          </div>
-                          <CopyButton
-                            label={card.title}
-                            onCopied={saveCopiedLabel}
-                            value={buildCopyText(
-                              card.title,
-                              `${card.value}\n${card.detail ?? ''}`.trim(),
-                            )}
-                          />
-                        </div>
-                        {card.detail ? (
-                          <p className="mt-3 text-sm leading-6 opacity-90">{card.detail}</p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </div>
-
-                  <div className="grid gap-4 lg:grid-cols-2">
-                    <DetailBlock label="Executive summary" value={currentOutput.executiveSummary} />
-                    <DetailBlock label="Team assumption" value={currentOutput.teamAssumption} />
-                    <DetailBlock label="Scale view" value={currentOutput.scaleView} />
-                    <DetailBlock
-                      label="Overall recommendation"
-                      value={currentOutput.recommendation}
-                    />
-                  </div>
-                </>
-              ) : (
+        {!hasOutput ? (
+          <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+            <Card>
+              <CardHeader>
+                <CardTitle>Recommendation summary</CardTitle>
+                <CardDescription>
+                  Generate a recommendation to see the stack choices.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="grid gap-4">
                 <HelpfulEmptyState
                   action={
                     <div className="flex items-center justify-between gap-4">
@@ -1004,390 +1395,10 @@ export const StackAdvicePage = () => {
                     'Hiring signals: Alignment with local developer availability and team skill levels',
                   ]}
                 />
-              )}
-            </CardContent>
-          </Card>
-
-          {currentOutput ? (
-            <>
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Layer decisions</CardTitle>
-                      <CardDescription>
-                        Recommendation cards grouped by the implementation layer.
-                      </CardDescription>
-                    </div>
-                    <Button
-                      onClick={async () => {
-                        await copyText(buildDeveloperBrief(currentOutput));
-                        saveCopiedLabel('Developer brief');
-                      }}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      Copy brief
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  {currentOutput.categories.map((category) => (
-                    <div
-                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                      key={category.category}
-                    >
-                      <div className="flex flex-col gap-3 border-b border-border/80 pb-4 sm:flex-row sm:items-start sm:justify-between">
-                        <div>
-                          <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                            {getStackLayerLabel(category.category)}
-                          </p>
-                          <h3 className="mt-1 text-sm font-semibold tracking-normal text-text">
-                            {category.recommendation}
-                          </h3>
-                        </div>
-                        <div className="flex flex-wrap gap-2">
-                          <Badge variant={getCategoryTone(category.costRiskLevel)}>
-                            Cost risk: {formatLabel(category.costRiskLevel)}
-                          </Badge>
-                          <Badge variant={getComplexityTone(category.operationalComplexityLevel)}>
-                            Complexity: {formatLabel(category.operationalComplexityLevel)}
-                          </Badge>
-                          <Button
-                            onClick={async () => {
-                              const text = [
-                                `${getStackLayerLabel(category.category)}: ${category.recommendation}`,
-                                '',
-                                `Why it fits: ${category.whyItFits}`,
-                                `Why not ${category.commonAlternative}: ${category.whyNotCommonAlternative}`,
-                                `Cost risk: ${category.costRisk}`,
-                                `Operational complexity: ${category.operationalComplexity}`,
-                                `Founder explanation: ${category.founderExplanation}`,
-                              ].join('\n');
-                              await copyText(text);
-                              saveCopiedLabel(getStackLayerLabel(category.category));
-                            }}
-                            size="sm"
-                            variant="ghost"
-                          >
-                            Copy
-                          </Button>
-                        </div>
-                      </div>
-                      <div className="mt-4 grid gap-4 lg:grid-cols-2">
-                        <DetailBlock label="Why it fits" value={category.whyItFits} />
-                        <DetailBlock
-                          label={`Why not ${category.commonAlternative}`}
-                          value={category.whyNotCommonAlternative}
-                        />
-                        <DetailBlock label="Cost risk" value={category.costRisk} />
-                        <DetailBlock
-                          label="Operational complexity"
-                          value={category.operationalComplexity}
-                        />
-                        <div className="lg:col-span-2">
-                          <DetailBlock
-                            label="Founder explanation"
-                            value={category.founderExplanation}
-                          />
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Tradeoff table</CardTitle>
-                      <CardDescription>
-                        A compact view of the main layer decisions and tradeoffs.
-                      </CardDescription>
-                    </div>
-                    <Button
-                      onClick={async () => {
-                        const rows = currentOutput.categories
-                          .map((category) =>
-                            [
-                              getStackLayerLabel(category.category),
-                              category.recommendation,
-                              category.commonAlternative,
-                              category.costRisk,
-                              category.operationalComplexity,
-                            ].join('\t'),
-                          )
-                          .join('\n');
-                        await copyText(
-                          [
-                            'Layer\tRecommendation\tAlternative\tCost risk\tOperational complexity',
-                            rows,
-                          ].join('\n'),
-                        );
-                        saveCopiedLabel('Tradeoff table');
-                      }}
-                      size="sm"
-                      variant="secondary"
-                    >
-                      Copy table
-                    </Button>
-                  </div>
-                </CardHeader>
-                <CardContent className="overflow-x-auto">
-                  <table className="min-w-full border-separate border-spacing-0">
-                    <thead>
-                      <tr className="text-left text-xs font-semibold uppercase tracking-[0.14em] text-muted">
-                        <th className="border-b border-border px-3 py-3 font-medium">Layer</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">
-                          Recommendation
-                        </th>
-                        <th className="border-b border-border px-3 py-3 font-medium">
-                          Alternative
-                        </th>
-                        <th className="border-b border-border px-3 py-3 font-medium">Cost risk</th>
-                        <th className="border-b border-border px-3 py-3 font-medium">
-                          Operational complexity
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {currentOutput.categories.map((category) => (
-                        <tr key={category.category}>
-                          <td className="border-b border-border px-3 py-4 align-top text-sm text-text">
-                            {getStackLayerLabel(category.category)}
-                          </td>
-                          <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-text">
-                            {category.recommendation}
-                          </td>
-                          <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-muted">
-                            {category.commonAlternative}
-                          </td>
-                          <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-muted">
-                            {category.costRisk}
-                          </td>
-                          <td className="border-b border-border px-3 py-4 align-top text-sm leading-6 text-muted">
-                            {category.operationalComplexity}
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <CardTitle>What to tell your developer</CardTitle>
-                        <CardDescription>
-                          A plain-English copy block that keeps the build direction clear.
-                        </CardDescription>
-                      </div>
-                      <Button
-                        onClick={async () => {
-                          await copyText(developerBrief);
-                          saveCopiedLabel('Developer brief');
-                        }}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <pre className="whitespace-pre-wrap rounded-panel border border-subtle bg-surface-card shadow-sm p-4 text-sm leading-6 text-text">
-                      {developerBrief}
-                    </pre>
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <CardTitle>Full markdown report</CardTitle>
-                        <CardDescription>
-                          The generated report can be copied in one step or scanned in place.
-                        </CardDescription>
-                      </div>
-                      <Button
-                        onClick={async () => {
-                          await copyText(currentOutput.reportMarkdown);
-                          saveCopiedLabel('Full report');
-                        }}
-                        size="sm"
-                        variant="secondary"
-                      >
-                        Copy report
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent>
-                    <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4">
-                      <div className="mb-4 flex flex-wrap items-center gap-2">
-                        <Badge variant="accent">Markdown</Badge>
-                        {copiedLabel ? <Badge>{copiedLabel} copied</Badge> : null}
-                      </div>
-                      <div className="whitespace-pre-wrap text-sm leading-6 text-text">
-                        {currentOutput.reportMarkdown}
-                      </div>
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <CardTitle>Assumptions</CardTitle>
-                        <CardDescription>
-                          What the recommendation is assuming about the project.
-                        </CardDescription>
-                      </div>
-                      <Button
-                        onClick={async () => {
-                          const text = currentOutput.assumptions
-                            .map((assumption) =>
-                              assumption.reason
-                                ? `- ${assumption.text} (${assumption.reason})`
-                                : `- ${assumption.text}`,
-                            )
-                            .join('\n');
-                          await copyText(text);
-                          saveCopiedLabel('Assumptions');
-                        }}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="grid gap-3">
-                    {currentOutput.assumptions.map((assumption) => (
-                      <div
-                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                        key={assumption.text}
-                      >
-                        <p className="text-sm leading-6 text-text">{assumption.text}</p>
-                        {assumption.reason ? (
-                          <p className="mt-2 text-sm leading-6 text-muted">{assumption.reason}</p>
-                        ) : null}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <div className="flex flex-wrap items-start justify-between gap-3">
-                      <div>
-                        <CardTitle>Risks and next steps</CardTitle>
-                        <CardDescription>
-                          What can go wrong and what should happen next.
-                        </CardDescription>
-                      </div>
-                      <Button
-                        onClick={async () => {
-                          const text = [
-                            'Risks:',
-                            ...currentOutput.risks.map(
-                              (risk) => `- ${risk.risk}: ${risk.impact} / ${risk.mitigation}`,
-                            ),
-                            '',
-                            'Next steps:',
-                            ...currentOutput.nextSteps.map((step) =>
-                              step.reason
-                                ? `- ${step.action} (${step.reason})`
-                                : `- ${step.action}`,
-                            ),
-                          ].join('\n');
-                          await copyText(text);
-                          saveCopiedLabel('Risks and next steps');
-                        }}
-                        size="sm"
-                        variant="ghost"
-                      >
-                        Copy
-                      </Button>
-                    </div>
-                  </CardHeader>
-                  <CardContent className="grid gap-4">
-                    <div className="grid gap-3">
-                      {currentOutput.risks.map((risk) => (
-                        <div
-                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                          key={risk.risk}
-                        >
-                          <p className="text-sm font-medium tracking-normal text-text">
-                            {risk.risk}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-muted">{risk.impact}</p>
-                          <p className="mt-2 text-sm leading-6 text-muted">{risk.mitigation}</p>
-                        </div>
-                      ))}
-                    </div>
-                    <div className="grid gap-3">
-                      {currentOutput.nextSteps.map((step) => (
-                        <div
-                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                          key={step.action}
-                        >
-                          <p className="text-sm font-medium tracking-normal text-text">
-                            {step.action}
-                          </p>
-                          {step.reason ? (
-                            <p className="mt-2 text-sm leading-6 text-muted">{step.reason}</p>
-                          ) : null}
-                        </div>
-                      ))}
-                    </div>
-                  </CardContent>
-                </Card>
-              </div>
-
-              {selectedDocument ? (
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Selected document details</CardTitle>
-                    <CardDescription>
-                      {selectedDocument.summary ?? 'Saved stack advice document.'}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4 lg:grid-cols-3">
-                    <DetailBlock label="Document title" value={selectedDocument.title} />
-                    <DetailBlock label="Status" value={formatLabel(selectedDocument.status)} />
-                    <DetailBlock
-                      label="Created"
-                      value={`${formatDate(selectedDocument.createdAt)} at ${formatTime(selectedDocument.createdAt)}`}
-                    />
-                    <div className="lg:col-span-3">
-                      <DetailBlock
-                        label="Selected constraints"
-                        value={
-                          selectedOverrideSummary
-                            ? Object.entries(selectedOverrideSummary)
-                                .map(
-                                  ([key, value]) =>
-                                    `${formatConstraintKey(key)}: ${formatConstraintValue(key, String(value))}`,
-                                )
-                                .join('\n')
-                            : 'No constraint overrides were saved with this document.'
-                        }
-                      />
-                    </div>
-                  </CardContent>
-                </Card>
-              ) : null}
-            </>
-          ) : null}
-        </ModuleOutputPanel>
+              </CardContent>
+            </Card>
+          </ModuleOutputPanel>
+        ) : null}
       </ModulePageShell>
 
       <Link
