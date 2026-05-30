@@ -159,6 +159,7 @@ export const config = {
   googleFrontendRedirectUrl: process.env.GOOGLE_FRONTEND_REDIRECT_URL?.trim(),
   refreshTokenBytes: parsePositiveInteger(process.env.REFRESH_TOKEN_BYTES, 48),
   refreshTokenTtlDays: parsePositiveInteger(process.env.REFRESH_TOKEN_TTL_DAYS, 30),
+  githubToken: process.env.GITHUB_TOKEN?.trim() || undefined,
   isProduction,
   jsonLimit: process.env.JSON_LIMIT ?? '1mb',
   modelProviderApiKey: process.env.MODEL_PROVIDER_API_KEY?.trim(),

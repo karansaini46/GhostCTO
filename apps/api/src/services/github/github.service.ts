@@ -1,3 +1,4 @@
+import { config } from '../../core/config.js';
 import { ApiError } from '../../lib/api-error.js';
 
 const githubApiBaseUrl = 'https://api.github.com';
@@ -471,12 +472,18 @@ const handleGithubError = async (response: Response) => {
 };
 
 const githubRequest = async <T>(path: string): Promise<T> => {
+  const headers: Record<string, string> = {
+    Accept: 'application/vnd.github+json',
+    'User-Agent': githubUserAgent,
+    'X-GitHub-Api-Version': '2022-11-28',
+  };
+
+  if (config.githubToken) {
+    headers.Authorization = `Bearer ${config.githubToken}`;
+  }
+
   const response = await fetch(`${githubApiBaseUrl}${path}`, {
-    headers: {
-      Accept: 'application/vnd.github+json',
-      'User-Agent': githubUserAgent,
-      'X-GitHub-Api-Version': '2022-11-28',
-    },
+    headers,
   });
 
   if (!response.ok) {
