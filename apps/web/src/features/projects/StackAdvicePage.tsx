@@ -1345,58 +1345,48 @@ export const StackAdvicePage = () => {
 
         {!hasOutput ? (
           <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
-            <Card>
-              <CardHeader>
-                <CardTitle>Recommendation summary</CardTitle>
-                <CardDescription>
-                  Generate a recommendation to see the stack choices.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="grid gap-4">
-                <HelpfulEmptyState
-                  action={
-                    <div className="flex items-center justify-between gap-4">
-                      <p className="text-sm text-muted">Ready to choose your stack?</p>
-                      <Button isLoading={isGenerating} onClick={handleGenerate}>
-                        Generate stack advice
-                      </Button>
-                    </div>
-                  }
-                  description="A tailor-made technology stack selection mapped to your budget, stage, scale, and compliance requirements."
-                  previewSections={[
-                    {
-                      desc: 'Recommendation cards for frontend, backend, database, auth, and hosting layers.',
-                      title: 'Layer Decisions',
-                    },
-                    {
-                      desc: 'Direct comparisons between recommended technologies and common alternatives.',
-                      title: 'Tradeoff Analysis',
-                    },
-                    {
-                      desc: 'A ready-to-copy technical summary for onboarding engineers or writing specs.',
-                      title: 'Developer Brief',
-                    },
-                    {
-                      desc: 'Fair warnings about complexity limits, pricing traps, and scaling assumptions.',
-                      title: 'Risk Verdict',
-                    },
-                  ]}
-                  title="Expected Stack Advice & Tradeoffs"
-                  whatItDoes="Identifies the right frontend, database, hosting, and backend technologies, explaining tradeoffs in plain English."
-                  whatToProvide={[
-                    'Budget and timeline constraints',
-                    'Founder technical skill level',
-                    'Monetization model and target scale',
-                  ]}
-                  whatYouGet={[
-                    'Layer-by-Layer Decisions: Specific technologies chosen for frontend, backend, database, hosting, etc.',
-                    'Alternative Comparisons: Why we picked a stack over common alternatives, detailing tradeoffs',
-                    'Complexity & Cost Risk: Flags indicating setup difficulty and ongoing maintenance effort',
-                    'Hiring signals: Alignment with local developer availability and team skill levels',
-                  ]}
-                />
-              </CardContent>
-            </Card>
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to choose your stack?</p>
+                  <Button isLoading={isGenerating} onClick={handleGenerate}>
+                    Generate stack advice
+                  </Button>
+                </div>
+              }
+              description="A tailor-made technology stack selection mapped to your budget, stage, scale, and compliance requirements."
+              previewSections={[
+                {
+                  desc: 'Recommendation cards for frontend, backend, database, auth, and hosting layers.',
+                  title: 'Layer Decisions',
+                },
+                {
+                  desc: 'Direct comparisons between recommended technologies and common alternatives.',
+                  title: 'Tradeoff Analysis',
+                },
+                {
+                  desc: 'A ready-to-copy technical summary for onboarding engineers or writing specs.',
+                  title: 'Developer Brief',
+                },
+                {
+                  desc: 'Fair warnings about complexity limits, pricing traps, and scaling assumptions.',
+                  title: 'Risk Verdict',
+                },
+              ]}
+              title="Expected Stack Advice & Tradeoffs"
+              whatItDoes="Identifies the right frontend, database, hosting, and backend technologies, explaining tradeoffs in plain English."
+              whatToProvide={[
+                'Budget and timeline constraints',
+                'Founder technical skill level',
+                'Monetization model and target scale',
+              ]}
+              whatYouGet={[
+                'Layer-by-Layer Decisions: Specific technologies chosen for frontend, backend, database, hosting, etc.',
+                'Alternative Comparisons: Why we picked a stack over common alternatives, detailing tradeoffs',
+                'Complexity & Cost Risk: Flags indicating setup difficulty and ongoing maintenance effort',
+                'Hiring signals: Alignment with local developer availability and team skill levels',
+              ]}
+            />
           </ModuleOutputPanel>
         ) : null}
       </ModulePageShell>
