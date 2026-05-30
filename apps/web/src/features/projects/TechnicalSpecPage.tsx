@@ -19,12 +19,18 @@ import {
   Tabs,
   Textarea,
   type TabItem,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
 import { getGenerationErrorMessage, isGenerationLimitError } from './generation-error-utils';
 import {
+  exportProjectDocumentPdfRequest,
   generateTechnicalSpecRequest,
   getProjectRequest,
   listProjectDocumentsRequest,
@@ -142,16 +148,21 @@ const slugify = (value: string) => {
   return slug || 'technical-spec';
 };
 
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 const exportMarkdown = (fileName: string, content: string) => {
   const blob = new Blob([content], { type: 'text/markdown;charset=utf-8' });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = `${slugify(fileName)}.md`;
-  document.body.appendChild(anchor);
-  anchor.click();
-  document.body.removeChild(anchor);
-  URL.revokeObjectURL(url);
+  downloadBlob(blob, `${slugify(fileName)}.md`);
 };
 
 const validateList = ({
@@ -509,7 +520,7 @@ const buildSpecTabs = (
           </div>
           <CopyButton label="Overview" onCopied={onCopied} value={buildOverviewText(output)} />
         </div>
-        <div className="grid gap-4 lg:grid-cols-3">
+        <div className="flex flex-col gap-4">
           <DetailBlock label="Problem" value={output.featureOverview.problem} />
           <DetailBlock label="Goal" value={output.featureOverview.goal} />
           <DetailBlock
@@ -517,10 +528,10 @@ const buildSpecTabs = (
             value={output.featureOverview.priorityRationale}
           />
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Assumptions</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.assumptions.map((assumption) => (
                 <DetailBlock
                   key={assumption.text}
@@ -552,14 +563,14 @@ const buildSpecTabs = (
           </div>
           <CopyButton label="User stories" onCopied={onCopied} value={buildStoriesText(output)} />
         </div>
-        <div className="grid gap-4">
+        <div className="flex flex-col gap-4">
           {output.userStories.map((story) => (
             <div
               className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
               key={story.story}
             >
               <p className="text-sm font-semibold text-text">{story.story}</p>
-              <div className="mt-3 grid gap-3 md:grid-cols-3">
+              <div className="mt-3 flex flex-col gap-3">
                 <DetailBlock label="Actor" value={story.actor} />
                 <DetailBlock label="Goal" value={story.goal} />
                 <DetailBlock label="Benefit" value={story.benefit} />
@@ -567,7 +578,7 @@ const buildSpecTabs = (
             </div>
           ))}
         </div>
-        <div className="grid gap-4">
+        <div className="flex flex-col gap-4">
           {output.userFlows.map((flow) => (
             <div
               className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
@@ -580,7 +591,7 @@ const buildSpecTabs = (
               <div className="mt-4">
                 <ListBlock items={flow.steps} />
               </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-2">
+              <div className="mt-4 flex flex-col gap-3">
                 <DetailBlock label="Success outcome" value={flow.successOutcome} />
                 <DetailBlock label="Failure handling" value={flow.failureHandling} />
               </div>
@@ -604,7 +615,7 @@ const buildSpecTabs = (
           </div>
           <CopyButton label="API" onCopied={onCopied} value={buildApiText(output)} />
         </div>
-        <div className="grid gap-4">
+        <div className="flex flex-col gap-4">
           {output.apiEndpoints.map((endpoint) => (
             <div
               className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
@@ -618,7 +629,7 @@ const buildSpecTabs = (
                 </div>
                 <Badge>{endpoint.auth}</Badge>
               </div>
-              <div className="mt-4 grid gap-4 lg:grid-cols-2">
+              <div className="mt-4 flex flex-col gap-4">
                 <DetailBlock label="Request fields" value={formatBullets(endpoint.requestBody)} />
                 <DetailBlock label="Response fields" value={formatBullets(endpoint.responseBody)} />
                 <div>
@@ -660,7 +671,7 @@ const buildSpecTabs = (
           </div>
           <CopyButton label="Database" onCopied={onCopied} value={buildDatabaseText(output)} />
         </div>
-        <div className="grid gap-4">
+        <div className="flex flex-col gap-4">
           {output.databaseChanges.map((change) => (
             <div
               className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
@@ -670,7 +681,7 @@ const buildSpecTabs = (
                 <h3 className="text-sm font-semibold text-text">{change.entity}</h3>
                 <Badge>{formatLabel(change.changeType)}</Badge>
               </div>
-              <div className="mt-4 grid gap-3 lg:grid-cols-3">
+              <div className="mt-4 flex flex-col gap-3">
                 <DetailBlock
                   label="Fields"
                   value={change.fields.length ? formatBullets(change.fields) : 'None'}
@@ -684,10 +695,10 @@ const buildSpecTabs = (
             </div>
           ))}
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Permissions</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.permissions.map((permission) => (
                 <DetailBlock
                   key={`${permission.actor}-${permission.requirement}`}
@@ -699,7 +710,7 @@ const buildSpecTabs = (
           </div>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Analytics events</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.analyticsEvents.map((event) => (
                 <DetailBlock
                   key={event.eventName}
@@ -727,10 +738,10 @@ const buildSpecTabs = (
           </div>
           <CopyButton label="Edge cases" onCopied={onCopied} value={buildEdgeCasesText(output)} />
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Edge cases</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.edgeCases.map((edgeCase) => (
                 <DetailBlock
                   key={edgeCase.case}
@@ -742,7 +753,7 @@ const buildSpecTabs = (
           </div>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Error states</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.errorStates.map((errorState) => (
                 <DetailBlock
                   key={`${errorState.condition}-${errorState.message}`}
@@ -770,10 +781,10 @@ const buildSpecTabs = (
           </div>
           <CopyButton label="Tests" onCopied={onCopied} value={buildTestsText(output)} />
         </div>
-        <div className="grid gap-4 lg:grid-cols-2">
+        <div className="flex flex-col gap-6">
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Acceptance criteria</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.acceptanceCriteria.map((criterion) => (
                 <DetailBlock
                   key={criterion.criterion}
@@ -785,7 +796,7 @@ const buildSpecTabs = (
           </div>
           <div>
             <h3 className="mb-3 text-sm font-semibold text-text">Test cases</h3>
-            <div className="grid gap-3">
+            <div className="flex flex-col gap-3">
               {output.testCases.map((testCase) => (
                 <DetailBlock
                   key={`${testCase.testType}-${testCase.scenario}`}
@@ -822,7 +833,7 @@ const buildSpecTabs = (
             </Button>
           </div>
         </div>
-        <div className="grid gap-3">
+        <div className="flex flex-col gap-3">
           {output.implementationSequence
             .slice()
             .sort((first, second) => first.order - second.order)
@@ -842,7 +853,7 @@ const buildSpecTabs = (
                   </Badge>
                 </div>
                 <p className="mt-3 text-sm leading-6 text-text">{step.work}</p>
-                <div className="mt-4 grid gap-3 lg:grid-cols-2">
+                <div className="mt-4 flex flex-col gap-3">
                   <DetailBlock
                     label="Dependencies"
                     value={step.dependencies.length ? formatBullets(step.dependencies) : 'None'}
@@ -888,6 +899,8 @@ export const TechnicalSpecPage = () => {
   const [isGenerating, setIsGenerating] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
+  const [exportError, setExportError] = useState<string | null>(null);
   const [progressIndex, setProgressIndex] = useState(0);
   const [project, setProject] = useState<Project | null>(null);
   const [selectedDocumentId, setSelectedDocumentId] = useState<string | null>(null);
@@ -989,8 +1002,8 @@ export const TechnicalSpecPage = () => {
   );
 
   const handleGenerate = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+    async (event?: FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
 
       if (!accessToken || !id) {
         return;
@@ -1031,6 +1044,34 @@ export const TechnicalSpecPage = () => {
     },
     [accessToken, formState, id],
   );
+
+  const handleExportPdf = useCallback(async () => {
+    if (!accessToken || !project || !selectedDocument) {
+      return;
+    }
+
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(
+        accessToken,
+        project.id,
+        selectedDocument.id,
+      );
+      const fallbackFilename = `${slugify(project.name)}-${slugify(selectedDocument.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch (requestError) {
+      setExportError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Unable to export this document as a PDF.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, project, selectedDocument]);
 
   const handleSelectDocument = useCallback((document: ProjectDocument) => {
     setSelectedDocumentId(document.id);
@@ -1077,6 +1118,8 @@ export const TechnicalSpecPage = () => {
     );
   }
 
+  const hasOutput = Boolean(currentOutput || isGenerating || selectedDocument?.content);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -1104,6 +1147,11 @@ export const TechnicalSpecPage = () => {
                 >
                   Export markdown
                 </Button>
+                {selectedDocument?.status === 'COMPLETED' ? (
+                  <Button isLoading={isExporting} onClick={handleExportPdf} variant="secondary">
+                    Export PDF
+                  </Button>
+                ) : null}
               </>
             ) : null}
           </div>
@@ -1112,6 +1160,18 @@ export const TechnicalSpecPage = () => {
         eyebrow="Project workspace"
         title="Technical Spec Writer"
       />
+
+      {exportError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setExportError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Try again in a moment or contact support if the issue persists."
+          title={exportError}
+        />
+      ) : null}
 
       {generationError && !limitMessage ? (
         <ErrorState
@@ -1126,8 +1186,8 @@ export const TechnicalSpecPage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <div className="space-y-6">
+      <ModulePageShell>
+        <ModuleInputPanel colSpan={hasOutput ? "col-span-12" : "col-span-12 xl:col-span-4"}>
           <Card>
             <CardHeader>
               <CardTitle>Feature inputs</CardTitle>
@@ -1138,27 +1198,29 @@ export const TechnicalSpecPage = () => {
             </CardHeader>
             <CardContent>
               <form className="grid gap-4" onSubmit={handleGenerate}>
-                <Input
-                  error={formErrors.featureName}
-                  hint="Name the feature the same way you would describe it to a developer."
-                  label="Feature name"
-                  onChange={(event) => updateFormField('featureName', event.target.value)}
-                  placeholder="Example: Founder onboarding checklist"
-                  value={formState.featureName}
-                />
-                <Select
-                  label="Priority"
-                  onChange={(event) =>
-                    updateFormField('priority', event.target.value as TechnicalSpecPriority)
-                  }
-                  value={formState.priority}
-                >
-                  {priorityOptions.map((option) => (
-                    <option key={option.value} value={option.value}>
-                      {option.label}
-                    </option>
-                  ))}
-                </Select>
+                <div className="grid gap-4 sm:grid-cols-2">
+                  <Input
+                    error={formErrors.featureName}
+                    hint="Describe it to a developer."
+                    label="Feature name"
+                    onChange={(event) => updateFormField('featureName', event.target.value)}
+                    placeholder="Example: Founder onboarding checklist"
+                    value={formState.featureName}
+                  />
+                  <Select
+                    label="Priority"
+                    onChange={(event) =>
+                      updateFormField('priority', event.target.value as TechnicalSpecPriority)
+                    }
+                    value={formState.priority}
+                  >
+                    {priorityOptions.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label}
+                      </option>
+                    ))}
+                  </Select>
+                </div>
                 <Textarea
                   error={formErrors.desiredUserOutcome}
                   hint="State who succeeds, what they can do afterward, and what problem is removed."
@@ -1316,9 +1378,10 @@ export const TechnicalSpecPage = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ModuleInputPanel>
 
-        <div className="space-y-6">
+        {hasOutput ? (
+          <ModuleOutputPanel colSpan="col-span-12">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -1437,13 +1500,58 @@ export const TechnicalSpecPage = () => {
               </CardContent>
             </Card>
           ) : (
-            <EmptyState
-              description="A clear technical spec prevents developers from building the wrong thing by turning the outcome, rules, edge cases, tests, and handoff sequence into one saved document."
-              title="No spec generated yet"
-            />
+            null
           )}
-        </div>
-      </div>
+        </ModuleOutputPanel>
+      ) : null}
+
+      {!hasOutput ? (
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+          <HelpfulEmptyState
+            action={
+              <div className="flex items-center justify-between gap-4">
+                <p className="text-sm text-muted">Ready to write a comprehensive spec?</p>
+                <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
+                  Create technical spec
+                </Button>
+              </div>
+            }
+            description="A detailed, developer-ready blueprint that translates founder features into code instructions."
+            previewSections={[
+              {
+                desc: 'Clear definition of the problem, targeted user outcome, project priorities, and what lies outside the project scope.',
+                title: 'Feature Overview & Goals',
+              },
+              {
+                desc: 'Step-by-step breakdown of user interactions, success scenarios, and error boundaries for each user role.',
+                title: 'User Stories & Flows',
+              },
+              {
+                desc: 'HTTP endpoints, payload formats, error responses, authentication scopes, and copy-pasteable request/response JSON examples.',
+                title: 'API Endpoints Schema',
+              },
+              {
+                desc: 'Proposed entity fields, relationships, actor permissions, and background jobs or events triggered by operations.',
+                title: 'Database & Migration Plan',
+              },
+            ]}
+            title="Expected Spec Sections & Output"
+            whatItDoes="A clear technical spec prevents developers from building the wrong thing by locking the outcome, rules, API shape, database changes, edge cases, and tests before work starts."
+            whatToProvide={[
+              'Feature name and targeted user outcome description',
+              'Roles involved, business rules, constraints, and success examples',
+              'At least 3 core inputs defined on the feature form',
+            ]}
+            whatYouGet={[
+              'Detailed User Outcome: Complete breakdown of goals and anti-goals',
+              'User Roles & Permissions: Access boundaries and authorization rules',
+              'API & Data Schemas: JSON request/responses and entity relationships',
+              'Edge Cases & Error States: Failure path mitigations for robust engineering',
+            ]}
+          />
+        </ModuleOutputPanel>
+      ) : null}
+      </ModulePageShell>
     </div>
   );
 };

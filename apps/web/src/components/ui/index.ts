@@ -52,3 +52,28 @@ export { Tooltip } from './Tooltip';
 export type { TooltipProps } from './Tooltip';
 export { VerdictCard } from './VerdictCard';
 export type { VerdictCardProps } from './VerdictCard';
+
+export {
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
+  ProjectContextCard,
+  MetricCard,
+  RiskCard,
+  ResultSection,
+  FormSection
+} from './LayoutHelperComponents';
+
+export type {
+  ModulePageShellProps,
+  ModuleInputPanelProps,
+  ModuleOutputPanelProps,
+  HelpfulEmptyStateProps,
+  ProjectContextCardProps,
+  MetricCardProps,
+  RiskCardProps,
+  ResultSectionProps,
+  FormSectionProps
+} from './LayoutHelperComponents';
+

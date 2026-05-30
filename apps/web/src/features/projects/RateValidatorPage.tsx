@@ -17,6 +17,10 @@ import {
   PageHeader,
   Select,
   Textarea,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
@@ -395,8 +399,8 @@ export const RateValidatorPage = () => {
   );
 
   const handleGenerate = useCallback(
-    async (event: FormEvent<HTMLFormElement>) => {
-      event.preventDefault();
+    async (event?: FormEvent<HTMLFormElement>) => {
+      event?.preventDefault();
 
       if (!accessToken || !id || !formState) {
         return;
@@ -484,6 +488,8 @@ export const RateValidatorPage = () => {
     );
   }
 
+  const hasOutput = Boolean(currentOutput || isGenerating || selectedDocument?.content);
+
   return (
     <div className="space-y-8">
       <PageHeader
@@ -532,10 +538,361 @@ export const RateValidatorPage = () => {
           title={generationError}
         />
       ) : null}
-      {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[420px_minmax(0,1fr)]">
-        <div className="space-y-6">
+      <ModulePageShell>
+        {hasOutput ? (
+          <ModuleOutputPanel colSpan="col-span-12">
+            {isGenerating ? (
+              <Card className="border-accent/30 bg-accent/5">
+                <CardContent className="space-y-3 p-5">
+                  <div className="flex items-center justify-between gap-3">
+                    <p className="text-sm font-medium text-text">Validating proposal</p>
+                    <Badge variant="accent">Working</Badge>
+                  </div>
+                  <p className="text-sm leading-6 text-muted">{progressMessages[progressIndex]}</p>
+                  <div className="grid gap-2">
+                    {progressMessages.map((step, index) => (
+                      <div
+                        className={`rounded-md border px-3 py-2 text-sm leading-6 ${
+                          index === progressIndex
+                            ? 'border-accent/40 bg-accent/10 text-text'
+                            : 'border-border bg-surface-raised text-muted'
+                        }`}
+                        key={step}
+                      >
+                        {step}
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+
+            {copiedLabel ? (
+              <div className="flex justify-end">
+                <Badge variant="success">{copiedLabel} copied</Badge>
+              </div>
+            ) : null}
+
+            {currentOutput ? (
+              <div className="space-y-6">
+                <div
+                  className={`rounded-lg border p-5 ${verdictStyles[currentOutput.priceFairnessVerdict.verdict]}`}
+                >
+                  <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
+                    <div>
+                      <p className="text-xs uppercase tracking-normal opacity-75">Verdict</p>
+                      <h2 className="mt-2 text-3xl font-semibold tracking-normal">
+                        {verdictLabels[currentOutput.priceFairnessVerdict.verdict]}
+                      </h2>
+                      <p className="mt-3 max-w-3xl text-sm leading-6 opacity-95">
+                        {currentOutput.valueJudgment}
+                      </p>
+                    </div>
+                    <div className="shrink-0 rounded-md border border-current/20 bg-background/20 p-4">
+                      <p className="text-xs uppercase tracking-normal opacity-75">Risk Score</p>
+                      <p className="mt-1 text-3xl font-black">
+                        {currentOutput.riskScore}
+                        <span className="text-sm font-normal opacity-75">/100</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex flex-col gap-4">
+                  <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm text-center">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">
+                      Price Fairness
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-text">
+                      {verdictLabels[currentOutput.priceFairnessVerdict.verdict]}
+                    </p>
+                    <p className="text-xs text-muted mt-1">
+                      Confidence: {formatLabel(currentOutput.priceFairnessVerdict.confidenceLevel)}
+                    </p>
+                  </div>
+                  <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm text-center">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">
+                      Timeline Realism
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-text">
+                      {formatLabel(currentOutput.timelineRealism.verdict)}
+                    </p>
+                    <p className="text-xs text-muted mt-1">
+                      Confidence: {formatLabel(currentOutput.timelineRealism.confidenceLevel)}
+                    </p>
+                  </div>
+                  <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm text-center">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">
+                      Quoted Price Basis
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-text">
+                      {currentOutput.quotedPrice.amount
+                        ? `${currentOutput.quotedPrice.currency ?? ''} ${currentOutput.quotedPrice.amount}`.trim()
+                        : 'No clear amount'}
+                    </p>
+                    <p className="text-xs text-muted mt-1">
+                      Basis: {formatLabel(currentOutput.quotedPrice.basis)}
+                    </p>
+                  </div>
+                  <div className="rounded-panel border border-subtle bg-surface-card p-4 shadow-sm text-center">
+                    <p className="text-xs uppercase tracking-wider text-muted font-semibold">
+                      Complexity Level
+                    </p>
+                    <p className="mt-2 text-lg font-bold text-text">
+                      {formatLabel(currentOutput.estimatedComplexity.level)}
+                    </p>
+                    <p className="text-xs text-muted mt-1">
+                      Confidence: {formatLabel(currentOutput.estimatedComplexity.confidenceLevel)}
+                    </p>
+                  </div>
+                </div>
+
+                {selectedDocument ? (
+                  <DocumentFeedbackPanel
+                    accessToken={accessToken}
+                    document={selectedDocument}
+                    onFeedbackSaved={handleFeedbackSaved}
+                    projectId={project.id}
+                  />
+                ) : null}
+
+                <Card>
+                  <CardHeader>
+                    <CardTitle>Decision summary</CardTitle>
+                    <CardDescription>{currentOutput.recommendation}</CardDescription>
+                  </CardHeader>
+                  <CardContent className="flex flex-col gap-4">
+                    <DetailBlock label="Vendor summary" value={currentOutput.vendorSummary} />
+                    <DetailBlock
+                      label="Quoted price details"
+                      value={[
+                        currentOutput.quotedPrice.amount
+                          ? `${currentOutput.quotedPrice.currency ?? ''} ${currentOutput.quotedPrice.amount}`.trim()
+                          : 'No clear amount parsed',
+                        `Basis: ${formatLabel(currentOutput.quotedPrice.basis)}`,
+                        currentOutput.quotedPrice.notes,
+                      ].join('\n')}
+                    />
+                    <DetailBlock
+                      label="Estimated complexity rationale"
+                      value={`${currentOutput.estimatedComplexity.rationale}\n${formatBullets(
+                        currentOutput.estimatedComplexity.drivers,
+                      )}`}
+                    />
+                    <DetailBlock
+                      label="Timeline realism rationale"
+                      value={`${currentOutput.timelineRealism.rationale}\n${formatBullets(
+                        currentOutput.timelineRealism.concerns,
+                      )}`}
+                    />
+                  </CardContent>
+                </Card>
+
+                <div className="flex flex-col gap-6">
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Missing items</CardTitle>
+                      <CardDescription>Deliverables to clarify before approval.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-3">
+                      {currentOutput.missingDeliverables.length > 0 ? (
+                        currentOutput.missingDeliverables.map((item) => (
+                          <DetailBlock
+                            key={item.deliverable}
+                            label={item.deliverable}
+                            value={item.whyItMatters}
+                          />
+                        ))
+                      ) : (
+                        <p className="text-sm leading-6 text-muted">No missing items identified.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Timeline concerns</CardTitle>
+                      <CardDescription>Schedule risks that may lead to overruns.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-2">
+                      {currentOutput.timelineRealism.concerns.length > 0 ? (
+                        currentOutput.timelineRealism.concerns.map((concern) => (
+                          <div
+                            className="rounded-panel border border-subtle bg-surface-card shadow-sm px-3 py-2 text-sm leading-6 text-text"
+                            key={concern}
+                          >
+                            {concern}
+                          </div>
+                        ))
+                      ) : (
+                        <p className="text-sm leading-6 text-muted">No timeline concerns identified.</p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Pricing risk</CardTitle>
+                      <CardDescription>Overcharge and undercharge signals.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
+                      <DetailBlock
+                        label={`Overcharge risk: ${formatLabel(currentOutput.overchargeRisk.riskLevel)}`}
+                        value={`Confidence: ${formatLabel(
+                          currentOutput.overchargeRisk.confidenceLevel,
+                        )}\n${currentOutput.overchargeRisk.rationale}`}
+                      />
+                      <DetailBlock
+                        label={`Undercharge risk: ${formatLabel(currentOutput.underchargeRisk.riskLevel)}`}
+                        value={`Confidence: ${formatLabel(
+                          currentOutput.underchargeRisk.confidenceLevel,
+                        )}\n${currentOutput.underchargeRisk.rationale}`}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Contract gaps</CardTitle>
+                      <CardDescription>
+                        Terms that can create disputes or surprise cost.
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-3">
+                      {currentOutput.dangerousContractGaps.length > 0 ? (
+                        currentOutput.dangerousContractGaps.map((gap) => (
+                          <DetailBlock key={gap.gap} label={gap.gap} value={gap.risk} />
+                        ))
+                      ) : (
+                        <p className="text-sm leading-6 text-muted">
+                          No dangerous contract gaps identified.
+                        </p>
+                      )}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <CardTitle>Scope review</CardTitle>
+                      <CardDescription>Parsed scope items and vague wording flags.</CardDescription>
+                    </CardHeader>
+                    <CardContent className="grid gap-4">
+                      <div className="grid gap-3">
+                        {currentOutput.parsedScopeItems.map((item) => (
+                          <div
+                            className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                            key={`${item.scopeItem}-${item.description}`}
+                          >
+                            <div className="flex flex-wrap items-start justify-between gap-3">
+                              <div>
+                                <h3 className="text-sm font-semibold text-text">
+                                  {item.scopeItem}
+                                </h3>
+                                <p className="mt-2 text-sm leading-6 text-muted">
+                                  {item.description}
+                                </p>
+                              </div>
+                              <div className="flex flex-wrap gap-2">
+                                <Badge>{formatLabel(item.complexity)}</Badge>
+                                <Badge variant={confidenceTone[item.confidenceLevel]}>
+                                  {formatLabel(item.confidenceLevel)} confidence
+                                </Badge>
+                                <Badge>{formatLabel(item.specificity)}</Badge>
+                              </div>
+                            </div>
+                            <p className="mt-3 text-sm leading-6 text-text">{item.pricingConcern}</p>
+                          </div>
+                        ))}
+                      </div>
+                      <DetailBlock
+                        label="Vague scope flags"
+                        value={formatBullets(currentOutput.vagueScopeFlags)}
+                      />
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>Questions to send back</CardTitle>
+                          <CardDescription>
+                            Exact questions for the developer before you accept the proposal.
+                          </CardDescription>
+                        </div>
+                        <CopyButton
+                          label="Questions"
+                          onCopied={setCopiedLabel}
+                          value={buildQuestionsText(currentOutput)}
+                        />
+                      </div>
+                    </CardHeader>
+                    <CardContent className="grid gap-3">
+                      {currentOutput.questionsToAskDeveloper.map((item, index) => (
+                        <div
+                          className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
+                          key={item.question}
+                        >
+                          <div className="flex flex-wrap items-start gap-3">
+                            <Badge variant="accent">{index + 1}</Badge>
+                            <div className="min-w-0 flex-1">
+                              <p className="text-sm font-semibold leading-6 text-text">
+                                {item.question}
+                              </p>
+                              <p className="mt-2 text-sm leading-6 text-muted">{item.reason}</p>
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </CardContent>
+                  </Card>
+
+                  <Card>
+                    <CardHeader>
+                      <div className="flex flex-wrap items-start justify-between gap-3">
+                        <div>
+                          <CardTitle>Negotiation points</CardTitle>
+                          <CardDescription>
+                            Direct language to use when responding to the proposal.
+                          </CardDescription>
+                        </div>
+                        <CopyButton
+                          label="Negotiation script"
+                          onCopied={setCopiedLabel}
+                          value={buildNegotiationText(currentOutput)}
+                        />
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                        {currentOutput.negotiationScript}
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </div>
+            ) : selectedDocument?.content ? (
+              <Card>
+                <CardHeader>
+                  <CardTitle>{selectedDocument.title}</CardTitle>
+                  <CardDescription>
+                    {selectedDocument.summary ?? 'Saved proposal validation.'}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
+                    {selectedDocument.content}
+                  </div>
+                </CardContent>
+              </Card>
+            ) : null}
+          </ModuleOutputPanel>
+        ) : null}
+
+        <ModuleInputPanel
+          colSpan={hasOutput ? 'col-span-12' : 'col-span-12 xl:col-span-4'}
+        >
           <Card>
             <CardHeader>
               <CardTitle>Proposal input</CardTitle>
@@ -714,311 +1071,55 @@ export const RateValidatorPage = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ModuleInputPanel>
 
-        <div className="space-y-6">
-          {isGenerating ? (
-            <Card className="border-accent/30 bg-accent/5">
-              <CardContent className="space-y-3 p-5">
-                <div className="flex items-center justify-between gap-3">
-                  <p className="text-sm font-medium text-text">Validating proposal</p>
-                  <Badge variant="accent">Working</Badge>
+        {!hasOutput ? (
+          <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to validate a proposal?</p>
+                  <Button isLoading={isGenerating} onClick={() => handleGenerate()}>
+                    Validate proposal
+                  </Button>
                 </div>
-                <p className="text-sm leading-6 text-muted">{progressMessages[progressIndex]}</p>
-                <div className="grid gap-2">
-                  {progressMessages.map((step, index) => (
-                    <div
-                      className={`rounded-md border px-3 py-2 text-sm leading-6 ${
-                        index === progressIndex
-                          ? 'border-accent/40 bg-accent/10 text-text'
-                          : 'border-border bg-surface-raised text-muted'
-                      }`}
-                      key={step}
-                    >
-                      {step}
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-          ) : null}
-
-          {copiedLabel ? (
-            <div className="flex justify-end">
-              <Badge variant="success">{copiedLabel} copied</Badge>
-            </div>
-          ) : null}
-
-          {currentOutput ? (
-            <div className="space-y-6">
-              <div
-                className={`rounded-lg border p-5 ${verdictStyles[currentOutput.priceFairnessVerdict.verdict]}`}
-              >
-                <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
-                    <p className="text-xs uppercase tracking-normal opacity-75">Verdict</p>
-                    <h2 className="mt-2 text-3xl font-semibold tracking-normal">
-                      {verdictLabels[currentOutput.priceFairnessVerdict.verdict]}
-                    </h2>
-                    <p className="mt-3 max-w-3xl text-sm leading-6 opacity-95">
-                      {currentOutput.valueJudgment}
-                    </p>
-                  </div>
-                  <div className="grid min-w-64 gap-2 sm:grid-cols-3 lg:grid-cols-1">
-                    <div className="rounded-md border border-current/20 bg-background/20 p-3">
-                      <p className="text-xs uppercase tracking-normal opacity-75">Risk score</p>
-                      <p className="mt-1 text-2xl font-semibold">{currentOutput.riskScore}/100</p>
-                    </div>
-                    <div className="rounded-md border border-current/20 bg-background/20 p-3">
-                      <p className="text-xs uppercase tracking-normal opacity-75">Confidence</p>
-                      <p className="mt-1 text-lg font-semibold">
-                        {formatLabel(currentOutput.priceFairnessVerdict.confidenceLevel)}
-                      </p>
-                    </div>
-                    <div className="rounded-md border border-current/20 bg-background/20 p-3">
-                      <p className="text-xs uppercase tracking-normal opacity-75">Timeline</p>
-                      <p className="mt-1 text-lg font-semibold">
-                        {formatLabel(currentOutput.timelineRealism.verdict)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {selectedDocument ? (
-                <DocumentFeedbackPanel
-                  accessToken={accessToken}
-                  document={selectedDocument}
-                  onFeedbackSaved={handleFeedbackSaved}
-                  projectId={project.id}
-                />
-              ) : null}
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Decision summary</CardTitle>
-                  <CardDescription>{currentOutput.recommendation}</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4 lg:grid-cols-2">
-                  <DetailBlock label="Vendor summary" value={currentOutput.vendorSummary} />
-                  <DetailBlock
-                    label="Quoted price"
-                    value={[
-                      currentOutput.quotedPrice.amount
-                        ? `${currentOutput.quotedPrice.currency ?? ''} ${currentOutput.quotedPrice.amount}`.trim()
-                        : 'No clear amount parsed',
-                      `Basis: ${formatLabel(currentOutput.quotedPrice.basis)}`,
-                      currentOutput.quotedPrice.notes,
-                    ].join('\n')}
-                  />
-                  <DetailBlock
-                    label="Estimated complexity"
-                    value={`${formatLabel(currentOutput.estimatedComplexity.level)} confidence: ${formatLabel(
-                      currentOutput.estimatedComplexity.confidenceLevel,
-                    )}\n${currentOutput.estimatedComplexity.rationale}\n${formatBullets(
-                      currentOutput.estimatedComplexity.drivers,
-                    )}`}
-                  />
-                  <DetailBlock
-                    label="Timeline realism"
-                    value={`${formatLabel(currentOutput.timelineRealism.verdict)} confidence: ${formatLabel(
-                      currentOutput.timelineRealism.confidenceLevel,
-                    )}\n${currentOutput.timelineRealism.rationale}\n${formatBullets(
-                      currentOutput.timelineRealism.concerns,
-                    )}`}
-                  />
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Missing items</CardTitle>
-                    <CardDescription>Deliverables to clarify before approval.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-3">
-                    {currentOutput.missingDeliverables.map((item) => (
-                      <DetailBlock
-                        key={item.deliverable}
-                        label={item.deliverable}
-                        value={item.whyItMatters}
-                      />
-                    ))}
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Timeline concerns</CardTitle>
-                    <CardDescription>Schedule risks that may lead to overruns.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-2">
-                    {currentOutput.timelineRealism.concerns.map((concern) => (
-                      <div
-                        className="rounded-panel border border-subtle bg-surface-card shadow-sm px-3 py-2 text-sm leading-6 text-text"
-                        key={concern}
-                      >
-                        {concern}
-                      </div>
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Questions to send back</CardTitle>
-                      <CardDescription>
-                        Exact questions for the developer before you accept the proposal.
-                      </CardDescription>
-                    </div>
-                    <CopyButton
-                      label="Questions"
-                      onCopied={setCopiedLabel}
-                      value={buildQuestionsText(currentOutput)}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent className="grid gap-3">
-                  {currentOutput.questionsToAskDeveloper.map((item, index) => (
-                    <div
-                      className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                      key={item.question}
-                    >
-                      <div className="flex flex-wrap items-start gap-3">
-                        <Badge variant="accent">{index + 1}</Badge>
-                        <div className="min-w-0 flex-1">
-                          <p className="text-sm font-semibold leading-6 text-text">
-                            {item.question}
-                          </p>
-                          <p className="mt-2 text-sm leading-6 text-muted">{item.reason}</p>
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </CardContent>
-              </Card>
-
-              <Card>
-                <CardHeader>
-                  <div className="flex flex-wrap items-start justify-between gap-3">
-                    <div>
-                      <CardTitle>Negotiation points</CardTitle>
-                      <CardDescription>
-                        Direct language to use when responding to the proposal.
-                      </CardDescription>
-                    </div>
-                    <CopyButton
-                      label="Negotiation script"
-                      onCopied={setCopiedLabel}
-                      value={buildNegotiationText(currentOutput)}
-                    />
-                  </div>
-                </CardHeader>
-                <CardContent>
-                  <div className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
-                    {currentOutput.negotiationScript}
-                  </div>
-                </CardContent>
-              </Card>
-
-              <div className="grid gap-6 lg:grid-cols-2">
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Pricing risk</CardTitle>
-                    <CardDescription>Overcharge and undercharge signals.</CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-4">
-                    <DetailBlock
-                      label={`Overcharge risk: ${formatLabel(currentOutput.overchargeRisk.riskLevel)}`}
-                      value={`Confidence: ${formatLabel(
-                        currentOutput.overchargeRisk.confidenceLevel,
-                      )}\n${currentOutput.overchargeRisk.rationale}`}
-                    />
-                    <DetailBlock
-                      label={`Undercharge risk: ${formatLabel(currentOutput.underchargeRisk.riskLevel)}`}
-                      value={`Confidence: ${formatLabel(
-                        currentOutput.underchargeRisk.confidenceLevel,
-                      )}\n${currentOutput.underchargeRisk.rationale}`}
-                    />
-                  </CardContent>
-                </Card>
-
-                <Card>
-                  <CardHeader>
-                    <CardTitle>Contract gaps</CardTitle>
-                    <CardDescription>
-                      Terms that can create disputes or surprise cost.
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent className="grid gap-3">
-                    {currentOutput.dangerousContractGaps.map((gap) => (
-                      <DetailBlock key={gap.gap} label={gap.gap} value={gap.risk} />
-                    ))}
-                  </CardContent>
-                </Card>
-              </div>
-
-              <Card>
-                <CardHeader>
-                  <CardTitle>Scope review</CardTitle>
-                  <CardDescription>Parsed scope items and vague wording flags.</CardDescription>
-                </CardHeader>
-                <CardContent className="grid gap-4">
-                  <div className="grid gap-3">
-                    {currentOutput.parsedScopeItems.map((item) => (
-                      <div
-                        className="rounded-panel border border-subtle bg-surface-card shadow-sm p-4"
-                        key={`${item.scopeItem}-${item.description}`}
-                      >
-                        <div className="flex flex-wrap items-start justify-between gap-3">
-                          <div>
-                            <h3 className="text-sm font-semibold text-text">{item.scopeItem}</h3>
-                            <p className="mt-2 text-sm leading-6 text-muted">{item.description}</p>
-                          </div>
-                          <div className="flex flex-wrap gap-2">
-                            <Badge>{formatLabel(item.complexity)}</Badge>
-                            <Badge variant={confidenceTone[item.confidenceLevel]}>
-                              {formatLabel(item.confidenceLevel)} confidence
-                            </Badge>
-                            <Badge>{formatLabel(item.specificity)}</Badge>
-                          </div>
-                        </div>
-                        <p className="mt-3 text-sm leading-6 text-text">{item.pricingConcern}</p>
-                      </div>
-                    ))}
-                  </div>
-                  <DetailBlock
-                    label="Vague scope flags"
-                    value={formatBullets(currentOutput.vagueScopeFlags)}
-                  />
-                </CardContent>
-              </Card>
-            </div>
-          ) : selectedDocument?.content ? (
-            <Card>
-              <CardHeader>
-                <CardTitle>{selectedDocument.title}</CardTitle>
-                <CardDescription>
-                  {selectedDocument.summary ?? 'Saved proposal validation.'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="max-h-[720px] overflow-auto rounded-panel border border-subtle bg-surface-card shadow-sm p-4 whitespace-pre-wrap text-sm leading-6 text-text">
-                  {selectedDocument.content}
-                </div>
-              </CardContent>
-            </Card>
-          ) : (
-            <EmptyState
-              description="Paste a developer proposal to get a verdict, risks, missing scope, questions, and negotiation language."
-              title="No proposal validated yet"
+              }
+              description="An objective second-opinion audit of developer rates, timelines, deliverables, and terms."
+              previewSections={[
+                {
+                  desc: 'Comparison of quoted developer/agency rates against market standards for the specified location and developer seniority.',
+                  title: 'Price Fairness Verdict',
+                },
+                {
+                  desc: 'Audit of delivery timeline assumptions to ensure they are realistic for the scope, identifying optimistic or high-risk schedules.',
+                  title: 'Timeline Realism',
+                },
+                {
+                  desc: 'Detection of critical gaps in the proposal (e.g. testing, deployment, source code handoff, design system, API docs).',
+                  title: 'Missing Deliverables',
+                },
+                {
+                  desc: 'Drafted email/message template structured to address missing items, push back on rates, or clarify scope terms professionally.',
+                  title: 'Negotiation Script',
+                },
+              ]}
+              title="Expected Proposal Audit Output"
+              whatItDoes="Analyzes a vendor or freelancer quote to see if rates match market expectations, highlights timeline risks, lists missing items, and provides negotiation text."
+              whatToProvide={[
+                'Raw quote or proposal text pasted in the input',
+                'Hiring market/country (e.g. India, USA, Eastern Europe)',
+                'Timeline details or target deadlines',
+              ]}
+              whatYouGet={[
+                'Fairness Verdict: Market standard comparison for the role seniority and region',
+                'Timeline Audit: Risk factors and realism scoring of delivery commitments',
+                'Gap Analysis: Highlights missing deliverables like tests, handoff, or support',
+                'Negotiation Copy: Ready-to-send script to push back on terms or rates',
+              ]}
             />
-          )}
-        </div>
-      </div>
+          </ModuleOutputPanel>
+        ) : null}
+      </ModulePageShell>
     </div>
   );
 };

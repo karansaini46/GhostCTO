@@ -21,7 +21,15 @@ import {
 } from './project-api';
 import type { Project, ProjectDocument, ProjectDocumentFeedback } from './project-types';
 
-const exportablePdfTypes = new Set(['developer_jd', 'roadmap', 'stack_advisor', 'technical_spec']);
+const exportablePdfTypes = new Set([
+  'code_audit',
+  'developer_jd',
+  'rate_validator',
+  'roadmap',
+  'stack_advisor',
+  'technical_spec',
+  'vetting_scorecard',
+]);
 
 const documentTypeLabels: Record<string, string> = {
   code_audit: 'Code Audit',
@@ -254,35 +262,41 @@ export const DocumentDetailPage = () => {
         </Card>
       ) : null}
 
-      <DocumentFeedbackPanel
-        accessToken={accessToken}
-        document={documentRecord}
-        onFeedbackSaved={handleFeedbackSaved}
-        projectId={project.id}
-      />
+      <div className="w-full max-w-[1100px] mx-auto flex flex-col gap-6">
+        <div className="w-full">
+          <ReportCard
+            meta={
+              <>
+                <Badge>{getDocumentTypeLabel(documentRecord.type)}</Badge>
+                <Badge variant="accent">v{documentRecord.version}</Badge>
+                <Badge>{formatLabel(documentRecord.status)}</Badge>
+                <Badge>{formatDateTime(documentRecord.createdAt)}</Badge>
+              </>
+            }
+            subtitle={
+              documentRecord.completedAt
+                ? `Completed ${formatDateTime(documentRecord.completedAt)}`
+                : 'Saved project document.'
+            }
+            title={documentRecord.title}
+          >
+            {reportContent ? (
+              <MarkdownReport content={reportContent} />
+            ) : (
+              <p className="text-sm leading-6 text-secondary">No content saved for this document.</p>
+            )}
+          </ReportCard>
+        </div>
 
-      <ReportCard
-        meta={
-          <>
-            <Badge>{getDocumentTypeLabel(documentRecord.type)}</Badge>
-            <Badge variant="accent">v{documentRecord.version}</Badge>
-            <Badge>{formatLabel(documentRecord.status)}</Badge>
-            <Badge>{formatDateTime(documentRecord.createdAt)}</Badge>
-          </>
-        }
-        subtitle={
-          documentRecord.completedAt
-            ? `Completed ${formatDateTime(documentRecord.completedAt)}`
-            : 'Saved project document.'
-        }
-        title={documentRecord.title}
-      >
-        {reportContent ? (
-          <MarkdownReport content={reportContent} />
-        ) : (
-          <p className="text-sm leading-6 text-secondary">No content saved for this document.</p>
-        )}
-      </ReportCard>
+        <div className="w-full">
+          <DocumentFeedbackPanel
+            accessToken={accessToken}
+            document={documentRecord}
+            onFeedbackSaved={handleFeedbackSaved}
+            projectId={project.id}
+          />
+        </div>
+      </div>
     </div>
   );
 };

@@ -14,7 +14,12 @@ import {
   LoadingState,
   PageHeader,
   Select,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
 } from '../../components/ui';
+import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
 import { DocumentFeedbackPanel } from './DocumentFeedbackPanel';
 import { GenerationLimitCallout } from './generation-errors';
@@ -25,6 +30,7 @@ import {
   technicalLevelOptions,
 } from './project-options';
 import {
+  exportProjectDocumentPdfRequest,
   generateStackAdviceRequest,
   getProjectRequest,
   listProjectDocumentsRequest,
@@ -270,6 +276,25 @@ const buildDeveloperBrief = (output: StackAdviceOutput) => {
 
 const buildCopyText = (title: string, body: string) => `${title}\n\n${body}`.trim();
 
+const slugify = (value: string) =>
+  value
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/(^-|-$)/g, '')
+    .slice(0, 80) || 'document';
+
+const downloadBlob = (blob: Blob, filename: string) => {
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement('a');
+
+  link.href = url;
+  link.download = filename;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+};
+
 const copyText = async (value: string) => {
   if (navigator.clipboard?.writeText) {
     await navigator.clipboard.writeText(value);
@@ -362,6 +387,8 @@ export const StackAdvicePage = () => {
   const [isLoading, setIsLoading] = useState(true);
   const [limitMessage, setLimitMessage] = useState<string | null>(null);
   const [copiedLabel, setCopiedLabel] = useState<string | null>(null);
+  const [exportError, setExportError] = useState<string | null>(null);
+  const [isExporting, setIsExporting] = useState(false);
   const [progressIndex, setProgressIndex] = useState(0);
 
   const loadWorkspace = useCallback(async () => {
@@ -483,6 +510,34 @@ export const StackAdvicePage = () => {
     }
   }, [accessToken, constraintState, id]);
 
+  const handleExportPdf = useCallback(async () => {
+    if (!accessToken || !project || !selectedDocument) {
+      return;
+    }
+
+    setExportError(null);
+    setIsExporting(true);
+
+    try {
+      const response = await exportProjectDocumentPdfRequest(
+        accessToken,
+        project.id,
+        selectedDocument.id,
+      );
+      const fallbackFilename = `${slugify(project.name)}-${slugify(selectedDocument.title)}.pdf`;
+
+      downloadBlob(response.blob, response.filename ?? fallbackFilename);
+    } catch (requestError) {
+      setExportError(
+        requestError instanceof ApiError
+          ? requestError.message
+          : 'Unable to export this document as a PDF.',
+      );
+    } finally {
+      setIsExporting(false);
+    }
+  }, [accessToken, project, selectedDocument]);
+
   const handleSelectDocument = useCallback((document: ProjectDocument) => {
     setSelectedDocumentId(document.id);
     const output = getDocumentStackAdvice(document);
@@ -545,6 +600,11 @@ export const StackAdvicePage = () => {
             <Button onClick={() => navigate(`/projects/${project.id}`)} variant="secondary">
               Back to project
             </Button>
+            {selectedDocument?.status === 'COMPLETED' ? (
+              <Button isLoading={isExporting} onClick={handleExportPdf} variant="secondary">
+                Export PDF
+              </Button>
+            ) : null}
             <Button isLoading={isGenerating} onClick={handleGenerate}>
               Generate advice
             </Button>
@@ -554,6 +614,18 @@ export const StackAdvicePage = () => {
         eyebrow="Project workspace"
         title="Stack Advisor"
       />
+
+      {exportError ? (
+        <ErrorState
+          action={
+            <Button onClick={() => setExportError(null)} variant="secondary" size="sm">
+              Dismiss
+            </Button>
+          }
+          description="Try again in a moment or contact support if the issue persists."
+          title={exportError}
+        />
+      ) : null}
 
       {generationError && !limitMessage ? (
         <ErrorState
@@ -568,8 +640,8 @@ export const StackAdvicePage = () => {
       ) : null}
       {limitMessage ? <GenerationLimitCallout message={limitMessage} /> : null}
 
-      <div className="grid gap-6 xl:grid-cols-[380px_minmax(0,1fr)]">
-        <div className="space-y-6">
+      <ModulePageShell>
+        <ModuleInputPanel colSpan="col-span-12 xl:col-span-4">
           <Card>
             <CardHeader>
               <CardTitle>Project constraints</CardTitle>
@@ -795,9 +867,9 @@ export const StackAdvicePage = () => {
               )}
             </CardContent>
           </Card>
-        </div>
+        </ModuleInputPanel>
 
-        <div className="space-y-6">
+        <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
           {isGenerating ? (
             <Card className="border-accent/30 bg-accent/5">
               <CardContent className="space-y-3 p-5">
@@ -890,9 +962,47 @@ export const StackAdvicePage = () => {
                   </div>
                 </>
               ) : (
-                <EmptyState
-                  description="The result will appear here after generation. It will stay readable for a founder and detailed enough for a developer."
-                  title="No recommendation generated"
+                <HelpfulEmptyState
+                  action={
+                    <div className="flex items-center justify-between gap-4">
+                      <p className="text-sm text-muted">Ready to choose your stack?</p>
+                      <Button isLoading={isGenerating} onClick={handleGenerate}>
+                        Generate stack advice
+                      </Button>
+                    </div>
+                  }
+                  description="A tailor-made technology stack selection mapped to your budget, stage, scale, and compliance requirements."
+                  previewSections={[
+                    {
+                      desc: 'Recommendation cards for frontend, backend, database, auth, and hosting layers.',
+                      title: 'Layer Decisions',
+                    },
+                    {
+                      desc: 'Direct comparisons between recommended technologies and common alternatives.',
+                      title: 'Tradeoff Analysis',
+                    },
+                    {
+                      desc: 'A ready-to-copy technical summary for onboarding engineers or writing specs.',
+                      title: 'Developer Brief',
+                    },
+                    {
+                      desc: 'Fair warnings about complexity limits, pricing traps, and scaling assumptions.',
+                      title: 'Risk Verdict',
+                    },
+                  ]}
+                  title="Expected Stack Advice & Tradeoffs"
+                  whatItDoes="Identifies the right frontend, database, hosting, and backend technologies, explaining tradeoffs in plain English."
+                  whatToProvide={[
+                    'Budget and timeline constraints',
+                    'Founder technical skill level',
+                    'Monetization model and target scale',
+                  ]}
+                  whatYouGet={[
+                    'Layer-by-Layer Decisions: Specific technologies chosen for frontend, backend, database, hosting, etc.',
+                    'Alternative Comparisons: Why we picked a stack over common alternatives, detailing tradeoffs',
+                    'Complexity & Cost Risk: Flags indicating setup difficulty and ongoing maintenance effort',
+                    'Hiring signals: Alignment with local developer availability and team skill levels',
+                  ]}
                 />
               )}
             </CardContent>
@@ -1277,8 +1387,8 @@ export const StackAdvicePage = () => {
               ) : null}
             </>
           ) : null}
-        </div>
-      </div>
+        </ModuleOutputPanel>
+      </ModulePageShell>
 
       <Link
         className="text-sm font-medium text-accent hover:text-accent/80"

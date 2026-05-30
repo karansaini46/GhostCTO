@@ -6,7 +6,6 @@ import {
   Badge,
   Button,
   CopyButton,
-  EmptyState,
   ErrorState,
   ExportButton,
   LoadingState,
@@ -15,6 +14,11 @@ import {
   ReportCard,
   SectionHeader,
   Surface,
+  ModulePageShell,
+  ModuleInputPanel,
+  ModuleOutputPanel,
+  HelpfulEmptyState,
+  ProjectContextCard,
 } from '../../components/ui';
 import { ApiError } from '../../lib/api';
 import { useAuth } from '../auth/auth-context';
@@ -289,9 +293,9 @@ export const DeveloperJdPage = () => {
         </Surface>
       ) : null}
 
-      <div className="grid gap-6 xl:grid-cols-[1fr_20rem]">
-        <div className="min-w-0">
-          {selectedDocument?.content ? (
+      <ModulePageShell>
+        {selectedDocument?.content ? (
+          <ModuleOutputPanel colSpan="col-span-12">
             <ReportCard
               actions={
                 <>
@@ -324,30 +328,11 @@ export const DeveloperJdPage = () => {
               {exportError ? <ErrorState className="mb-6" title={exportError} /> : null}
               <MarkdownReport content={selectedDocument.content} />
             </ReportCard>
-          ) : (
-            <EmptyState
-              action={
-                <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
-                  Create developer brief
-                </Button>
-              }
-              className="min-h-[28rem]"
-              description="Create your first developer brief to get job-post copy, must-have skills, interview questions, a test task, red flags, and handoff guidance."
-              title="No developer brief yet"
-            />
-          )}
-        </div>
+          </ModuleOutputPanel>
+        ) : null}
 
-        <aside className="space-y-5">
-          <Surface tone="soft">
-            <BriefcaseBusiness className="h-5 w-5 text-accent" />
-            <p className="mt-3 text-sm font-semibold text-text">Hiring context</p>
-            <div className="mt-3 space-y-3 text-sm leading-6 text-secondary">
-              <p>{getProjectOptionLabel.currentStage(project.currentStage)}</p>
-              <p>{getProjectOptionLabel.budgetRange(project.budgetRange)}</p>
-              <p>{getProjectOptionLabel.founderTechnicalLevel(project.founderTechnicalLevel)}</p>
-            </div>
-          </Surface>
+        <ModuleInputPanel colSpan={selectedDocument?.content ? 'col-span-12' : 'col-span-12 xl:col-span-4'}>
+          <ProjectContextCard project={project} />
 
           <Surface tone="default">
             <SectionHeader
@@ -378,8 +363,55 @@ export const DeveloperJdPage = () => {
               )}
             </div>
           </Surface>
-        </aside>
-      </div>
+        </ModuleInputPanel>
+
+        {!selectedDocument?.content ? (
+          <ModuleOutputPanel colSpan="col-span-12 xl:col-span-8">
+            <HelpfulEmptyState
+              action={
+                <div className="flex items-center justify-between gap-4">
+                  <p className="text-sm text-muted">Ready to brief a developer?</p>
+                  <Button disabled={!contextReady} isLoading={isGenerating} onClick={handleGenerate}>
+                    Create developer brief
+                  </Button>
+                </div>
+              }
+              description="A ready-to-publish developer brief tailored to your project architecture and timeline."
+              previewSections={[
+                {
+                  desc: 'Sleek, compelling position summary showing project context, candidate goals, and company mission.',
+                  title: 'Job Posting Copy & Intro',
+                },
+                {
+                  desc: 'Precise mapping of must-have tech stack skills, development workflows, and preferred background.',
+                  title: 'Tech Stack & Required Skills',
+                },
+                {
+                  desc: 'Custom questions to ask candidates during phone calls or technical evaluations with expected strong signals.',
+                  title: 'Interview Screening Questions',
+                },
+                {
+                  desc: 'A short, relevant, and objective coding challenge to assess candidate proficiency and communication style.',
+                  title: 'Practical Coding Test Task',
+                },
+              ]}
+              title="Expected Developer Brief & JD Output"
+              whatItDoes="Turns the saved project context into a professional hiring brief with role scope, must-have skills, screening questions, a test task, and agency red flags."
+              whatToProvide={[
+                'Product idea summary and target audience',
+                'Hiring context (stage, budget, timelines)',
+                'A saved tech stack recommendation from Stack Advisor',
+              ]}
+              whatYouGet={[
+                'Job Posting Copy: Compelling intro showing project context and goals',
+                'Tech Stack Skills: Precise mapping of must-have skills and preferred backgrounds',
+                'Screening Questions: Custom questions to ask during phone calls',
+                'Practical Coding Task: Short, relevant coding challenge to assess proficiency',
+              ]}
+            />
+          </ModuleOutputPanel>
+        ) : null}
+      </ModulePageShell>
     </div>
   );
 };
