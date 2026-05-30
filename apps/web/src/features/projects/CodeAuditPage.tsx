@@ -391,6 +391,19 @@ const CodeAuditPage = () => {
 
       setProject(projectResponse.project);
       setDocuments(documentsResponse.documents);
+
+      const auditDocuments = documentsResponse.documents
+        .filter((doc) => doc.type === 'code_audit')
+        .map((doc) => ({ doc, audit: getDocumentCodeAudit(doc) }))
+        .filter(
+          (item): item is { doc: ProjectDocument; audit: CodeAuditOutput } =>
+            item.audit !== null,
+        );
+
+      const latestDocument = auditDocuments[0]?.doc;
+      if (latestDocument) {
+        setSelectedDocumentId(latestDocument.id);
+      }
     } catch {
       setLoadError('Unable to load the code audit workspace.');
     } finally {
@@ -466,6 +479,7 @@ const CodeAuditPage = () => {
       const response = await generateCodeAuditRequest(accessToken, id, toPayload(formState));
       setGeneratedDocument(response.document);
       setGeneratedAudit(response.codeAudit);
+      setSelectedDocumentId(response.document.id);
       setDocuments((current) => [
         response.document,
         ...current.filter((item) => item.id !== response.document.id),
