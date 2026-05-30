@@ -1,4 +1,4 @@
-import { ZodError, type ZodType, type z } from 'zod';
+import { ZodError, ZodObject, ZodArray, ZodString, type ZodType, type z } from 'zod';
 
 type StructuredParseSuccess<Schema extends ZodType> = {
   data: z.infer<Schema>;
@@ -147,6 +147,61 @@ const getSingleObjectFromArray = (value: unknown) => {
   return item;
 };
 
+const truncateStringToSchemaLimits = (value: any, schema: any): any => {
+  if (value === null || value === undefined) {
+    return value;
+  }
+
+  // Handle optional/nullable/unwrap wrappers
+  if (schema && typeof schema.unwrap === 'function') {
+    return truncateStringToSchemaLimits(value, schema.unwrap());
+  }
+
+  // Handle ZodEffects (superRefine, refine, transform)
+  if (schema && schema._def && schema._def.schema) {
+    return truncateStringToSchemaLimits(value, schema._def.schema);
+  }
+
+  // Handle ZodObject
+  if (schema && schema instanceof ZodObject) {
+    if (typeof value !== 'object' || value === null) {
+      return value;
+    }
+    const shape = schema.shape;
+    const result = { ...value };
+    for (const key of Object.keys(shape)) {
+      if (key in result) {
+        result[key] = truncateStringToSchemaLimits(result[key], shape[key]);
+      }
+    }
+    return result;
+  }
+
+  // Handle ZodArray
+  if (schema && schema instanceof ZodArray) {
+    if (!Array.isArray(value)) {
+      return value;
+    }
+    return value.map((item) => truncateStringToSchemaLimits(item, schema.element));
+  }
+
+  // Handle ZodString
+  if (schema && schema instanceof ZodString) {
+    if (typeof value === 'string') {
+      const checks = (schema._def as any).checks || [];
+      const maxCheck = checks.find((c: any) => c.kind === 'max');
+      if (maxCheck && typeof maxCheck.value === 'number') {
+        const maxLength = maxCheck.value;
+        if (value.length > maxLength) {
+          return value.substring(0, maxLength).trim();
+        }
+      }
+    }
+  }
+
+  return value;
+};
+
 export const parseStructuredOutput = <Schema extends ZodType>(
   text: string,
   schema: Schema,
@@ -167,7 +222,8 @@ export const parseStructuredOutput = <Schema extends ZodType>(
 
     normalizeModuleType(parsed);
 
-    const result = schema.safeParse(parsed);
+    const sanitized = truncateStringToSchemaLimits(parsed, schema);
+    const result = schema.safeParse(sanitized);
 
     if (result.success) {
       return {
@@ -180,7 +236,8 @@ export const parseStructuredOutput = <Schema extends ZodType>(
     if (singleObject) {
       normalizeModuleType(singleObject);
 
-      const unwrappedResult = schema.safeParse(singleObject);
+      const sanitizedSingle = truncateStringToSchemaLimits(singleObject, schema);
+      const unwrappedResult = schema.safeParse(sanitizedSingle);
 
       if (unwrappedResult.success) {
         return {
