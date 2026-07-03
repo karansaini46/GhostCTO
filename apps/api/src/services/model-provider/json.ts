@@ -1,4 +1,4 @@
-import { ZodError, ZodObject, ZodArray, ZodString, type ZodType, type z } from 'zod';
+import { ZodError, type ZodType, type z } from 'zod';
 
 type StructuredParseSuccess<Schema extends ZodType> = {
   data: z.infer<Schema>;
@@ -152,8 +152,10 @@ const truncateStringToSchemaLimits = (value: any, schema: any): any => {
     return value;
   }
 
+  const typeName = schema?._def?.type;
+
   // Handle optional/nullable/unwrap wrappers
-  if (schema && typeof schema.unwrap === 'function') {
+  if (typeName === 'optional' || typeName === 'nullable') {
     return truncateStringToSchemaLimits(value, schema.unwrap());
   }
 
@@ -163,7 +165,7 @@ const truncateStringToSchemaLimits = (value: any, schema: any): any => {
   }
 
   // Handle ZodObject
-  if (schema && schema instanceof ZodObject) {
+  if (typeName === 'object') {
     if (typeof value !== 'object' || value === null) {
       return value;
     }
@@ -178,15 +180,16 @@ const truncateStringToSchemaLimits = (value: any, schema: any): any => {
   }
 
   // Handle ZodArray
-  if (schema && schema instanceof ZodArray) {
+  if (typeName === 'array') {
     if (!Array.isArray(value)) {
       return value;
     }
-    return value.map((item) => truncateStringToSchemaLimits(item, schema.element));
+    const elementSchema = schema.element;
+    return value.map((item: any) => truncateStringToSchemaLimits(item, elementSchema));
   }
 
   // Handle ZodString
-  if (schema && schema instanceof ZodString) {
+  if (typeName === 'string') {
     if (typeof value === 'string') {
       const checks = (schema._def as any).checks || [];
       const maxCheck = checks.find((c: any) => c.kind === 'max');
