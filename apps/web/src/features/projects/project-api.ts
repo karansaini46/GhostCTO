@@ -4,6 +4,7 @@ import type { RateValidatorGenerationInput, RateValidatorOutput } from './rate-v
 import type { TechnicalSpecGenerationInput, TechnicalSpecOutput } from './technical-spec-types';
 import type { VettingGenerationInput, VettingOutput } from './vetting-types';
 import type {
+  ExtractionResponse,
   Project,
   ProjectChatMessage,
   ProjectChatPagination,
@@ -221,4 +222,14 @@ export const exportProjectDocumentPdfRequest = (
 ) =>
   apiFileRequest(`/projects/${projectId}/documents/${documentId}/export.pdf`, {
     headers: authHeaders(accessToken),
+  });
+
+export const extractProjectContextRequest = (
+  accessToken: string,
+  description: string,
+) =>
+  apiRequest<ExtractionResponse>('/projects/extract-context', {
+    body: JSON.stringify({ description }),
+    headers: authHeaders(accessToken),
+    method: 'POST',
   });

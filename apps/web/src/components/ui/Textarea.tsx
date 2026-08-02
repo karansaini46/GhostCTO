@@ -1,12 +1,12 @@
 import { forwardRef, useId } from 'react';
-import type { TextareaHTMLAttributes } from 'react';
+import type { ReactNode, TextareaHTMLAttributes } from 'react';
 
 import { cn } from '../../lib/cn';
 
 export type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
   error?: string;
   hint?: string;
-  label?: string;
+  label?: ReactNode;
 };
 
 export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(

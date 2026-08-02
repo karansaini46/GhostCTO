@@ -130,3 +130,18 @@ export type ProjectDocumentType =
   | 'technical_spec'
   | 'rate_validator'
   | 'vetting_scorecard';
+
+export type ExtractionResult = {
+  ideaSummary: string | null;
+  targetCustomer: string | null;
+  industry: string | null;
+  productType: string | null;
+  monetization: string | null;
+  currentStage: string | null;
+  mustHaveFeatures: string[] | null;
+};
+
+export type ExtractionResponse = {
+  result: ExtractionResult;
+};
+

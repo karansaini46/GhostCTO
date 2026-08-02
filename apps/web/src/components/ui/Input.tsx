@@ -1,12 +1,12 @@
 import { forwardRef, useId } from 'react';
-import type { InputHTMLAttributes } from 'react';
+import type { InputHTMLAttributes, ReactNode } from 'react';
 
 import { cn } from '../../lib/cn';
 
 export type InputProps = InputHTMLAttributes<HTMLInputElement> & {
   error?: string;
   hint?: string;
-  label?: string;
+  label?: ReactNode;
 };
 
 export const Input = forwardRef<HTMLInputElement, InputProps>(

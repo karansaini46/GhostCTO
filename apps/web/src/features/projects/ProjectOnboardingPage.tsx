@@ -18,7 +18,7 @@ import {
 import { ApiError } from '../../lib/api';
 import { cn } from '../../lib/cn';
 import { useAuth } from '../auth/auth-context';
-import { createProjectRequest } from './project-api';
+import { createProjectRequest, extractProjectContextRequest } from './project-api';
 import {
   budgetRangeOptions,
   existingAssetOptions,
@@ -29,7 +29,7 @@ import {
   stageOptions,
   technicalLevelOptions,
 } from './project-options';
-import type { ProjectPayload } from './project-types';
+import type { ExtractionResult, ProjectPayload } from './project-types';
 
 type ProjectDraft = Omit<ProjectPayload, 'mustHaveFeatures'> & {
   mustHaveFeatures: string;
@@ -55,6 +55,11 @@ const initialDraft: ProjectDraft = {
 
 const steps: { description: string; fields: FieldKey[]; title: string }[] = [
   {
+    description: 'Write a few sentences about your idea and who it is for.',
+    fields: [] as FieldKey[],
+    title: 'Describe',
+  },
+  {
     description: 'Name the idea, customer, and problem in plain English.',
     fields: ['name', 'ideaSummary', 'targetCustomer'],
     title: 'Foundation',
@@ -70,7 +75,7 @@ const steps: { description: string; fields: FieldKey[]; title: string }[] = [
     title: 'Execution',
   },
   {
-    description: 'Choose what exists, what must launch, and what worries you.',
+    description: 'These five things only you know — the AI cannot infer them.',
     fields: ['existingAssets', 'mustHaveFeatures', 'biggestConcern'],
     title: 'Scope',
   },
@@ -271,6 +276,32 @@ const ReviewRow = ({ label, value }: ReviewRowProps) => (
   </div>
 );
 
+const AISuggestedBadge = () => (
+  <span className="inline-flex items-center gap-1 rounded-full border border-accent/30 bg-accent-soft px-2 py-0.5 text-xs font-medium text-accent">
+    AI suggested
+  </span>
+);
+
+const FieldLabel = ({
+  label,
+  isSuggested,
+  isNull,
+}: {
+  label: string;
+  isSuggested: boolean;
+  isNull: boolean;
+}) => (
+  <div className="flex items-center gap-2 mb-1">
+    <span className="text-sm font-medium text-text">{label}</span>
+    {isSuggested && !isNull && <AISuggestedBadge />}
+    {isNull && (
+      <span className="inline-flex items-center rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-xs font-medium text-warning">
+        Needs your input
+      </span>
+    )}
+  </div>
+);
+
 export const ProjectOnboardingPage = () => {
   const navigate = useNavigate();
   const { accessToken, user } = useAuth();
@@ -282,6 +313,14 @@ export const ProjectOnboardingPage = () => {
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null);
   const [stepIndex, setStepIndex] = useState(0);
   const [submitError, setSubmitError] = useState<string | null>(null);
+  const [description, setDescription] = useState('');
+  const [descriptionError, setDescriptionError] = useState<string | null>(null);
+  const [isExtracting, setIsExtracting] = useState(false);
+  const [extractionFailed, setExtractionFailed] = useState(false);
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars -- stored for Task 5 (AI-suggested field highlights)
+  const [aiSuggestedFields, setAiSuggestedFields] = useState<Set<keyof ProjectDraft>>(new Set());
+  const [skippedToScope, setSkippedToScope] = useState(false);
+  const [isAiReviewOpen, setIsAiReviewOpen] = useState(false);
   const currentStep = steps[stepIndex];
   const progress = Math.round(((stepIndex + 1) / steps.length) * 100);
   const allFields = useMemo(() => steps.flatMap((step) => step.fields), []);
@@ -341,8 +380,55 @@ export const ProjectOnboardingPage = () => {
     return Object.keys(errors).length === 0;
   };
 
-  const goNext = () => {
+  const handleDescriptionSubmit = async () => {
+    if (description.trim().length < 30) {
+      setDescriptionError('Write at least a sentence or two about your idea.');
+      return;
+    }
+    setDescriptionError(null);
+    setIsExtracting(true);
+    setExtractionFailed(false);
+    
+    let didSuggest = false;
+
+    try {
+      const response = await extractProjectContextRequest(accessToken!, description);
+      const result: ExtractionResult = response.result;
+
+      const suggested = new Set<keyof ProjectDraft>();
+      const updates: Partial<ProjectDraft> = {};
+
+      if (result.ideaSummary) { updates.ideaSummary = result.ideaSummary; suggested.add('ideaSummary'); }
+      if (result.targetCustomer) { updates.targetCustomer = result.targetCustomer; suggested.add('targetCustomer'); }
+      if (result.industry) { updates.industry = result.industry; suggested.add('industry'); }
+      if (result.productType) { updates.productType = result.productType; suggested.add('productType'); }
+      if (result.monetization) { updates.monetization = result.monetization; suggested.add('monetization'); }
+      if (result.currentStage) { updates.currentStage = result.currentStage; suggested.add('currentStage'); }
+      if (result.mustHaveFeatures?.length) {
+        updates.mustHaveFeatures = result.mustHaveFeatures.join('\n');
+        suggested.add('mustHaveFeatures');
+      }
+
+      setDraft((prev) => ({ ...prev, ...updates }));
+      setAiSuggestedFields(suggested);
+      didSuggest = suggested.size > 0;
+    } catch {
+      setExtractionFailed(true);
+      // Extraction failed — user continues to fill form manually, not a blocking error
+    } finally {
+      setIsExtracting(false);
+      setSkippedToScope(didSuggest);
+      setStepIndex(didSuggest ? 4 : 1);
+    }
+  };
+
+  const goNext = async () => {
     setSubmitError(null);
+
+    if (stepIndex === 0) {
+      await handleDescriptionSubmit();
+      return;
+    }
 
     if (!validateCurrentStep()) {
       return;
@@ -354,6 +440,10 @@ export const ProjectOnboardingPage = () => {
   const goBack = () => {
     setSubmitError(null);
     setFieldErrors({});
+    if (stepIndex === 4 && skippedToScope) {
+      setStepIndex(0);
+      return;
+    }
     setStepIndex((current) => Math.max(current - 1, 0));
   };
 
@@ -404,7 +494,51 @@ export const ProjectOnboardingPage = () => {
   const renderCurrentStep = () => {
     if (stepIndex === 0) {
       return (
+        <div className="flex flex-col gap-4">
+          <Textarea
+            disabled={isExtracting}
+            label="Describe your project"
+            maxLength={2000}
+            onChange={(e: ChangeEvent<HTMLTextAreaElement>) => {
+              setDescription(e.target.value);
+              if (descriptionError) setDescriptionError(null);
+            }}
+            placeholder="E.g. I want to build a SaaS for freelance designers to send invoices and track payments. The main customers are solo designers. Must have an invoice builder, payment tracking, and a client portal."
+            rows={6}
+            value={description}
+          />
+          {descriptionError && (
+            <p className="text-sm text-danger">{descriptionError}</p>
+          )}
+          {isExtracting && (
+            <p className="text-sm text-secondary animate-pulse">
+              Reading your description and pre-filling your project details…
+            </p>
+          )}
+          {extractionFailed && (
+            <p className="text-sm text-warning">
+              Could not auto-fill fields — you can fill them in manually on the next steps.
+            </p>
+          )}
+        </div>
+      );
+    }
+
+    if (stepIndex === 1) {
+      const isIdeaSummarySuggested = aiSuggestedFields.has('ideaSummary');
+      const isIdeaSummaryNull = !isIdeaSummarySuggested && stepIndex > 0;
+      
+      const isTargetCustomerSuggested = aiSuggestedFields.has('targetCustomer');
+      const isTargetCustomerNull = !isTargetCustomerSuggested && stepIndex > 0;
+
+      return (
         <div className="space-y-5">
+          {aiSuggestedFields.size > 0 && (
+            <div className="rounded-panel border border-accent/25 bg-accent-soft p-3 text-sm text-text">
+              <span className="font-semibold">AI pre-filled {aiSuggestedFields.size} fields</span>
+              {' '}from your description. Review and edit anything that looks off.
+            </div>
+          )}
           <Input
             error={fieldErrors.name}
             hint="Use a clear working name. You can change it later."
@@ -416,37 +550,50 @@ export const ProjectOnboardingPage = () => {
           <Textarea
             error={fieldErrors.ideaSummary}
             hint="Explain who it serves, what painful problem it solves, and what outcome the customer should get."
-            label="Idea summary"
+            label={<FieldLabel label="Idea summary" isSuggested={isIdeaSummarySuggested} isNull={isIdeaSummaryNull} />}
             onChange={(event) => updateField('ideaSummary', event.target.value)}
             placeholder="Describe the product in practical terms, including the core workflow and expected customer result."
             value={draft.ideaSummary}
+            className={cn(isIdeaSummarySuggested && 'ring-1 ring-accent/40')}
           />
           <Textarea
             error={fieldErrors.targetCustomer}
             hint="Name the buyer or user, their context, current workaround, and why this matters now."
-            label="Target customer"
+            label={<FieldLabel label="Target customer" isSuggested={isTargetCustomerSuggested} isNull={isTargetCustomerNull} />}
             onChange={(event) => updateField('targetCustomer', event.target.value)}
             placeholder="Example: Seed-stage founders who need to compare vendor quotes before committing budget..."
             value={draft.targetCustomer}
+            className={cn(isTargetCustomerSuggested && 'ring-1 ring-accent/40')}
           />
         </div>
       );
     }
 
-    if (stepIndex === 1) {
+    if (stepIndex === 2) {
+      const isIndustrySuggested = aiSuggestedFields.has('industry');
+      const isIndustryNull = !isIndustrySuggested && stepIndex > 0;
+
+      const isProductTypeSuggested = aiSuggestedFields.has('productType');
+      const isProductTypeNull = !isProductTypeSuggested && stepIndex > 0;
+
+      const isMonetizationSuggested = aiSuggestedFields.has('monetization');
+      const isMonetizationNull = !isMonetizationSuggested && stepIndex > 0;
+
       return (
         <div className="grid gap-5 md:grid-cols-2">
           <Input
             error={fieldErrors.industry}
             hint="Use the category customers or investors would recognize."
-            label="Industry"
+            label={<FieldLabel label="Industry" isSuggested={isIndustrySuggested} isNull={isIndustryNull} />}
             onChange={(event) => updateField('industry', event.target.value)}
             placeholder="Example: Healthtech, fintech, B2B operations"
             value={draft.industry}
+            className={cn(isIndustrySuggested && 'ring-1 ring-accent/40')}
           />
           <Select
-            label="Product type"
+            label={<FieldLabel label="Product type" isSuggested={isProductTypeSuggested} isNull={isProductTypeNull} />}
             placeholder="Select product type"
+            className={cn(isProductTypeSuggested && 'ring-1 ring-accent/40')}
             {...selectProps('productType')}
           >
             {productTypeOptions.map((option) => (
@@ -458,8 +605,9 @@ export const ProjectOnboardingPage = () => {
           <div className="md:col-span-2">
             <Select
               hint="Pick the model you expect to test first."
-              label="Monetization"
+              label={<FieldLabel label="Monetization" isSuggested={isMonetizationSuggested} isNull={isMonetizationNull} />}
               placeholder="Select monetization"
+              className={cn(isMonetizationSuggested && 'ring-1 ring-accent/40')}
               {...selectProps('monetization')}
             >
               {monetizationOptions.map((option) => (
@@ -473,10 +621,18 @@ export const ProjectOnboardingPage = () => {
       );
     }
 
-    if (stepIndex === 2) {
+    if (stepIndex === 3) {
+      const isCurrentStageSuggested = aiSuggestedFields.has('currentStage');
+      const isCurrentStageNull = !isCurrentStageSuggested && stepIndex > 0;
+
       return (
         <div className="grid gap-5 md:grid-cols-2">
-          <Select label="Current stage" placeholder="Select stage" {...selectProps('currentStage')}>
+          <Select 
+            label={<FieldLabel label="Current stage" isSuggested={isCurrentStageSuggested} isNull={isCurrentStageNull} />} 
+            placeholder="Select stage" 
+            className={cn(isCurrentStageSuggested && 'ring-1 ring-accent/40')}
+            {...selectProps('currentStage')}
+          >
             {stageOptions.map((option) => (
               <option key={option.value} value={option.value}>
                 {option.label}
@@ -521,9 +677,114 @@ export const ProjectOnboardingPage = () => {
       );
     }
 
-    if (stepIndex === 3) {
+    if (stepIndex === 4) {
+      const isMustHaveFeaturesSuggested = aiSuggestedFields.has('mustHaveFeatures');
+      const isMustHaveFeaturesNull = !isMustHaveFeaturesSuggested && stepIndex > 0;
+
       return (
         <div className="space-y-5">
+          {aiSuggestedFields.size > 0 && (
+            <div className="rounded-panel border border-accent/25 bg-accent-soft">
+              <button
+                className="flex w-full items-center justify-between p-4 text-sm font-semibold text-text"
+                onClick={() => setIsAiReviewOpen((prev) => !prev)}
+                type="button"
+              >
+                <span>AI understood {aiSuggestedFields.size} things — review or edit</span>
+                <span className="text-muted">{isAiReviewOpen ? '▲' : '▼'}</span>
+              </button>
+
+              {isAiReviewOpen && (
+                <div className="space-y-4 border-t border-accent/20 p-4">
+                  {aiSuggestedFields.has('ideaSummary') && (
+                    <Textarea
+                      hint="Edit if the AI misunderstood your idea."
+                      label="Idea summary"
+                      onChange={(event) => updateField('ideaSummary', event.target.value)}
+                      placeholder="Describe the product in practical terms..."
+                      value={draft.ideaSummary}
+                    />
+                  )}
+                  {aiSuggestedFields.has('targetCustomer') && (
+                    <Textarea
+                      hint="Edit if the AI got the wrong customer."
+                      label="Target customer"
+                      onChange={(event) => updateField('targetCustomer', event.target.value)}
+                      placeholder="Who is the primary customer..."
+                      value={draft.targetCustomer}
+                    />
+                  )}
+                  {aiSuggestedFields.has('industry') && (
+                    <Input
+                      label="Industry"
+                      onChange={(event) => updateField('industry', event.target.value)}
+                      placeholder="E.g. Fintech, Healthtech, B2B SaaS"
+                      value={draft.industry}
+                    />
+                  )}
+                  {aiSuggestedFields.has('productType') && (
+                    <Select
+                      label="Product type"
+                      onChange={(event) => updateField('productType', event.target.value)}
+                      placeholder="Select product type"
+                      value={draft.productType}
+                    >
+                      {productTypeOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                  {aiSuggestedFields.has('monetization') && (
+                    <Select
+                      label="Monetization"
+                      onChange={(event) => updateField('monetization', event.target.value)}
+                      placeholder="Select monetization"
+                      value={draft.monetization}
+                    >
+                      {monetizationOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                  {aiSuggestedFields.has('currentStage') && (
+                    <Select
+                      label="Current stage"
+                      onChange={(event) => updateField('currentStage', event.target.value)}
+                      placeholder="Select stage"
+                      value={draft.currentStage}
+                    >
+                      {stageOptions.map((option) => (
+                        <option key={option.value} value={option.value}>
+                          {option.label}
+                        </option>
+                      ))}
+                    </Select>
+                  )}
+                  {aiSuggestedFields.has('mustHaveFeatures') && (
+                    <Textarea
+                      hint="One feature per line."
+                      label="Must-have features"
+                      onChange={(event) => updateField('mustHaveFeatures', event.target.value)}
+                      placeholder="One feature per line..."
+                      value={draft.mustHaveFeatures}
+                    />
+                  )}
+                  {aiSuggestedFields.has('name') && (
+                    <Input
+                      label="Project name"
+                      onChange={(event) => updateField('name', event.target.value)}
+                      placeholder="Working project name..."
+                      value={draft.name}
+                    />
+                  )}
+                </div>
+              )}
+            </div>
+          )}
           <div className="space-y-3">
             <div>
               <p className="text-sm font-semibold text-text">Existing assets</p>
@@ -559,12 +820,13 @@ export const ProjectOnboardingPage = () => {
           <Textarea
             error={fieldErrors.mustHaveFeatures}
             hint="Add one feature per line. Include what the user does and the business reason it belongs in the first launch."
-            label="Must-have features"
+            label={<FieldLabel label="Must-have features" isSuggested={isMustHaveFeaturesSuggested} isNull={isMustHaveFeaturesNull} />}
             onChange={(event) => updateField('mustHaveFeatures', event.target.value)}
             placeholder={
               'Example: Founder uploads a vendor quote and gets a risk summary\nExample: Team compares quote line items against market norms\nExample: Founder exports a negotiation checklist'
             }
             value={draft.mustHaveFeatures}
+            className={cn(isMustHaveFeaturesSuggested && 'ring-1 ring-accent/40')}
           />
           <Textarea
             error={fieldErrors.biggestConcern}
@@ -574,6 +836,14 @@ export const ProjectOnboardingPage = () => {
             placeholder="Example: I am worried about building too much before I know which workflow customers will pay for..."
             value={draft.biggestConcern}
           />
+          <Input
+            error={fieldErrors.name}
+            hint="Use a clear working name. You can change it later."
+            label="Project name"
+            onChange={(event) => updateField('name', event.target.value)}
+            placeholder="Example: Invoice tracker for designers"
+            value={draft.name}
+          />
         </div>
       );
     }
@@ -582,21 +852,31 @@ export const ProjectOnboardingPage = () => {
 
     return (
       <div className="space-y-5">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted mb-3">What AI understood</p>
+        {payload.ideaSummary && aiSuggestedFields.has('ideaSummary') && (
+          <ReviewRow label="Idea summary" value={payload.ideaSummary} />
+        )}
+        {payload.targetCustomer && aiSuggestedFields.has('targetCustomer') && (
+          <ReviewRow label="Target customer" value={payload.targetCustomer} />
+        )}
+        {payload.industry && aiSuggestedFields.has('industry') && (
+          <ReviewRow label="Industry" value={payload.industry} />
+        )}
+        {payload.productType && aiSuggestedFields.has('productType') && (
+          <ReviewRow label="Product type" value={getProjectOptionLabel.productType(payload.productType)} />
+        )}
+        {payload.monetization && aiSuggestedFields.has('monetization') && (
+          <ReviewRow label="Monetization" value={getProjectOptionLabel.monetization(payload.monetization)} />
+        )}
+        {payload.currentStage && aiSuggestedFields.has('currentStage') && (
+          <ReviewRow label="Current stage" value={getProjectOptionLabel.currentStage(payload.currentStage)} />
+        )}
+        {payload.mustHaveFeatures?.length > 0 && aiSuggestedFields.has('mustHaveFeatures') && (
+          <ReviewRow label="Must-have features" value={payload.mustHaveFeatures.map((feature) => `- ${feature}`).join('\n')} />
+        )}
+
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-muted mb-3 mt-6">What you provided</p>
         <div className="grid gap-4 md:grid-cols-2">
-          <ReviewRow label="Project name" value={payload.name || 'Not set'} />
-          <ReviewRow label="Industry" value={payload.industry || 'Not set'} />
-          <ReviewRow
-            label="Product type"
-            value={getProjectOptionLabel.productType(payload.productType)}
-          />
-          <ReviewRow
-            label="Monetization"
-            value={getProjectOptionLabel.monetization(payload.monetization)}
-          />
-          <ReviewRow
-            label="Current stage"
-            value={getProjectOptionLabel.currentStage(payload.currentStage)}
-          />
           <ReviewRow
             label="Budget range"
             value={getProjectOptionLabel.budgetRange(payload.budgetRange)}
@@ -610,8 +890,6 @@ export const ProjectOnboardingPage = () => {
             value={getProjectOptionLabel.founderTechnicalLevel(payload.founderTechnicalLevel)}
           />
         </div>
-        <ReviewRow label="Idea summary" value={payload.ideaSummary || 'Not set'} />
-        <ReviewRow label="Target customer" value={payload.targetCustomer || 'Not set'} />
         <ReviewRow
           label="Existing assets"
           value={
@@ -619,10 +897,6 @@ export const ProjectOnboardingPage = () => {
               .map((asset) => getProjectOptionLabel.existingAsset(asset))
               .join(', ') || 'Not set'
           }
-        />
-        <ReviewRow
-          label="Must-have features"
-          value={payload.mustHaveFeatures.map((feature) => `- ${feature}`).join('\n') || 'Not set'}
         />
         <ReviewRow label="Biggest concern" value={payload.biggestConcern || 'Not set'} />
       </div>
@@ -698,7 +972,7 @@ export const ProjectOnboardingPage = () => {
                 Back
               </Button>
               {stepIndex < steps.length - 1 ? (
-                <Button onClick={goNext} type="button">
+                <Button disabled={isExtracting} onClick={goNext} type="button">
                   Continue
                 </Button>
               ) : (

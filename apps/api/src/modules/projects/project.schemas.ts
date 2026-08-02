@@ -333,6 +333,52 @@ export const chatMessagesQuerySchema = z
   })
   .strict();
 
+export const extractContextRequestSchema = z
+  .object({
+    description: z
+      .string()
+      .trim()
+      .min(30, 'Description is too short to extract context from.')
+      .max(2000, 'Description is too long.'),
+  })
+  .strict();
+
+export const extractContextResultSchema = z
+  .object({
+    ideaSummary: z.string().nullable(),
+    targetCustomer: z.string().nullable(),
+    industry: z.string().nullable(),
+    productType: z
+      .enum([
+        'saas',
+        'marketplace',
+        'consumer_app',
+        'internal_tool',
+        'commerce',
+        'community',
+        'content',
+        'services',
+        'hardware_enabled',
+      ])
+      .nullable(),
+    monetization: z
+      .enum([
+        'subscription',
+        'transaction_fee',
+        'one_time_purchase',
+        'services',
+        'freemium',
+        'licensing',
+        'not_decided',
+      ])
+      .nullable(),
+    currentStage: z
+      .enum(['idea', 'validating', 'prototype', 'mvp', 'beta', 'launched', 'scaling'])
+      .nullable(),
+    mustHaveFeatures: z.array(z.string()).nullable(),
+  })
+  .strict();
+
 export type ProjectPayloadInput = z.infer<typeof projectPayloadSchema>;
 export type UpdateProjectPayloadInput = z.infer<typeof updateProjectPayloadSchema>;
 export type DeleteProjectPayloadInput = z.infer<typeof deleteProjectPayloadSchema>;
@@ -347,3 +393,5 @@ export type QuoteAnalysisRequestInput = z.infer<typeof quoteAnalysisRequestSchem
 export type VettingRequestInput = z.infer<typeof vettingRequestSchema>;
 export type ChatMessageRequestInput = z.infer<typeof chatMessageRequestSchema>;
 export type ChatMessagesQueryInput = z.infer<typeof chatMessagesQuerySchema>;
+export type ExtractContextRequestInput = z.infer<typeof extractContextRequestSchema>;
+export type ExtractContextResult = z.infer<typeof extractContextResultSchema>;

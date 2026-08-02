@@ -1,12 +1,12 @@
 import { forwardRef, useId } from 'react';
-import type { SelectHTMLAttributes } from 'react';
+import type { ReactNode, SelectHTMLAttributes } from 'react';
 
 import { cn } from '../../lib/cn';
 
 export type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & {
   error?: string;
   hint?: string;
-  label?: string;
+  label?: ReactNode;
   placeholder?: string;
 };
 

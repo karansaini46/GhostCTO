@@ -31,6 +31,7 @@ import { generateRoadmap } from './roadmap.controller.js';
 import { generateStackAdvice } from './stack-advice.controller.js';
 import { generateTechnicalSpec } from './technical-spec.controller.js';
 import { generateVettingScorecard } from './vetting.controller.js';
+import { extractContext } from './project-extraction.controller.js';
 
 export const projectRouter = Router();
 
@@ -53,6 +54,7 @@ const generationEndpointLimiter = rateLimit({
   windowMs: config.generationRateLimitWindowMs,
 });
 
+projectRouter.post('/extract-context', asyncHandler(extractContext));
 projectRouter.post('/', requireProjectCapacity, asyncHandler(createProject));
 projectRouter.post(
   '/:id/code-audit',
