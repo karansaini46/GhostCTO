@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --import tsx src/server.ts",
     "build": "pnpm run build:production",
-    "build:production": "npx --yes prisma generate && npx --yes tsc -p tsconfig.json",
+    "build:production": "prisma generate && tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "start:production": "node dist/server.js",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
@@ -32,10 +32,9 @@
     "helmet": "^8.2.0",
     "jsonwebtoken": "^9.0.3",
     "pg": "^8.20.0",
-    "prisma": "^7.8.0",
     "puppeteer": "^24.43.1",
-    "typescript": "^5.0.0",
-    "zod": "^4.4.3"
+    "zod": "^4.4.3",
+    "prisma": "^7.8.0"
   },
   "devDependencies": {
     "@types/cookie-parser": "^1.4.10",
