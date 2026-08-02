@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "node --import tsx src/server.ts",
     "build": "pnpm run build:production",
-    "build:production": "prisma generate && tsc -p tsconfig.json",
+    "build:production": "npx --yes prisma generate && npx --yes tsc -p tsconfig.json",
     "start": "node dist/server.js",
     "start:production": "node dist/server.js",
     "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
